@@ -940,6 +940,9 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
 
     file_path = f"Backend/population_json_files/v{req.zoom_level}/all_features.geojson"
     population_data = await use_json(file_path, "r")
+    if not population_data:
+        raise Exception(f"could not find geojson data for zoom level")
+
 
 
     # Load only the required portion from the GeoJSON
