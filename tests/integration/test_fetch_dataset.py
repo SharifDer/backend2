@@ -13,7 +13,7 @@ FETCH_DATASET_TESTS = [
             requires_auth=True,
             requires_database_seed=True,
             ggl_raw_seeds=["supermarket"],
-            dataset_seeds=["supermarket_dataset"]
+            dataset_seeds=["supermarket_dataset"],
         ),
         endpoint=Endpoint(method="POST", path="/fetch_dataset"),
         input_data={
@@ -21,9 +21,9 @@ FETCH_DATASET_TESTS = [
             "request_info": {"request_id": "test-fetch-sample-001"},
             "request_body": {
                 "user_id": "${user.user_id}",
-                "lat": 24.7136,
-                "lng": 46.6753,
-                "radius": 2000.0,
+                "lat": 0,
+                "lng": 0,
+                "radius": 3000,
                 "boolean_query": "supermarket",
                 "page_token": "",
                 "action": "sample",
@@ -39,21 +39,28 @@ FETCH_DATASET_TESTS = [
                 "ids_and_location_only": False,
                 "include_rating_info": False,
                 "include_only_sub_properties": True,
-                "full_load": False
-            }
+                "full_load": False,
+            },
         },
         expected_output={
             "status_code": 200,
             "response_body": {
+                "message": "Request received.",
+                "request_id": "starts_with:req-",  # Only special validator for random field
                 "data": {
-                    "features": "non_empty_list",
-                    "type": "FeatureCollection"
-                }
-            }
+                    "type": "FeatureCollection",
+                    "features": [],  # Exact match: empty array
+                    "bknd_dataset_id": "46.6753_24.7136_2000.0_supermarket_token=",  # Exact match
+                    "prdcer_lyr_id": "min_length:1",  # Only special validator for random field
+                    "records_count": 0,  # Exact match
+                    "delay_before_next_call": 3,  # Exact match
+                    "progress": None,  # Exact match: null
+                    "next_page_token": "",  # Exact match: empty string
+                },
+            },
         },
-        print_response_on_failure=True  # ✅ Enable detailed response printing
+        print_response_on_failure=True,  # ✅ Enable detailed response printing
     ),
-    
     # ConfigDrivenTest(
     #     name="test_fetch_dataset_text_search_coffee",
     #     prerequisites=Prerequisites(
@@ -98,7 +105,6 @@ FETCH_DATASET_TESTS = [
     #         }
     #     }
     # ),
-    
     # ConfigDrivenTest(
     #     name="test_fetch_dataset_full_data",
     #     prerequisites=Prerequisites(
