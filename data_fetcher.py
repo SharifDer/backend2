@@ -518,7 +518,7 @@ async def fetch_dataset(req: ReqFetchDataset):
 
     await check_purchase(req, plan_name)
     progress = await full_load(req,plan_name,layer_id,next_page_token)
-    bknd_dataset_id = plan_name
+
     geojson_dataset["bknd_dataset_id"] = bknd_dataset_id
     geojson_dataset["records_count"] = len(geojson_dataset.get("features", ""))
     geojson_dataset["prdcer_lyr_id"] = layer_id
@@ -556,35 +556,31 @@ async def fetch_dataset(req: ReqFetchDataset):
 async def save_lyr(req: ReqSavePrdcerLyer) -> str:
     user_data = await load_user_profile(req.user_id)
 
-    try:
-        # Check for duplicate prdcer_layer_name
-        new_layer_name = req.model_dump(exclude={"user_id"})[
-            "prdcer_layer_name"
-        ]
-        for layer in user_data["prdcer"]["prdcer_lyrs"].values():
-            if layer["prdcer_layer_name"] == new_layer_name:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Layer name '{new_layer_name}' already exists. Layer names must be unique.",
-                )
+    # Check for duplicate prdcer_layer_name
+    new_layer_name = req.model_dump(exclude={"user_id"})[
+        "prdcer_layer_name"
+    ]
+    for layer in user_data["prdcer"]["prdcer_lyrs"].values():
+        if layer["prdcer_layer_name"] == new_layer_name:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Layer name '{new_layer_name}' already exists. Layer names must be unique.",
+            )
 
-        # Add the new layer to user profile
-        user_data["prdcer"]["prdcer_lyrs"][req.prdcer_lyr_id] = req.model_dump(
-            exclude={"user_id"}
-        )
+    # Add the new layer to user profile
+    user_data["prdcer"]["prdcer_lyrs"][req.prdcer_lyr_id] = req.model_dump(
+        exclude={"user_id"}
+    )
 
-        # Save updated user data
-        await update_user_profile(req.user_id, user_data)
-        await update_dataset_layer_matching(
-            req.prdcer_lyr_id, req.bknd_dataset_id
-        )
+    # Save updated user data
+    await update_user_profile(req.user_id, user_data)
+    if req.prdcer_lyr_id:
         await update_user_layer_matching(req.prdcer_lyr_id, req.user_id)
-    except KeyError as ke:
-        logger.error(f"Invalid user data structure for user_id: {req.user_id}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid user data structure",
-        ) from ke
+        if req.bknd_dataset_id:
+            await update_dataset_layer_matching(
+                req.prdcer_lyr_id, req.bknd_dataset_id
+            )
+        
 
     return "Producer layer created successfully"
 

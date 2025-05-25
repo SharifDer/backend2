@@ -196,68 +196,6 @@ def fetch_layer_owner(prdcer_lyr_id: str) -> str:
     return layer_owner_id
 
 
-# def load_dataset_layer_matching() -> Dict:
-#     """ """
-#     try:
-#         with open(DATASET_LAYER_MATCHING_PATH, "r") as f:
-#             dataset_layer_matching = json.load(f)
-#         return dataset_layer_matching
-#     except FileNotFoundError:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Dataset layer matching file not found",
-#         )
-#     except json.JSONDecodeError:
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail="Error parsing dataset layer matching file",
-#         )
-
-
-# def update_dataset_layer_matching(
-#     prdcer_lyr_id: str, bknd_dataset_id: str, records_count: int = 9191919
-# ):
-#     try:
-#         if os.path.exists(DATASET_LAYER_MATCHING_PATH):
-#             with open(DATASET_LAYER_MATCHING_PATH, "r") as f:
-#                 dataset_layer_matching = json.load(f)
-#         else:
-#             dataset_layer_matching = {}
-
-#         if bknd_dataset_id not in dataset_layer_matching:
-#             dataset_layer_matching[bknd_dataset_id] = {
-#                 "records_count": records_count,
-#                 "prdcer_lyrs": [],
-#             }
-
-#         if prdcer_lyr_id not in dataset_layer_matching[bknd_dataset_id]["prdcer_lyrs"]:
-#             dataset_layer_matching[bknd_dataset_id]["prdcer_lyrs"].append(prdcer_lyr_id)
-
-#         dataset_layer_matching[bknd_dataset_id]["records_count"] = records_count
-
-#         with open(DATASET_LAYER_MATCHING_PATH, "w") as f:
-#             json.dump(dataset_layer_matching, f, indent=2)
-#     except IOError:
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail="Error updating dataset layer matching",
-#         )
-
-
-# def update_user_layer_matching(layer_id: str, layer_owner_id: str):
-#     try:
-#         with open(USER_LAYER_MATCHING_PATH, "r+") as f:
-#             user_layer_matching = json.load(f)
-#             user_layer_matching[layer_id] = layer_owner_id
-#             f.seek(0)
-#             json.dump(user_layer_matching, f, indent=2)
-#             f.truncate()
-#     except IOError:
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail="Error updating user layer matching",
-#         )
-
 
 async def load_dataset_layer_matching() -> Dict:
     """Load dataset layer matching from Firestore"""
@@ -275,15 +213,9 @@ async def update_dataset_layer_matching(
     collection_name = "layer_matchings"
     document_id = "dataset_matching"
 
-    try:
-        dataset_layer_matching = await firebase_db.get_document(
-            collection_name, document_id
-        )
-    except HTTPException as e:
-        if e.status_code == status.HTTP_404_NOT_FOUND:
-            dataset_layer_matching = {}
-        else:
-            raise e
+    dataset_layer_matching = await firebase_db.get_document(
+    collection_name, document_id
+    )
 
     if bknd_dataset_id not in dataset_layer_matching:
         dataset_layer_matching[bknd_dataset_id] = {
@@ -385,15 +317,11 @@ async def update_user_layer_matching(layer_id: str, layer_owner_id: str):
     collection_name = "layer_matchings"
     document_id = "user_matching"
 
-    try:
-        user_layer_matching = await firebase_db.get_document(
-            collection_name, document_id
-        )
-    except HTTPException as e:
-        if e.status_code == status.HTTP_404_NOT_FOUND:
-            user_layer_matching = {}
-        else:
-            raise e
+
+    user_layer_matching = await firebase_db.get_document(
+        collection_name, document_id
+    )
+
 
     user_layer_matching[layer_id] = layer_owner_id
 

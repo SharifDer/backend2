@@ -809,10 +809,11 @@ async def fetch_ggl_nearby(req: ReqFetchDataset):
             await mark_plan_result(plan_name, current_plan_index, has_features)
 
 
-    if req.include_only_sub_properties:
-        dataset = select_sub_properties(dataset)
+
     if req.action=="full data":
         dataset = filter_ggl_data_valid_locations(req, dataset)
+    if req.include_only_sub_properties:
+        dataset = select_sub_properties(dataset)
         
 
     return dataset, bknd_dataset_id, next_page_token, plan_name, next_plan_index
@@ -881,7 +882,10 @@ def filter_ggl_data_valid_locations(req:ReqFetchDataset, dataset):
         else:
             # Check if it has photos
             photos = properties.get('photos', [])
-            if photos and len(photos) > 0:
+            if not photos:
+                photos = properties.get('googleMapsLinks', {}).get("photosUri","")
+            popularity_score = properties.get('popularity_score', 0)
+            if photos and len(photos) > 0 or popularity_score > 100:
                 filtered_features.append(feature)
     
     # Create a new dataset with the filtered features
