@@ -1,89 +1,100 @@
-# Integration_test_runner.py
-
+# test_run_Integration_test.py
 #!/usr/bin/env python3
-"""
-Integration Test Runner with dependency support
-
-This module starts the FastAPI server in test mode and runs integration tests against it.
-Tests can have dependencies and are run in the correct order.
-"""
-
-import os
+import pytest
 import sys
-import time
+import os
 import subprocess
 import logging
-from http.client import HTTPConnection
-from contextlib import contextmanager
+import time
 import json
-import asyncio
-import importlib.util
-from typing import Dict, List, Set, Tuple
+from contextlib import contextmanager
 
-# Set up logging
+# Set up logging with better formatting
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
-
-# Test dependency configuration
-TEST_DEPENDENCIES = {
-    "test_fetch_dataset": ["test_user"],  # fetch_dataset depends on user tests
-    # Add more dependencies here as needed
-}
-
-
 class TestServerManager:
-    """Manages starting and stopping the test server"""
-
+    """Manages test server with proper database configuration"""
+    
     def __init__(self, test_port=8080):
         self.test_port = test_port
         self.server_process = None
 
+    @contextmanager
+    def server_context(self):
+        """Context manager for server lifecycle"""
+        try:
+            self.setup_test_environment()
+            if not self.start_server():
+                raise RuntimeError("Failed to start test server")
+            
+            yield {
+                "port": self.test_port,
+                "base_url": f"http://localhost:{self.test_port}",
+                "api_base": f"http://localhost:{self.test_port}/fastapi",
+            }
+        finally:
+            self.cleanup()
+
     def setup_test_environment(self):
-        """Set up test environment - only sets TEST_MODE"""
-        logger.info("Setting up test environment...")
+        """Set up test environment - sets TEST_MODE and loads database config"""
+        logger.info("🔧 Setting up test environment...")
         os.environ["TEST_MODE"] = "true"
-        logger.info("Test environment set up successfully")
+        
+        # Load database configuration from secrets
+        try:
+            with open("secrets_test/postgres_db.json", "r") as file:
+                config = json.load(file)
+                db_url = config["DATABASE_URL"]
+                os.environ["DATABASE_URL"] = db_url
+                logger.info("📊 Database configuration loaded from secrets_test/postgres_db.json")
+        except FileNotFoundError:
+            logger.error("❌ secrets_test/postgres_db.json not found!")
+            raise
+        except KeyError:
+            logger.error("❌ DATABASE_URL not found in postgres_db.json!")
+            raise
+        except json.JSONDecodeError:
+            logger.error("❌ Invalid JSON in postgres_db.json!")
+            raise
+            
+        logger.info("✅ Test environment set up successfully")
 
     def start_server(self, timeout=120):
-        """Start the FastAPI server in test mode"""
-        logger.info(f"Starting test server on port {self.test_port}...")
-
+        """Start the FastAPI server in test mode with proper environment"""
+        logger.info(f"🚀 Starting test server on port {self.test_port}...")
+        
         cmd = [
             sys.executable,
-            "-m",
-            "uvicorn",
-            "fastapi_app:app",
+            "-m", "uvicorn", "fastapi_app:app",
             "--reload",
-            "--host", "localhost",
+            "--host", "localhost", 
             "--port", str(self.test_port),
         ]
-
-        with open("secrets_test/postgres_db.json", "r") as file:
-            config = json.load(file)
-            db_url = config["DATABASE_URL"]
-
+        
+        # Prepare environment variables for the server process
         env = os.environ.copy()
         env.update({
             "TEST_MODE": "true",
             "PORT": str(self.test_port),
-            "DATABASE_URL": db_url
+            "DATABASE_URL": os.environ["DATABASE_URL"]
         })
-
+        
         try:
-            logger.info("Launching server with command: " + " ".join(cmd))
+            logger.info(f"📋 Launching server: {' '.join(cmd)}")
             
             self.server_process = subprocess.Popen(
                 cmd,
                 env=env,
                 cwd=os.getcwd(),
             )
-
-            logger.info("Server process started, waiting for it to be ready...")
-
+            
+            logger.info("⏳ Server process started, waiting for it to be ready...")
+            
             if self._wait_for_server(timeout):
                 logger.info(f"✅ Test server started successfully on port {self.test_port}")
                 return True
@@ -91,26 +102,27 @@ class TestServerManager:
                 logger.error("❌ Server failed to start within timeout")
                 self.stop_server()
                 return False
-
+                
         except Exception as e:
-            logger.error(f"Failed to start server: {e}")
+            logger.error(f"💥 Failed to start server: {e}")
             return False
 
     def _wait_for_server(self, timeout):
         """Wait for server to be ready to accept connections"""
         start_time = time.time()
-        check_interval = 2
+        check_interval = 10
         last_check_time = 0
 
         while time.time() - start_time < timeout:
             current_time = time.time()
             
             if self.server_process.poll() is not None:
-                logger.error("Server process terminated unexpectedly")
+                logger.error("💀 Server process terminated unexpectedly")
                 return False
             
             if current_time - last_check_time >= check_interval:
                 try:
+                    from http.client import HTTPConnection
                     conn = HTTPConnection(f"localhost:{self.test_port}")
                     conn.request("GET", "/fastapi/fetch_acknowlg_id")
                     response = conn.getresponse()
@@ -121,173 +133,97 @@ class TestServerManager:
 
                 except (ConnectionRefusedError, OSError):
                     elapsed = current_time - start_time
-                    logger.info(f"Server not ready yet (after {elapsed:.1f}s)...")
+                    logger.info(f"⏳ Server not ready yet (after {elapsed:.1f}s)...")
                 
                 last_check_time = current_time
 
-            time.sleep(0.5)
+            time.sleep(2)
 
         return False
 
     def stop_server(self):
         """Stop the test server"""
         if self.server_process:
-            logger.info("Stopping test server...")
+            logger.info("🛑 Stopping test server...")
             try:
                 self.server_process.terminate()
                 self.server_process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                logger.warning("Graceful shutdown failed, force killing server")
+                logger.warning("⚠️ Graceful shutdown failed, force killing server")
                 self.server_process.kill()
                 self.server_process.wait()
 
             self.server_process = None
-            logger.info("Test server stopped")
+            logger.info("✅ Test server stopped")
 
     def cleanup(self):
-        """Clean up test environment"""
-        logger.info("Cleaning up test environment...")
+        """Clean up test environment with proper delays"""
+        logger.info("🧹 Cleaning up test environment...")
+        
+        # Give background tasks time to complete
+        logger.info("⏳ Waiting 5 seconds for background tasks and cache updates...")
+        time.sleep(5)
+        
         self.stop_server()
         os.environ.pop("TEST_MODE", None)
-        logger.info("Test environment cleaned up")
-
-
-def load_test_module(test_name: str):
-    """Dynamically load a test module"""
-    module_path = f"tests/integration/{test_name}.py"
-    spec = importlib.util.spec_from_file_location(test_name, module_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def get_test_order(test_modules: List[str]) -> List[str]:
-    """Determine the order to run tests based on dependencies"""
-    # Create a graph of dependencies
-    visited = set()
-    order = []
-    
-    def visit(test: str):
-        if test in visited:
-            return
-        visited.add(test)
-        
-        # Visit dependencies first
-        if test in TEST_DEPENDENCIES:
-            for dep in TEST_DEPENDENCIES[test]:
-                if dep in test_modules:
-                    visit(dep)
-        
-        order.append(test)
-    
-    # Visit all test modules
-    for test in test_modules:
-        visit(test)
-    
-    return order
-
-
-async def run_test_module(test_name: str, api_base_url: str) -> bool:
-    """Run a single test module"""
-    logger.info(f"\n{'='*60}")
-    logger.info(f"Running {test_name}...")
-    logger.info(f"{'='*60}")
-    
-    try:
-        module = load_test_module(test_name)
-        
-        # Get the main test runner function
-        if hasattr(module, f"run_{test_name.replace('test_', '')}_tests"):
-            test_func = getattr(module, f"run_{test_name.replace('test_', '')}_tests")
-            result = await test_func(api_base_url)
-            
-            if result:
-                logger.info(f"✅ {test_name} completed successfully")
-            else:
-                logger.error(f"❌ {test_name} failed")
-            
-            return result
-        else:
-            logger.error(f"No test runner function found in {test_name}")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Error running {test_name}: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-
-@contextmanager
-def test_server_context(test_port):
-    """Context manager for test server lifecycle"""
-    manager = TestServerManager(test_port)
-
-    try:
-        manager.setup_test_environment()
-        if not manager.start_server():
-            raise RuntimeError("Failed to start test server")
-
-
-        yield {
-            "port": test_port,
-            "base_url": f"http://localhost:{test_port}",
-            "api_base": f"http://localhost:{test_port}/fastapi",
-        }
-
-    finally:
-        manager.cleanup()
-
-
-async def run_all_tests(api_base_url: str, test_directory: str) -> bool:
-    """Run all tests in dependency order"""
-    # Find all test modules
-    test_modules = []
-    for file in os.listdir(test_directory):
-        if file.startswith("test_") and file.endswith(".py"):
-            test_modules.append(file[:-3])  # Remove .py extension
-    
-    # Get ordered list based on dependencies
-    test_order = get_test_order(test_modules)
-    
-    logger.info(f"Test execution order: {test_order}")
-    
-    # Run tests in order
-    all_passed = True
-    for test_name in test_order:
-        passed = await run_test_module(test_name, api_base_url)
-        if not passed:
-            all_passed = False
-            # Continue running other tests even if one fails
-    
-    return all_passed
-
+        os.environ.pop("DATABASE_URL", None)
+        logger.info("✅ Test environment cleaned up")
 
 def main():
-    """Main entry point"""
-    logger.info("🧪 Starting Integration Test Runner...")
-    logger.info("This will start the server in TEST_MODE and run integration tests")
-
-    success = False
-
-    with test_server_context(test_port=8080) as server_info:
-        logger.info(f"🚀 Server running at: {server_info['base_url']}")
-
-        # Run all tests
-        success = asyncio.run(
-            run_all_tests(
-                api_base_url=server_info["api_base"],
-                test_directory="tests/integration"
-            )
-        )
-
-    if success:
-        logger.info("\n✅ All tests passed!")
-        sys.exit(0)
+    """Main entry point with enhanced pytest integration"""
+    print("\n" + "="*80)
+    print("🧪 INTEGRATION TEST RUNNER")
+    print("="*80)
+    logger.info("🚀 Starting Integration Test Runner...")
+    logger.info("📋 This will start the server in TEST_MODE and run integration tests")
+    
+    # Start server and run pytest
+    manager = TestServerManager(test_port=8080)
+    
+    with manager.server_context() as server_info:
+        logger.info(f"🌐 Server running at: {server_info['base_url']}")
+        
+        # Run pytest with simple, working options (removed --dist=no)
+        pytest_args = [
+            "tests/integration/",
+            "-v",                           # Verbose output
+            "-s",                           # Don't capture output  
+            "--tb=short",                   # Short traceback format
+            "--maxfail=3",                  # Stop after 3 failures
+            "--color=yes",                  # Force colored output
+            "--show-capture=no",            # Don't show captured output
+            "--durations=10",               # Show 10 slowest tests
+        ]
+        
+        # Add coverage if available
+        try:
+            import pytest_cov
+            pytest_args.extend([
+                "--cov=backend_common", 
+                "--cov-report=term-missing:skip-covered",
+                "--cov-report=html:htmlcov"
+            ])
+            logger.info("📊 Coverage reporting enabled")
+        except ImportError:
+            logger.info("📊 Coverage not available (install pytest-cov for coverage)")
+        
+        print("\n" + "="*80)
+        print("🔬 RUNNING TESTS")
+        print("="*80)
+        
+        # Run the tests
+        exit_code = pytest.main(pytest_args)
+    
+    print("\n" + "="*80)
+    if exit_code == 0:
+        print("✅ ALL TESTS PASSED!")
+        logger.info("🎉 All tests passed!")
     else:
-        logger.error("\n❌ Some tests failed!")
-        sys.exit(1)
-
+        print("❌ SOME TESTS FAILED!")
+        logger.error("💥 Some tests failed!")
+    print("="*80)
+    
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     main()

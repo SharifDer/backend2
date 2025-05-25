@@ -1,0 +1,74 @@
+{
+  "supermarket_dataset": {
+    "filename_template": "24.7136_46.6753_2000.0_supermarket_token_{test_run_id}=",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 2000.0,
+      "boolean_query": "supermarket",
+      "user_id": "{user_id}"
+    },
+    "response_data": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [46.6753, 24.7136]
+          },
+          "properties": {
+            "id": "ChIJtest_supermarket_001_{test_run_id}",
+            "displayName": "Test Supermarket Riyadh",
+            "rating": 4.2,
+            "formattedAddress": "King Fahd Road, Riyadh, Saudi Arabia"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [46.6800, 24.7200]
+          },
+          "properties": {
+            "id": "ChIJtest_supermarket_002_{test_run_id}",
+            "displayName": "Test Hypermarket Riyadh",
+            "rating": 4.0,
+            "formattedAddress": "Prince Sultan Road, Riyadh, Saudi Arabia"
+          }
+        }
+      ],
+      "properties": ["id", "displayName", "rating", "formattedAddress"]
+    }
+  },
+  "coffee_dataset": {
+    "filename_template": "24.7136_46.6753_2000.0_coffee_token_{test_run_id}=",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 2000.0,
+      "boolean_query": "@coffee shop@",
+      "text_search": true,
+      "user_id": "{user_id}"
+    },
+    "response_data": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [46.6780, 24.7150]
+          },
+          "properties": {
+            "id": "ChIJtest_coffee_001_{test_run_id}",
+            "displayName": "Test Coffee Shop",
+            "rating": 4.5,
+            "formattedAddress": "Olaya Street, Riyadh, Saudi Arabia"
+          }
+        }
+      ],
+      "properties": ["id", "displayName", "rating", "formattedAddress"]
+    }
+  }
+}

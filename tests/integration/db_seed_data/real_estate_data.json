@@ -1,0 +1,93 @@
+{
+  "residential_properties": {
+    "filename_template": "test_real_estate_residential_24.7136_46.6753_{test_run_id}",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 5000.0,
+      "property_type": "residential",
+      "search_criteria": {
+        "min_price": 500000,
+        "max_price": 2000000,
+        "bedrooms": [2, 3, 4]
+      }
+    },
+    "response_data": {
+      "properties": [
+        {
+          "id": "RE_test_001_{test_run_id}",
+          "title": "Modern 3BR Apartment - Riyadh",
+          "location": {
+            "latitude": 24.7156,
+            "longitude": 46.6773
+          },
+          "address": "Al Malaz District, Riyadh, Saudi Arabia",
+          "price": 850000,
+          "currency": "SAR",
+          "bedrooms": 3,
+          "bathrooms": 2,
+          "area_sqm": 120,
+          "property_type": "apartment",
+          "listing_type": "sale",
+          "features": ["parking", "balcony", "central_ac"],
+          "agent": {
+            "name": "Test Real Estate Agent",
+            "phone": "+966501234567",
+            "company": "Test Realty Co."
+          }
+        },
+        {
+          "id": "RE_test_002_{test_run_id}",
+          "title": "Luxury Villa - Riyadh",
+          "location": {
+            "latitude": 24.7200,
+            "longitude": 46.6800
+          },
+          "address": "Al Nakheel District, Riyadh, Saudi Arabia",
+          "price": 1500000,
+          "currency": "SAR",
+          "bedrooms": 4,
+          "bathrooms": 3,
+          "area_sqm": 250,
+          "property_type": "villa",
+          "listing_type": "sale",
+          "features": ["garden", "swimming_pool", "garage", "security"],
+          "agent": {
+            "name": "Premium Property Agent",
+            "phone": "+966502345678",
+            "company": "Elite Properties"
+          }
+        }
+      ]
+    }
+  },
+  "commercial_properties": {
+    "filename_template": "test_real_estate_commercial_24.7136_46.6753_{test_run_id}",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 3000.0,
+      "property_type": "commercial"
+    },
+    "response_data": {
+      "properties": [
+        {
+          "id": "RE_commercial_001_{test_run_id}",
+          "title": "Office Space - Business District",
+          "location": {
+            "latitude": 24.7136,
+            "longitude": 46.6753
+          },
+          "address": "King Fahd Road, Riyadh, Saudi Arabia",
+          "price": 120000,
+          "currency": "SAR",
+          "area_sqm": 80,
+          "property_type": "office",
+          "listing_type": "rent",
+          "rental_period": "annual",
+          "features": ["parking", "elevator", "security", "central_ac"]
+        }
+      ]
+    }
+  }
+}

@@ -63,7 +63,6 @@ from backend_common.request_processor import request_handling
 from backend_common.auth import (
     create_firebase_user,
     login_user,
-    my_verify_id_token,
     reset_password,
     confirm_reset,
     change_password,

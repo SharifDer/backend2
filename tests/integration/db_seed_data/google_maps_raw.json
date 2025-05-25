@@ -1,0 +1,126 @@
+{
+  "supermarket": {
+    "filename_template": "test_category_search_24.7136_46.6753_2000.0_inc_supermarket_exc_{test_run_id}",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 2000.0,
+      "includedTypes": ["supermarket"],
+      "excludedTypes": []
+    },
+    "response_data": {
+      "places": [
+        {
+          "id": "ChIJtest_supermarket_001_{test_run_id}",
+          "displayName": {
+            "text": "Test Supermarket Riyadh",
+            "languageCode": "en"
+          },
+          "formattedAddress": "King Fahd Road, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7136,
+            "longitude": 46.6753
+          },
+          "rating": 4.2,
+          "userRatingCount": 156,
+          "types": ["supermarket", "grocery_or_supermarket", "store"],
+          "primaryType": "supermarket",
+          "photos": [{"name": "places/test/photos/1"}]
+        },
+        {
+          "id": "ChIJtest_supermarket_002_{test_run_id}",
+          "displayName": {
+            "text": "Test Hypermarket Riyadh",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Prince Sultan Road, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7200,
+            "longitude": 46.6800
+          },
+          "rating": 4.0,
+          "userRatingCount": 89,
+          "types": ["supermarket", "grocery_or_supermarket", "store"],
+          "primaryType": "supermarket",
+          "photos": [{"name": "places/test/photos/2"}]
+        }
+      ]
+    }
+  },
+  "coffee_shop_search": {
+    "filename_template": "test_text_search_24.7136_46.6753_2000.0_coffee_shop_{test_run_id}",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 2000.0,
+      "textQuery": "coffee shop"
+    },
+    "response_data": {
+      "places": [
+        {
+          "id": "ChIJtest_coffee_001_{test_run_id}",
+          "displayName": {
+            "text": "Test Coffee Shop",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Olaya Street, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7150,
+            "longitude": 46.6780
+          },
+          "rating": 4.5,
+          "userRatingCount": 234,
+          "types": ["cafe", "coffee_shop"],
+          "primaryType": "coffee_shop"
+        },
+        {
+          "id": "ChIJtest_coffee_002_{test_run_id}",
+          "displayName": {
+            "text": "Specialty Coffee Riyadh",
+            "languageCode": "en"
+          },
+          "formattedAddress": "King Abdul Aziz Road, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7180,
+            "longitude": 46.6750
+          },
+          "rating": 4.7,
+          "userRatingCount": 156,
+          "types": ["cafe", "coffee_shop"],
+          "primaryType": "coffee_shop"
+        }
+      ]
+    }
+  },
+  "restaurant_search": {
+    "filename_template": "test_category_search_24.7136_46.6753_2000.0_inc_restaurant_exc_{test_run_id}",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 2000.0,
+      "includedTypes": ["restaurant"],
+      "excludedTypes": []
+    },
+    "response_data": {
+      "places": [
+        {
+          "id": "ChIJtest_restaurant_001_{test_run_id}",
+          "displayName": {
+            "text": "Test Restaurant Riyadh",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Tahlia Street, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7120,
+            "longitude": 46.6770
+          },
+          "rating": 4.3,
+          "userRatingCount": 278,
+          "types": ["restaurant", "food", "establishment"],
+          "primaryType": "restaurant",
+          "photos": [{"name": "places/test/photos/3"}]
+        }
+      ]
+    }
+  }
+}
