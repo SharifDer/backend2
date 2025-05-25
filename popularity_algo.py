@@ -274,7 +274,7 @@ def cover_circle_with_seven_circles(
 
 
 def create_string_list(
-    circle_hierarchy, type_string, text_search, include_hierarchy=False
+    circle_hierarchy, type_string, include_hierarchy=False
 ):
     result = []
     circles_to_process = [(circle_hierarchy, "1")]
@@ -288,8 +288,6 @@ def create_string_list(
         radius = circle["radius"]
 
         circle_string = f"{lat}_{lng}_{radius * 1000}_{type_string}"
-        if text_search != "" and text_search is not None:
-            circle_string = circle_string + f"_{text_search}"
 
         center_marker = "*" if circle["is_center"] else ""
         circle_string += f"_circle={number}{center_marker}_circleNumber={total_circles}"
@@ -462,8 +460,8 @@ def process_circles(input_strings):
 
     return result
 
-async def create_plan(lng, lat, radius, boolean_query, text_search):
-    text = boolean_query + "_" + text_search
+async def create_plan(lng, lat, radius, boolean_query):
+    text = boolean_query
     text = text.strip("_")
     counter = Counter()
     circle_hierarchy = Circle(
@@ -506,7 +504,6 @@ async def create_plan(lng, lat, radius, boolean_query, text_search):
         + db["p_counter"].astype("str")
     )
     string_list = string_list.values.tolist()
-    # string_list_plan = create_string_list(circle_hierarchy, boolean_query, text_search)
     string_list = filter_circles(string_list)
     string_list = process_circles(string_list)
     string_list.append("end of search plan")
@@ -531,8 +528,6 @@ async def process_req_plan(req: ReqFetchDataset):
         # TODO creating the name of the file should be moved to storage
         tcc_string = make_ggl_layer_filename(req)
         plan_name = f"plan_{tcc_string}"
-        if req.text_search != "" and req.text_search is not None:
-            plan_name = plan_name + "_text_search="
         
         try:
             plan = await get_plan(plan_name)
@@ -543,7 +538,7 @@ async def process_req_plan(req: ReqFetchDataset):
             logger.error(f"no plan found for plan_name: {plan_name}")
             if req.radius > 750:
                 plan = await create_plan(
-                    req.lng, req.lat, req.radius, req.boolean_query, req.text_search
+                    req.lng, req.lat, req.radius, req.boolean_query
                 )
                 await save_plan(plan_name, plan)
 

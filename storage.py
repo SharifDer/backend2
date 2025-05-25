@@ -134,16 +134,13 @@ def make_ggl_dataset_cord_string(lng: str, lat: str, radius: str):
     return f"{lng}_{lat}_{radius}"
 
 
-def make_dataset_filename(req: ReqFetchDataset, text_search=False) -> str:
+def make_dataset_filename(req: ReqFetchDataset) -> str:
     if req:
         cord_string = make_ggl_dataset_cord_string(req.lng, req.lat, req.radius)
         # type_string = make_include_exclude_name(req.includedTypes, req.excludedTypes)
         type_string = req.boolean_query.replace(" ", "_")
         try:
             name = f"{cord_string}_{type_string}_token={req.page_token}"
-            if text_search:
-                name = name + f"_text_search=true_"
-
         except AttributeError as e:
             raise ValueError(f"Invalid location request object: {str(e)}")
 
@@ -558,20 +555,6 @@ async def load_dataset(dataset_id: str, fetch_full_plan_datasets=False) -> Dict:
         plan = await get_plan(plan_name)
         if not plan:
             return {}
-        # if not plan:
-        #     city_info=load_country_city()
-        #     category = plan_name.split("_")[1]
-        #     country_name = plan_name.split("_")[2]
-        #     city_name = plan_name.split("_")[3]
-
-        #     lng=city_info[f"{country_name}"][f"{city_name}"]["lat"]
-        #     lat=city_info[f"{country_name}"][f"{city_name}"]["lat"]
-        #     radius=ReqFetchDataset.model_fields["radius"].default
-        #     boolean_query=category
-        #     text_search=""
-        #     plan = await create_plan(
-        #         lng, lat, radius, boolean_query, text_search
-        #     )
 
         # TODO this is a temp fix because this whole thing needs to be redone
         new_plan = []

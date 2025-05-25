@@ -98,24 +98,6 @@ def count_circles(circle: dict):
     )
 
 
-# def create_string_list(circle_hierarchy, type_string, text_search):
-#     result = []
-#     circles_to_process = [circle_hierarchy]
-
-#     while circles_to_process:
-#         circle = circles_to_process.pop(0)
-
-#         lat, lng = circle["center"]
-#         radius = circle["radius"]
-
-#         circle_string = f"{lat}_{lng}_{radius * 1000}_{type_string}"
-#         if text_search != "" and text_search is not None:
-#             circle_string = circle_string + f"_{text_search}"
-#         result.append(circle_string)
-
-#         circles_to_process.extend(circle.get("sub_circles", []))
-
-#     return result
 
 
 async def fetch_census_realestate(
@@ -303,7 +285,6 @@ def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
     - "google_categories" if ANY terms are Google or custom terms
     - Raises error if mixing Google/custom with special categories
     """
-    contains_text_search = False
     if not boolean_query:
         return None
 
@@ -312,7 +293,6 @@ def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
     text_search_terms = re.findall(r"@([^@]+)@", boolean_query)
     for term in text_search_terms:
         boolean_query = boolean_query.replace(f"@{term}@", "")
-        contains_text_search = True
 
     # Extract just the terms
     terms = set(
@@ -532,9 +512,6 @@ async def fetch_dataset(req: ReqFetchDataset):
         while progress <= 100 and progress_check_counts < 1:
             if progress == 100:
                 plan = await get_plan(plan_name)
-                # foe each item in the plan except the last one do make_dataset_filename
-                # if containing text combined_dataset_id = make_dataset_filename(req, text_search=True)
-                # else: combined_dataset_id = make_dataset_filename(req)
                 
                 # execute in db merge+deduplicate all datasets
                 output_filenames = await transform_plan_items(req, plan)

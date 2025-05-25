@@ -226,7 +226,6 @@ def optimize_query_sequence(
     Optimize the query sequence based on set theory and popularity data
     Returns: List of (included_types, excluded_types) tuples
     """
-    # boolean_query = preserve_space_for_text_search_items(boolean_query)
     # Convert to sympy syntax
     query = replace_boolean_operators(boolean_query)
     logger.info(f"Processing query: {query}")

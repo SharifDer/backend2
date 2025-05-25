@@ -70,7 +70,7 @@ async def fetch_text_search_ggl_maps_api(
 
     # if retriving seperate include & exclude, if not empty then combine them into partial dataset and save it in db
     # if retriving partial dataset or built partial dataset,and if not empty then combine them into full dataset and save it in db
-    combined_dataset_id = make_dataset_filename(req, text_search=True)
+    combined_dataset_id = make_dataset_filename(req)
     existing_combined_data = await load_dataset(combined_dataset_id)
 
     if existing_combined_data:
@@ -604,8 +604,7 @@ async def single_ggl_text_call(
 async def single_ggl_cat_call(
     req: ReqFetchDataset,
     include: List[str],
-    exclude: List[str],
-    text_search=False,
+    exclude: List[str]
 ) -> List[dict]:
     ggl_api_url, headers, data = await build_category_search_payload(
         req, include, exclude
@@ -964,8 +963,7 @@ async def transform_plan_items(req:ReqFetchDataset, plan_list: List[str]) -> Lis
             )
 
             # Generate the two versions of the filename and add to results
-            transformed_items.append(make_dataset_filename(req, text_search=False))
-            transformed_items.append(make_dataset_filename(req, text_search=True))
+            transformed_items.append(make_dataset_filename(req))
             
     return transformed_items
 
