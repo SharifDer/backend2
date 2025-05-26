@@ -147,8 +147,6 @@ def make_dataset_filename(req: ReqFetchDataset) -> str:
     return name
 
 
-
-
 def make_dataset_filename_part(
     req: ReqFetchDataset, included_types: List[str], excluded_types: List[str]
 ) -> str:
@@ -193,11 +191,12 @@ def fetch_layer_owner(prdcer_lyr_id: str) -> str:
     return layer_owner_id
 
 
-
 async def load_dataset_layer_matching() -> Dict:
     """Load dataset layer matching from Firestore"""
     try:
-        return await firebase_db.get_document("layer_matchings", "dataset_matching")
+        return await firebase_db.get_document(
+            "layer_matchings", "dataset_matching"
+        )
     except HTTPException as e:
         if e.status_code == status.HTTP_404_NOT_FOUND:
             return {}
@@ -211,7 +210,7 @@ async def update_dataset_layer_matching(
     document_id = "dataset_matching"
 
     dataset_layer_matching = await firebase_db.get_document(
-    collection_name, document_id
+        collection_name, document_id
     )
 
     if bknd_dataset_id not in dataset_layer_matching:
@@ -303,7 +302,9 @@ async def delete_dataset_layer_matching(
 async def load_user_layer_matching() -> Dict:
     """Load user layer matching from Firestore"""
     try:
-        return await firebase_db.get_document("layer_matchings", "user_matching")
+        return await firebase_db.get_document(
+            "layer_matchings", "user_matching"
+        )
     except HTTPException as e:
         if e.status_code == status.HTTP_404_NOT_FOUND:
             return {}
@@ -314,11 +315,9 @@ async def update_user_layer_matching(layer_id: str, layer_owner_id: str):
     collection_name = "layer_matchings"
     document_id = "user_matching"
 
-
     user_layer_matching = await firebase_db.get_document(
         collection_name, document_id
     )
-
 
     user_layer_matching[layer_id] = layer_owner_id
 
@@ -469,6 +468,7 @@ def remove_exclusions_from_id(dataset_id: str) -> str:
     filtered_parts = [p for p in parts if not p.startswith("excluding")]
     return "_".join(filtered_parts)
 
+
 async def store_place_details(filename_id: str, place_details: dict):
     if place_details:
         await Database.execute(
@@ -518,6 +518,7 @@ async def store_data_resp(
         # If table doesn't exist, create it and retry
         await Database.execute(SqlObject.create_datasets_table)
         return await store_data_resp(req, dataset, file_name)
+
 
 async def load_place_details(place_id: str) -> Optional[dict]:
     json_content = await Database.fetchrow(
@@ -813,96 +814,198 @@ async def fetch_db_categories_by_lat_lng(bounding_box: list[float]) -> Dict:
 def combine_income_and_population_data(population_data, income_data):
     # Create a lookup dictionary from income data using Main_ID as key
     income_lookup = {}
-    for feature in income_data['features']:
-        main_id = feature['properties']['Main_ID']
-        income_lookup[main_id] = feature['properties']['income']  # Only store the income value
-    
+    for feature in income_data["features"]:
+        main_id = feature["properties"]["Main_ID"]
+        income_lookup[main_id] = feature["properties"][
+            "income"
+        ]  # Only store the income value
+
     # Create a copy of population data to avoid modifying the original
     combined_data = population_data.copy()
-    combined_data['features'] = []
-    combined_data['properties'].append("Income") 
+    combined_data["features"] = []
+    combined_data["properties"].append("Income")
 
     # Loop through population features and add income data
-    for pop_feature in population_data['features']:
+    for pop_feature in population_data["features"]:
         # Create a copy of the population feature
         combined_feature = pop_feature.copy()
-        combined_feature['properties'] = pop_feature['properties'].copy()
-        
+        combined_feature["properties"] = pop_feature["properties"].copy()
+
         # Get the Main_ID
-        main_id = pop_feature['properties']['Main_ID']
-        
+        main_id = pop_feature["properties"]["Main_ID"]
+
         # Add income property if matching Main_ID exists
         if main_id in income_lookup:
-            combined_feature['properties']['income'] = income_lookup[main_id]
+            combined_feature["properties"]["income"] = income_lookup[main_id]
         else:
-            combined_feature['properties']['income'] = None
-        
-        combined_data['features'].append(combined_feature)
-    
+            combined_feature["properties"]["income"] = None
+
+        combined_data["features"].append(combined_feature)
+
     return combined_data
 
+
+import math
+
+
+def calculate_polygon_area_km2(coordinates):
+    """
+    Calculate approximate area of polygon in square kilometers.
+    Uses simple lat/lng to approximate area (good enough for density calculations).
+    """
+    if not coordinates or not coordinates[0]:
+        return 1  # Default to avoid division by zero
+
+    # Get the outer ring (first array in coordinates)
+    ring = coordinates[0]
+    if len(ring) < 3:
+        return 1
+
+    # Simple area calculation in square degrees, then convert to km2
+    area_sq_degrees = 0
+    n = len(ring) - 1  # Last point same as first, so exclude it
+
+    for i in range(n):
+        j = (i + 1) % n
+        area_sq_degrees += ring[i][0] * ring[j][1]
+        area_sq_degrees -= ring[j][0] * ring[i][1]
+
+    area_sq_degrees = abs(area_sq_degrees) / 2
+
+    # Rough conversion from square degrees to square kilometers
+    lat_avg = sum(point[1] for point in ring[:n]) / n
+    km_per_degree_lat = 111.0
+    km_per_degree_lng = 111.0 * math.cos(math.radians(lat_avg))
+    area_km2 = area_sq_degrees * km_per_degree_lat * km_per_degree_lng
+
+    return max(area_km2, 0.01)  # Minimum area to avoid division by zero
 
 
 async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
     """
     Fetches population data from local GeoJSON files based on viewport and zoom level.
     """
-    #TODO first check if the user has purchased intelligence
+    # TODO first check if the user has purchased intelligence
 
-    file_path = f"Backend/population_json_files/v{req.zoom_level}/all_features.geojson"
-    population_data = await use_json(file_path, "r")
-    if not population_data:
-        raise Exception(f"could not find geojson data for zoom level {req.zoom_level}, in folder {file_path}")
+    if req.population and not req.income:
+        file_path = f"Backend/population_json_files/v{req.zoom_level}/all_features.geojson"
+        intelligence_geojson_data = await use_json(file_path, "r")
+        layer_type = "population"
+        if not intelligence_geojson_data:
+            raise Exception(
+                f"could not find geojson data for zoom level {req.zoom_level}, in folder {file_path}"
+            )
 
+    # if income is also true load income
+    if req.income:
+        file_path = f"Backend/area_income_geojson/v{req.zoom_level}/all_features.geojson"
+        intelligence_geojson_data = await use_json(file_path, "r")
+        layer_type = "income"
 
-
+    if not intelligence_geojson_data:
+        raise Exception(
+            f"could not find geojson data for zoom level {req.zoom_level}, in folder {file_path}"
+        )
 
     # Load only the required portion from the GeoJSON
-    # This avoids creating a full GeoDataFrame which can be slow
     filtered_features = []
-    for feature in population_data.get("features", []):
+    density_values = []  # Collect density values for normalization
+
+    for feature in intelligence_geojson_data.get("features", []):
         # For polygon features, do a basic bounds check (faster than full intersection)
         geom_type = feature.get("geometry", {}).get("type")
         coords = feature.get("geometry", {}).get("coordinates", [])
-            
+
         # Simple bounding box check (this is much faster than full geometric operations)
         if geom_type == "Polygon":
             # Extract the bounds of the polygon (min/max lng/lat)
             flat_coords = [point for ring in coords for point in ring]
             lngs = [p[0] for p in flat_coords]
             lats = [p[1] for p in flat_coords]
-            
+
             # Check if polygon bbox overlaps viewport
             poly_min_lng = min(lngs)
             poly_max_lng = max(lngs)
             poly_min_lat = min(lats)
             poly_max_lat = max(lats)
-            
-            # If polygon bounding box overlaps viewport, include it
-            if (poly_min_lng <= req.max_lng and poly_max_lng >= req.min_lng and
-                poly_min_lat <= req.max_lat and poly_max_lat >= req.min_lat):
-                filtered_features.append(feature)    
 
+            # If polygon bounding box overlaps viewport, include it
+            if (
+                poly_min_lng <= req.max_lng
+                and poly_max_lng >= req.min_lng
+                and poly_min_lat <= req.max_lat
+                and poly_max_lat >= req.min_lat
+            ):
+
+                # Calculate density based on layer type
+                properties = feature.get("properties", {})
+                raw_density = 0  # Initialize default value
+
+                if req.population and not req.income:
+                    # Use correct field names from your data
+                    population = properties.get("Population_Count", 0)
+                    # Calculate area from geometry
+                    area_km2 = calculate_polygon_area_km2(coords)
+                    raw_density = population / area_km2 if area_km2 > 0 else 0
+
+                elif req.income:
+                    # For income, adjust field names as needed
+                    income = properties.get(
+                        "income", 0
+                    )  # Update this field name
+                    area_km2 = calculate_polygon_area_km2(coords)
+                    raw_density = income / area_km2 if area_km2 > 0 else 0
+
+                density_values.append(raw_density)
+                filtered_features.append((feature, raw_density))
+
+    # Normalize density values to 0-100 range
+    if density_values:
+        min_density = min(density_values)
+        max_density = max(density_values)
+        density_range = (
+            max_density - min_density if max_density > min_density else 1
+        )
+    else:
+        min_density = 0
+        density_range = 1
+
+    # Add normalized density to each feature
+    processed_features = []
+    for feature, raw_density in filtered_features:
+        # Normalize to 0-100 scale
+        normalized_density = ((raw_density - min_density) / density_range) * 100
+
+        # Ensure minimum visibility - if there's any population, guarantee at least 0.1% density
+        population = feature.get("properties", {}).get("Population_Count", 0)
+        if population > 0 and normalized_density < 0.1:
+            normalized_density = 0.1
+
+        # Add density property with 6 decimal places (overwrite the existing 0 value)
+        feature["properties"]["density"] = round(normalized_density, 6)
+        processed_features.append(feature)
 
     # Extract properties from first feature if available
     properties = []
-    if filtered_features and len(filtered_features) > 0:
-        properties = list(filtered_features[0].get("properties", {}).keys())
-    
-    # Return raw dictionary instead of Pydantic model to avoid validation errors
+    if processed_features and len(processed_features) > 0:
+        properties = list(processed_features[0].get("properties", {}).keys())
+
+    # Return raw dictionary
     intelligence_geojson = {
         "type": "FeatureCollection",
-        "features": filtered_features,
+        "features": processed_features,
+        "metadata": {
+            "color": "#e74c3c" if layer_type == "population" else "#3498db",
+            "name": f"{layer_type.title()} Density Layer",
+            "layer_type": layer_type,
+            "zoom_level": req.zoom_level,
+        },
         "properties": properties,
-        "records_count": len(filtered_features)
+        "records_count": len(processed_features),
     }
-    # if income is also true load income
-    if req.income:
-        income_file_path = f"Backend/area_income_geojson/v{req.zoom_level}/all_features.geojson"
-        income_data = await use_json(income_file_path, "r")
-        intelligence_geojson = combine_income_and_population_data(intelligence_geojson, income_data)
 
     return intelligence_geojson
+
 
 async def get_full_load_geojson(filenames: list[str]) -> str:
 
@@ -910,8 +1013,6 @@ async def get_full_load_geojson(filenames: list[str]) -> str:
     for fname in filenames:
         escaped_fname = fname.replace("'", "''")  # Escape single quotes for SQL
         formatted_filenames_list.append(f"'{escaped_fname}'")
-    
-
 
     sql_query = """
 WITH FileList AS (
@@ -961,19 +1062,20 @@ FROM
     # # Check if we have results
     # if not merged_deduplicated_data:
     #     return {"type": "FeatureCollection", "features": []}
-    
+
     # # Extract the merged_geojson field from the first record
     # merged_geojson = merged_deduplicated_data[0]['merged_geojson']
-    
+
     # # If the result is a string (JSON), parse it into a Python dict
     # if isinstance(geojson_data, str):
     #     import json
     #     geojson_data = json.loads(geojson_data)
-    
 
     merged_deduplicated_data = await Database.fetchrow(sql_query, filenames)
     if merged_deduplicated_data:
-        merged_geojson = orjson.loads(merged_deduplicated_data.get("merged_geojson", "{}"))
+        merged_geojson = orjson.loads(
+            merged_deduplicated_data.get("merged_geojson", "{}")
+        )
     return merged_geojson
 
 
