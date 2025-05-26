@@ -909,7 +909,9 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
 
     # Load only the required portion from the GeoJSON
     filtered_features = []
-    density_values = []  # Collect density values for normalization
+    
+    # Only collect density values for income normalization
+    density_values = [] if req.income else None
 
     for feature in intelligence_geojson_data.get("features", []):
         # For polygon features, do a basic bounds check (faster than full intersection)
@@ -937,63 +939,46 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
                 and poly_max_lat >= req.min_lat
             ):
 
-                # Calculate density based on layer type
                 properties = feature.get("properties", {})
-                raw_density = 0  # Initialize default value
 
-                if req.population and not req.income:
-                    # Use correct field names from your data
-                    population = properties.get("Population_Count", 0)
-                    # Calculate area from geometry
-                    area_km2 = calculate_polygon_area_km2(coords)
-                    raw_density = population / area_km2 if area_km2 > 0 else 0
-
-                elif req.income:
-                    # For income, adjust field names as needed
-                    income = properties.get(
-                        "income", 0
-                    )  # Update this field name
-                    area_km2 = calculate_polygon_area_km2(coords)
+                if layer_type == "population":
+                    # Simply copy Population_Density_KM2 to density (most performant)
+                    density_value = properties.get("Population_Density_KM2", 0)
+                    feature["properties"]["density"] = density_value
+                    filtered_features.append(feature)
+                    
+                elif layer_type == "income":
+                    # For income, calculate and collect for normalization
+                    income = properties.get("income", 0)  # Update field name as needed
+                    area_km2 = calculate_polygon_area_km2(coords)  # Keep this function for income
                     raw_density = income / area_km2 if area_km2 > 0 else 0
+                    density_values.append(raw_density)
+                    filtered_features.append((feature, raw_density))
 
-                density_values.append(raw_density)
-                filtered_features.append((feature, raw_density))
-
-    # Normalize density values to 0-100 range
-    if density_values:
+    # Only normalize for income
+    if req.income and density_values:
         min_density = min(density_values)
         max_density = max(density_values)
-        density_range = (
-            max_density - min_density if max_density > min_density else 1
-        )
-    else:
-        min_density = 0
-        density_range = 1
-
-    # Add normalized density to each feature
-    processed_features = []
-    for feature, raw_density in filtered_features:
-        # Normalize to 0-100 scale
-        normalized_density = ((raw_density - min_density) / density_range) * 100
-
-        # Ensure minimum visibility - if there's any population, guarantee at least 0.1% density
-        population = feature.get("properties", {}).get("Population_Count", 0)
-        if population > 0 and normalized_density < 0.1:
-            normalized_density = 0.1
-
-        # Add density property with 6 decimal places (overwrite the existing 0 value)
-        feature["properties"]["density"] = round(normalized_density, 6)
-        processed_features.append(feature)
+        density_range = max_density - min_density if max_density > min_density else 1
+        
+        # Process income features with normalization
+        processed_features = []
+        for feature, raw_density in filtered_features:
+            normalized_density = ((raw_density - min_density) / density_range) * 100
+            feature["properties"]["density"] = round(normalized_density, 6)
+            processed_features.append(feature)
+        
+        filtered_features = processed_features
 
     # Extract properties from first feature if available
     properties = []
-    if processed_features and len(processed_features) > 0:
-        properties = list(processed_features[0].get("properties", {}).keys())
+    if filtered_features and len(filtered_features) > 0:
+        properties = list(filtered_features[0].get("properties", {}).keys())
 
     # Return raw dictionary
     intelligence_geojson = {
         "type": "FeatureCollection",
-        "features": processed_features,
+        "features": filtered_features,
         "metadata": {
             "color": "#e74c3c" if layer_type == "population" else "#3498db",
             "name": f"{layer_type.title()} Density Layer",
@@ -1001,7 +986,7 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
             "zoom_level": req.zoom_level,
         },
         "properties": properties,
-        "records_count": len(processed_features),
+        "records_count": len(filtered_features),
     }
 
     return intelligence_geojson
