@@ -532,7 +532,7 @@ async def load_dataset(dataset_id: str, fetch_full_plan_datasets=False) -> Dict:
     """
     Loads a dataset from file based on its ID.
     """
-    # if the dataset_id contains the word plan '21.57445341427591_39.1728_2000.0_mosque__plan_mosque_Saudi Arabia_Jeddah@#$9'
+    # if the dataset_id contains the word plan '21.57445341427591_39.1728_30000.0_mosque__plan_mosque_Saudi Arabia_Jeddah@#$9'
     # isolate the plan's name from the dataset_id = mosque__plan_mosque_Saudi Arabia_Jeddah
     # load the plan's json file
     # from the dataset_id isolate the page number which is after @#$ = 9

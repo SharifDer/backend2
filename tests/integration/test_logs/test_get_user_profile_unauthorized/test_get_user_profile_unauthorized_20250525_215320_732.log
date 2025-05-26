@@ -1,0 +1,31 @@
+====================================================================================================
+DETAILED TEST COMPARISON LOG
+Test Name: test_get_user_profile_unauthorized
+Timestamp: 2025-05-25T21:53:20.732985
+====================================================================================================
+
+📊 STATUS CODE COMPARISON:
+Expected Status: 401
+Actual Status:   403
+❌ STATUS CODE MISMATCH!
+
+📦 ACTUAL RESPONSE BODY:
+--------------------------------------------------
+{
+  "detail": "Not authenticated"
+}
+
+🎯 EXPECTED RESPONSE BODY:
+--------------------------------------------------
+{
+  "detail": "Not authenticated"
+}
+
+🔍 DETAILED ANALYSIS:
+--------------------------------------------------
+🔍 Comparing dict at root:
+  ✅ Values match at root.detail
+
+====================================================================================================
+END OF COMPARISON LOG
+====================================================================================================

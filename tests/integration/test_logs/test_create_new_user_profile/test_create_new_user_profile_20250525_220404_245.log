@@ -1,0 +1,132 @@
+====================================================================================================
+DETAILED TEST COMPARISON LOG
+Test Name: test_create_new_user_profile
+Timestamp: 2025-05-25T22:04:04.246075
+====================================================================================================
+
+📊 STATUS CODE COMPARISON:
+Expected Status: 200
+Actual Status:   200
+✅ Status codes match
+
+📦 ACTUAL RESPONSE BODY:
+--------------------------------------------------
+[
+  {
+    "data": {
+      "user_id": "CA43lIWpOxN3BtmkYh77ZJEa5K52",
+      "message": "User profile created successfully"
+    },
+    "message": "Request received.",
+    "request_id": "req-6b83c0dd-de27-48a7-9ac6-a89f3fdb1b8b"
+  },
+  {
+    "data": {
+      "id": "cus_SNbbiQ4ndG4VVg",
+      "object": "customer",
+      "address": null,
+      "balance": 0,
+      "created": 1748225045,
+      "currency": null,
+      "default_source": null,
+      "delinquent": false,
+      "description": null,
+      "discount": null,
+      "email": "brand_new_user_123@test.com",
+      "invoice_prefix": "6ZIDPDH9",
+      "invoice_settings": {
+        "custom_fields": null,
+        "default_payment_method": null,
+        "footer": null,
+        "rendering_options": null
+      },
+      "livemode": false,
+      "metadata": {
+        "user_id": "CA43lIWpOxN3BtmkYh77ZJEa5K52"
+      },
+      "name": "Brand New User 123",
+      "next_invoice_sequence": 1,
+      "phone": null,
+      "preferred_locales": [],
+      "shipping": null,
+      "tax_exempt": "none",
+      "test_clock": null,
+      "user_id": "CA43lIWpOxN3BtmkYh77ZJEa5K52"
+    },
+    "message": "Request received.",
+    "request_id": "req-61675310-1e7d-4655-a860-d9d8e31528e5"
+  },
+  {
+    "data": {
+      "user_id": "CA43lIWpOxN3BtmkYh77ZJEa5K52",
+      "email": "brand_new_user_123@test.com",
+      "username": "Brand New User 123",
+      "account_type": "admin",
+      "admin_id": null,
+      "settings": {
+        "show_price_on_purchase": false
+      },
+      "prdcer": {
+        "prdcer_dataset": {
+          "dataset_plan": "",
+          "progress": 89,
+          "dataset_next_refresh_date": "2025-08-25T22:04:04.242073",
+          "auto_refresh": true
+        },
+        "prdcer_lyrs": {},
+        "prdcer_ctlgs": {},
+        "draft_ctlgs": {}
+      }
+    },
+    "message": "Request received.",
+    "request_id": "req-3e731e4d-7ad0-44e3-a1d7-57af6dd5b0c7"
+  }
+]
+
+🎯 EXPECTED RESPONSE BODY:
+--------------------------------------------------
+[
+  {
+    "message": "Request received.",
+    "request_id": "test-create-new-profile-001",
+    "data": {
+      "user_id": "${created_user.user_id}",
+      "email": "brand_new_user_123@test.com",
+      "username": "Brand New User 123",
+      "account_type": "admin",
+      "admin_id": null,
+      "settings": {
+        "show_price_on_purchase": true
+      },
+      "prdcer": {
+        "prdcer_ctlgs": {},
+        "draft_ctlgs": {},
+        "prdcer_lyrs": {},
+        "prdcer_dataset": {
+          "dataset_plan": "",
+          "auto_refresh": true
+        }
+      }
+    }
+  }
+]
+
+🔍 DETAILED ANALYSIS:
+--------------------------------------------------
+🔍 Comparing list at root:
+❌ Length mismatch: expected 1, got 3
+  🔍 Comparing dict at root[0]:
+    ✅ Values match at root[0].message
+    ❌ Value mismatch at root[0].request_id:
+       Expected: test-create-new-profile-001
+       Actual:   req-6b83c0dd-de27-48a7-9ac6-a89f3fdb1b8b
+    🔍 Comparing dict at root[0].data:
+    ❌ Missing keys: {'admin_id', 'settings', 'email', 'username', 'account_type', 'prdcer'}
+    ℹ️ Extra keys in actual: {'message'}
+      ❌ Value mismatch at root[0].data.user_id:
+         Expected: ${created_user.user_id}
+         Actual:   CA43lIWpOxN3BtmkYh77ZJEa5K52
+
+====================================================================================================
+END OF COMPARISON LOG
+====================================================================================================

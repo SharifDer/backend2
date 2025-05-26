@@ -1,10 +1,10 @@
 {
-  "supermarket_gg_cat_response": {
-    "filename_template": "test_category_search_24.7136_46.6753_2000.0_inc_supermarket_exc",
+  "supermarket_cat_response": {
+    "filename_template": "test_category_search_24.7136_46.6753_30000.0_inc_supermarket_exc_{test_run_id}",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
-      "radius": 3000.0,
+      "radius": 30000.0,
       "includedTypes": [
         "supermarket"
       ],
@@ -7711,11 +7711,11 @@
   
 
   "coffee_shop_search": {
-    "filename_template": "test_text_search_24.7136_46.6753_2000.0_coffee_shop_{test_run_id}",
+    "filename_template": "test_text_search_24.7136_46.6753_30000.0_coffee_shop_{test_run_id}",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
-      "radius": 2000.0,
+      "radius": 30000.0,
       "textQuery": "coffee shop"
     },
     "response_data": {
@@ -7762,11 +7762,11 @@
     }
   },
   "restaurant_search": {
-    "filename_template": "test_category_search_24.7136_46.6753_2000.0_inc_restaurant_exc_{test_run_id}",
+    "filename_template": "test_category_search_24.7136_46.6753_30000.0_inc_restaurant_exc_{test_run_id}",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
-      "radius": 2000.0,
+      "radius": 30000.0,
       "includedTypes": [
         "restaurant"
       ],

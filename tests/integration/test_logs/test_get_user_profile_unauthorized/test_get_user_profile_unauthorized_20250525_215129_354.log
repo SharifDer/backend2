@@ -1,0 +1,33 @@
+====================================================================================================
+DETAILED TEST COMPARISON LOG
+Test Name: test_get_user_profile_unauthorized
+Timestamp: 2025-05-25T21:51:29.355450
+====================================================================================================
+
+📊 STATUS CODE COMPARISON:
+Expected Status: 401
+Actual Status:   403
+❌ STATUS CODE MISMATCH!
+
+📦 ACTUAL RESPONSE BODY:
+--------------------------------------------------
+{
+  "detail": "Not authenticated"
+}
+
+🎯 EXPECTED RESPONSE BODY:
+--------------------------------------------------
+{
+  "message": "Unauthorized access",
+  "request_id": "test-profile-unauth-001"
+}
+
+🔍 DETAILED ANALYSIS:
+--------------------------------------------------
+🔍 Comparing dict at root:
+❌ Missing keys: {'message', 'request_id'}
+ℹ️ Extra keys in actual: {'detail'}
+
+====================================================================================================
+END OF COMPARISON LOG
+====================================================================================================

@@ -252,93 +252,91 @@ async def fetch_text_search_ggl_maps_api(
 async def fetch_cat_google_maps_api(
     req: ReqFetchDataset, optimized_queries: List[Tuple[List[str], List[str]]]
 ) -> Tuple[List[Dict[str, Any]], str]:
-    try:
 
-        combined_dataset_id = make_dataset_filename(req)
-        existing_combined_data = await load_dataset(combined_dataset_id)
 
-        if existing_combined_data:
-            logger.info(
-                f"Returning existing combined dataset: {combined_dataset_id}"
-            )
-            return existing_combined_data
+    combined_dataset_id = make_dataset_filename(req)
+    existing_combined_data = await load_dataset(combined_dataset_id)
 
-        datasets = {}
-        missing_queries = []
+    if existing_combined_data:
+        logger.info(
+            f"Returning existing combined dataset: {combined_dataset_id}"
+        )
+        return existing_combined_data
 
-        for included_types, excluded_types in optimized_queries:
-            full_dataset_id = make_dataset_filename_part(
-                req, included_types, excluded_types
-            )
-            stored_data = await load_dataset(full_dataset_id)
+    datasets = {}
+    missing_queries = []
 
-            if stored_data:
-                datasets[full_dataset_id] = stored_data
-            else:
-                missing_queries.append(
-                    (full_dataset_id, included_types, excluded_types)
-                )
+    for included_types, excluded_types in optimized_queries:
+        full_dataset_id = make_dataset_filename_part(
+            req, included_types, excluded_types
+        )
+        stored_data = await load_dataset(full_dataset_id)
 
-        if missing_queries:
-            logger.info(
-                f"Fetching {len(missing_queries)} queries from Google Maps API."
-            )
-            query_tasks = [
-                single_ggl_cat_call(req, included_types, excluded_types)
-                for _, included_types, excluded_types in missing_queries
-            ]
-
-            all_query_results = await asyncio.gather(*query_tasks)
-
-            for (dataset_id, included, excluded), query_results in zip(
-                missing_queries, all_query_results
-            ):
-
-                if query_results:
-                    format_response = await process_and_store_to_db(
-                        req, dataset_id, query_results
-                    )
-                    datasets[dataset_id] = format_response
-
-        # Initialize the combined dictionary
-        combined = {
-            "type": "FeatureCollection",
-            "features": [],
-            "properties": set(),
-        }
-
-        # Initialize a set to keep track of unique IDs
-        seen_ids = set()
-
-        # Iterate through each dataset
-        for dataset in datasets.values():
-            # Add properties to the combined set
-            combined["properties"].update(dataset.get("properties", []))
-            features = dataset.get("features", [])
-
-            # Iterate through each feature in the dataset
-            for feature in features:
-                feature_id = feature.get("properties", {}).get("id")
-                if feature_id is not None and feature_id not in seen_ids:
-                    combined["features"].append(feature)
-                    seen_ids.add(feature_id)
-
-        # Convert the properties set back to a list (if needed)
-        combined["properties"] = list(combined["properties"])
-
-        if combined["features"]:
-            await store_data_resp(req, combined, combined_dataset_id)
-            logger.info(f"Stored combined dataset: {combined_dataset_id}")
-            return combined
+        if stored_data:
+            datasets[full_dataset_id] = stored_data
         else:
-            logger.warning(
-                "No valid results returned from Google Maps API or DB."
+            missing_queries.append(
+                (full_dataset_id, included_types, excluded_types)
             )
-            return combined
 
-    except Exception as e:
-        logger.error(f"Error in fetch_from_google_maps_api: {str(e)}")
-        return str(e)
+    if missing_queries:
+        logger.info(
+            f"Fetching {len(missing_queries)} queries from Google Maps API."
+        )
+        query_tasks = [
+            single_ggl_cat_call(req, included_types, excluded_types)
+            for _, included_types, excluded_types in missing_queries
+        ]
+
+        all_query_results = await asyncio.gather(*query_tasks)
+
+        for (dataset_id, included, excluded), query_results in zip(
+            missing_queries, all_query_results
+        ):
+
+            if query_results:
+                format_response = await process_and_store_to_db(
+                    req, dataset_id, query_results
+                )
+                datasets[dataset_id] = format_response
+
+    # Initialize the combined dictionary
+    combined = {
+        "type": "FeatureCollection",
+        "features": [],
+        "properties": set(),
+    }
+
+    # Initialize a set to keep track of unique IDs
+    seen_ids = set()
+
+    # Iterate through each dataset
+    for dataset in datasets.values():
+        # Add properties to the combined set
+        combined["properties"].update(dataset.get("properties", []))
+        features = dataset.get("features", [])
+
+        # Iterate through each feature in the dataset
+        for feature in features:
+            feature_id = feature.get("properties", {}).get("id")
+            if feature_id is not None and feature_id not in seen_ids:
+                combined["features"].append(feature)
+                seen_ids.add(feature_id)
+
+    # Convert the properties set back to a list (if needed)
+    combined["properties"] = list(combined["properties"])
+
+    if combined["features"]:
+        await store_data_resp(req, combined, combined_dataset_id)
+        logger.info(f"Stored combined dataset: {combined_dataset_id}")
+        return combined
+    else:
+        logger.warning(
+            "No valid results returned from Google Maps API or DB."
+        )
+        return combined
+
+
 
 
 async def build_details_search_payload(place_id: str) -> Dict[str, Any]:

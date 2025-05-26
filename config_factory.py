@@ -122,4 +122,4 @@ class ApiConfig(CommonApiConfig):
 CONF = ApiConfig.get_conf()
 
 if CONF.test_mode:
-    print(CONF)
+    print("🎯🎯🎯🎯🎯🎯🎯🎯🎯 TEST MODE 🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯")

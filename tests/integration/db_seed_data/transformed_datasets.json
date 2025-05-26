@@ -1,10 +1,10 @@
 {
-  "supermarket_dataset": {
-    "filename_template": "24.7136_46.6753_2000.0_supermarket_token_{test_run_id}=",
+  "supermarket_cat_response": {
+    "filename_template": "24.7136_46.6753_30000.0_supermarket_token_{test_run_id}=",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
-      "radius": 2000.0,
+      "radius": 30000.0,
       "boolean_query": "supermarket",
       "user_id": "{user_id}"
     },
@@ -42,11 +42,11 @@
     }
   },
   "coffee_dataset": {
-    "filename_template": "24.7136_46.6753_2000.0_coffee_token_{test_run_id}=",
+    "filename_template": "24.7136_46.6753_30000.0_coffee_token_{test_run_id}=",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
-      "radius": 2000.0,
+      "radius": 30000.0,
       "boolean_query": "@coffee shop@",
       "text_search": true,
       "user_id": "{user_id}"

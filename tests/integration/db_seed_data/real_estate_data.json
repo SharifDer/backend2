@@ -66,7 +66,7 @@
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
-      "radius": 3000.0,
+      "radius": 30000.0,
       "property_type": "commercial"
     },
     "response_data": {

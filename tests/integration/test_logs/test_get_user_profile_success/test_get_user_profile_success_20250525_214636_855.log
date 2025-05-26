@@ -1,0 +1,92 @@
+====================================================================================================
+DETAILED TEST COMPARISON LOG
+Test Name: test_get_user_profile_success
+Timestamp: 2025-05-25T21:46:36.856257
+====================================================================================================
+
+📊 STATUS CODE COMPARISON:
+Expected Status: 200
+Actual Status:   200
+✅ Status codes match
+
+📦 ACTUAL RESPONSE BODY:
+--------------------------------------------------
+{
+  "message": "Request received.",
+  "request_id": "req-3627931d-48b5-4c22-8539-ea84bfdf6f73",
+  "data": {
+    "admin_id": null,
+    "prdcer": {
+      "prdcer_ctlgs": {},
+      "prdcer_lyrs": {},
+      "prdcer_dataset": {
+        "dataset_plan": "",
+        "dataset_next_refresh_date": "2025-08-25T21:46:31.835405Z",
+        "progress": 38,
+        "auto_refresh": true
+      },
+      "draft_ctlgs": {}
+    },
+    "account_type": "admin",
+    "user_id": "4InbNegChrNp42PtguWCEKWEkZ52",
+    "email": "regular_user_20250525_214627_478@test.com",
+    "settings": {
+      "show_price_on_purchase": false
+    },
+    "username": "Regular Test User - 20250525_214627_478"
+  }
+}
+
+🎯 EXPECTED RESPONSE BODY:
+--------------------------------------------------
+{
+  "message": "Request received.",
+  "request_id": "test-profile-001",
+  "data": {
+    "user_id": "4InbNegChrNp42PtguWCEKWEkZ52",
+    "email": "regular_user_20250525_214627_478@test.com",
+    "username": "Regular Test User - 20250525_214627_478",
+    "account_type": "admin",
+    "admin_id": null,
+    "settings": {
+      "show_price_on_purchase": false
+    },
+    "prdcer": {
+      "prdcer_ctlgs": {},
+      "draft_ctlgs": {},
+      "prdcer_lyrs": {},
+      "prdcer_dataset": {
+        "dataset_plan": "",
+        "auto_refresh": true
+      }
+    }
+  }
+}
+
+🔍 DETAILED ANALYSIS:
+--------------------------------------------------
+🔍 Comparing dict at root:
+  ✅ Values match at root.message
+  ❌ Value mismatch at root.request_id:
+     Expected: test-profile-001
+     Actual:   req-3627931d-48b5-4c22-8539-ea84bfdf6f73
+  🔍 Comparing dict at root.data:
+    ✅ Values match at root.data.user_id
+    ✅ Values match at root.data.email
+    ✅ Values match at root.data.username
+    ✅ Values match at root.data.account_type
+    ✅ Values match at root.data.admin_id
+    🔍 Comparing dict at root.data.settings:
+      ✅ Values match at root.data.settings.show_price_on_purchase
+    🔍 Comparing dict at root.data.prdcer:
+      🔍 Comparing dict at root.data.prdcer.prdcer_ctlgs:
+      🔍 Comparing dict at root.data.prdcer.draft_ctlgs:
+      🔍 Comparing dict at root.data.prdcer.prdcer_lyrs:
+      🔍 Comparing dict at root.data.prdcer.prdcer_dataset:
+      ℹ️ Extra keys in actual: {'dataset_next_refresh_date', 'progress'}
+        ✅ Values match at root.data.prdcer.prdcer_dataset.dataset_plan
+        ✅ Values match at root.data.prdcer.prdcer_dataset.auto_refresh
+
+====================================================================================================
+END OF COMPARISON LOG
+====================================================================================================
