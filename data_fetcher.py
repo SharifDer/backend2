@@ -448,6 +448,7 @@ async def fetch_dataset(req: ReqFetchDataset):
     and returns it. If the layer doesn't exist, it creates a new layer
     """
     next_page_token = None
+    progress = 0
     layer_id = req.prdcer_lyr_id
     if req.page_token == "" or req.prdcer_lyr_id == "":
         layer_id = generate_layer_id()
@@ -496,8 +497,8 @@ async def fetch_dataset(req: ReqFetchDataset):
             next_plan_index,
         ) = await fetch_ggl_nearby(req)
 
-    await check_purchase(req, plan_name)
-    progress = await full_load(req,plan_name,layer_id,next_page_token)
+        await check_purchase(req, plan_name)
+        progress = await full_load(req,plan_name,layer_id,next_page_token)
 
     geojson_dataset["bknd_dataset_id"] = bknd_dataset_id
     geojson_dataset["records_count"] = len(geojson_dataset.get("features", ""))
