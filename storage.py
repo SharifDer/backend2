@@ -942,9 +942,7 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
                 properties = feature.get("properties", {})
 
                 if layer_type == "population":
-                    # Simply copy Population_Density_KM2 to density (most performant)
-                    density_value = properties.get("Population_Density_KM2", 0)
-                    feature["properties"]["density"] = density_value
+                    # Density is already pre-calculated in the JSON files
                     filtered_features.append(feature)
                     
                 elif layer_type == "income":
