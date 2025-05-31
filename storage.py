@@ -598,6 +598,68 @@ async def load_dataset(dataset_id: str, fetch_full_plan_datasets=False) -> Dict:
             # Create the final combined GeoJSON
             feat_collec["features"] = all_features
             feat_collec["properties"] = list(properties_set)
+    
+    elif "real_estate" in dataset_id:
+        # Parse the real estate dataset ID to extract bounding box and type
+        # Format: saudi_real_estate_riyadh_box=46.082,24.172,47.268,25.255_type=warehouse_for_rent
+        # Extract bounding box
+        box_start = dataset_id.find("box=") + 4
+        box_end = dataset_id.find("_type=")
+        bbox_str = dataset_id[box_start:box_end]
+        bbox_coords = [float(coord) for coord in bbox_str.split(",")]
+        
+        # Extract type
+        type_start = dataset_id.find("type=") + 5
+        type_str = dataset_id[type_start:]
+        # Handle multiple types separated by commas
+        property_types = [t.strip() for t in type_str.split(",")]
+        
+        # bbox_coords format: [min_lng, min_lat, max_lng, max_lat]
+        min_lng = bbox_coords[0]
+        min_lat = bbox_coords[1]
+        max_lng = bbox_coords[2]
+        max_lat = bbox_coords[3] 
+        
+        # Query the database using the correct parameter mapping
+        city_data = await Database.fetch(
+            SqlObject.real_estate_full_data,
+            property_types,  # $1 - category array
+            min_lng,
+            min_lat,
+            max_lng,
+            max_lat
+        )
+        
+        # Convert to DataFrame and then to GeoJSON format
+        city_df = pd.DataFrame([dict(record) for record in city_data])
+        
+        # Convert to GeoJSON format
+        features = []
+        for _, row in city_df.iterrows():
+            # Parse coordinates
+            coordinates = [float(row["longitude"]), float(row["latitude"])]
+            
+            # Create properties dict excluding certain columns
+            columns_to_drop = ["latitude", "longitude", "city"]
+            if "country" in row:
+                columns_to_drop.append("country")
+            properties = row.drop(columns_to_drop).to_dict()
+            
+            feature = {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": coordinates},
+                "properties": properties,
+            }
+            features.append(feature)
+        
+        # Create GeoJSON structure
+        feat_collec = {
+            "type": "FeatureCollection", 
+            "features": features,
+            "properties": list(city_df.columns) if not city_df.empty else []
+        }
+
+            
     else:
         feat_collec = None
         json_content = await Database.fetchrow(
@@ -744,66 +806,65 @@ async def get_commercial_properties_dataset_from_storage(
 
 
 async def get_real_estate_dataset_from_storage(
-    filename: str,
-    action: str,
-    request_location: ReqFetchDataset,
+    bknd_dataset_id: str,
+    req: ReqFetchDataset,
     next_page_token: str,
     data_type: str,
 ) -> tuple[dict, str, str]:
     """
     Retrieves data from storage based on the location request.
     """
-    data_type = request_location._included_types
+    data_type = req._included_types
     # TODO at moment the user will only give one category, in the future we should see how to implement this with more
     # realEstateData=(await load_real_estate_categories())
     # filtered_categories = [item for item in realEstateData if item in req.included_types]
     # final_categories = [item for item in filtered_categories if item not in req.excludedTypes]
-
-    page_number = 0
-    if next_page_token:
-        page_number = int(next_page_token)
-
-    offset = page_number * DEFAULT_LIMIT
-    query = SqlObject.saudi_real_estate_w_bounding_box_and_category
-
-    city_data = await Database.fetch(
-        query, data_type, *request_location._bounding_box, DEFAULT_LIMIT, offset
-    )
-
+    next_page_token = ""
+    if req.action == "sample":
+        page_number = 0
+        offset = page_number * DEFAULT_LIMIT
+        query = SqlObject.saudi_real_estate_w_bounding_box_and_category
+        city_data = await Database.fetch(
+            query, data_type, *req._bounding_box, DEFAULT_LIMIT, offset
+        )
+    if req.action == "full data":
+        query = SqlObject.real_estate_full_data
+        city_data = await Database.fetch(
+            query, data_type, *req._bounding_box
+        )
     city_df = pd.DataFrame([dict(record) for record in city_data])
-
     # Convert to GeoJSON format
     features = []
     for _, row in city_df.iterrows():
         # Parse coordinates from Degree column
         coordinates = [float(row["longitude"]), float(row["latitude"])]
-
         # Create properties dict excluding certain columns
         columns_to_drop = ["latitude", "longitude", "city"]
         if "country" in row:
             columns_to_drop.append("country")
         properties = row.drop(columns_to_drop).to_dict()
-
         feature = {
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": coordinates},
             "properties": properties,
         }
         features.append(feature)
-
-    # Create GeoJSON structure similar to Google Maps API response
+   
     geojson_data = {"type": "FeatureCollection", "features": features}
-
-    # Generate a unique filename if one isn't provided
-    if not filename:
-        filename = f"saudi_real_estate_{request_location.city_name.lower()}_{data_type}"
-
-    if len(features) < DEFAULT_LIMIT:
-        next_page_token = ""
+    
+    # Format bounding box as min_lng,min_lat,max_lng,max_lat
+    bbox_str = f"{req._bounding_box[0]},{req._bounding_box[1]},{req._bounding_box[2]},{req._bounding_box[3]}"
+    
+    # Format data type - handle both single string and list formats
+    if isinstance(data_type, list):
+        type_str = ",".join(data_type)
     else:
-        next_page_token = str(page_number + 1)
-
-    return geojson_data, filename, next_page_token
+        type_str = str(data_type)
+    
+    # Create the new filename format with explicit prefixes
+    bknd_dataset_id = f"saudi_real_estate_{req.city_name.lower()}_box={bbox_str}_type={type_str}"
+    
+    return geojson_data, bknd_dataset_id, next_page_token
 
 
 async def fetch_db_categories_by_lat_lng(bounding_box: list[float]) -> Dict:

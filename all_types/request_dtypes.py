@@ -154,7 +154,7 @@ class ReqLLMFetchDataset(BaseModel):
 class ReqFilter(ReqGradientColorBasedOnZone):
     threshold: float|str
     
-class Req_src_distination(BaseModel):
+class ReqSrcDistination(BaseModel):
     source : Coordinate
     destination : Coordinate
 

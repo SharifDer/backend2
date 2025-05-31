@@ -55,7 +55,7 @@ from all_types.request_dtypes import (
     ReqPrompt,
     ValidationResult,
     ReqFilter,
-    Req_src_distination,
+    ReqSrcDistination,
     ReqIntelligenceData,
     ReqClustersForSalesManData,
 )
@@ -1165,10 +1165,10 @@ async def filter_based_on_(req: ReqModel[ReqFilter], request: Request):
 @app.post(
     CONF.distance_drive_time_polygon, response_model=ResModel[ResSrcDistination]
 )
-async def distance_drivetime_polygon(req: ReqModel[Req_src_distination]):
+async def distance_drivetime_polygon(req: ReqModel[ReqSrcDistination]):
     response = await request_handling(
         req.request_body,
-        Req_src_distination,
+        ReqSrcDistination,
         ResModel[ResSrcDistination],
         load_distance_drive_time_polygon,
         wrap_output=True,

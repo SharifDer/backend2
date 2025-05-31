@@ -36,7 +36,7 @@ from google_api_connector import (
     fetch_ggl_nearby,
     # text_fetch_from_google_maps_api,
     calculate_distance_traffic_route,
-    transform_plan_items
+    transform_plan_items,
 )
 from backend_common.logging_wrapper import (
     apply_decorator_to_module,
@@ -68,7 +68,7 @@ from storage import (
     convert_to_serializable,
     generate_layer_id,
     # load_google_categories,
-    get_full_load_geojson
+    get_full_load_geojson,
 )
 from boolean_query_processor import reduce_to_single_query
 from popularity_algo import get_plan
@@ -79,25 +79,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
-
-
-def print_circle_hierarchy(circle: dict, number=""):
-    center_marker = "*" if circle["is_center"] else ""
-    print(
-        f"Circle {number}{center_marker}: Center: (lng: {circle['center'][0]:.4f}, lat: {circle['center'][1]:.4f}), Radius: {circle['radius']:.2f} km"
-    )
-    for i, sub_circle in enumerate(circle["sub_circles"], 1):
-        print_circle_hierarchy(
-            sub_circle, f"{number}.{i}" if number else f"{i}"
-        )
-
-
-def count_circles(circle: dict):
-    return 1 + sum(
-        count_circles(sub_circle) for sub_circle in circle["sub_circles"]
-    )
-
-
 
 
 async def fetch_census_realestate(
@@ -122,24 +103,19 @@ async def fetch_census_realestate(
         if data_type == "real_estate" or (
             data_type == "commercial" and req.country_name == "Saudi Arabia"
         ):
-            get_dataset_func = get_real_estate_dataset_from_storage
-        elif data_type in ["Population Area Intelligence"]:
-            get_dataset_func = get_census_dataset_from_storage
-        elif data_type == "commercial":
-            get_dataset_func = get_commercial_properties_dataset_from_storage
-
-        dataset, bknd_dataset_id, next_page_token = await get_dataset_func(
-            bknd_dataset_id,
-            action,
-            request_location=req,
-            next_page_token=next_page_token,
-            data_type=data_type,
-        )
-        if dataset:
-            dataset = convert_strings_to_ints(dataset)
-            # bknd_dataset_id = await store_data_resp(
-            #     req_dataset, dataset, bknd_dataset_id
-            # )
+            (dataset, 
+            bknd_dataset_id, 
+            next_page_token) = await get_real_estate_dataset_from_storage(
+                bknd_dataset_id,
+                req=req,
+                next_page_token=next_page_token,
+                data_type=data_type,
+            )
+            if dataset:
+                dataset = convert_strings_to_ints(dataset)
+                # bknd_dataset_id = await store_data_resp(
+                #     req_dataset, dataset, bknd_dataset_id
+                # )
 
     return dataset, bknd_dataset_id, next_page_token, plan_name
 
@@ -240,43 +216,6 @@ async def fetch_country_city_data() -> Dict[str, List[Dict[str, float]]]:
     return data
 
 
-async def validate_city_data(country, city):
-    """Validates and returns city data"""
-    country_city_data = await fetch_country_city_data()
-    for c, cities in country_city_data.items():
-        if c.lower() == country.lower():
-            for city_data in cities:
-                if city_data["name"].lower() == city.lower():
-                    return city_data
-    raise HTTPException(
-        status_code=404, detail="City not found in the specified country"
-    )
-
-
-# def determine_data_type(included_types: List[str], categories: Dict) -> Optional[str]:
-#     """
-#     Determines the data type based on included types by checking against all category types
-#     """
-#     if not included_types:
-#         return None
-
-#     for category_type, type_list in categories.items():
-#         # Handle both direct lists and nested dictionaries
-#         if isinstance(type_list, list):
-#             if set(included_types).intersection(set(type_list)):
-#                 return category_type
-#         elif isinstance(type_list, dict):
-#             # Flatten nested categories for comparison
-#             all_subcategories = []
-#             for subcategories in type_list.values():
-#                 if isinstance(subcategories, list):
-#                     all_subcategories.extend(subcategories)
-#             if set(included_types).intersection(set(all_subcategories)):
-#                 return category_type
-
-#     return None
-
-
 def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
     """
     Determines the data type based on boolean query.
@@ -324,7 +263,8 @@ def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
     # So we can safely return google_categories for either Google terms or custom terms
     return "google_categories"
 
-async def check_purchase(req:ReqFetchDataset, plan_name:str):
+
+async def check_purchase(req: ReqFetchDataset, plan_name: str):
     if req.action == "full data":
         contains_text_search = False
         if "@" in req.boolean_query:
@@ -372,13 +312,11 @@ async def check_purchase(req:ReqFetchDataset, plan_name:str):
                 currency="usd",
                 description="Deducted funds from wallet",
             )
-    
 
 
 async def full_load(
     req: ReqFetchDataset, plan_name: str, layer_id: str, next_page_token: str
 ):
-
 
     # if request action was "full data" then store dataset id in the user profile
     # the name of the dataset will be the action + cct_layer name
@@ -439,8 +377,6 @@ async def full_load(
         return progress
 
 
-
-
 async def fetch_dataset(req: ReqFetchDataset):
     """
     This function attempts to fetch an existing layer based on the provided
@@ -498,7 +434,7 @@ async def fetch_dataset(req: ReqFetchDataset):
         ) = await fetch_ggl_nearby(req)
 
         await check_purchase(req, plan_name)
-        progress = await full_load(req,plan_name,layer_id,next_page_token)
+        progress = await full_load(req, plan_name, layer_id, next_page_token)
 
     geojson_dataset["bknd_dataset_id"] = bknd_dataset_id
     geojson_dataset["records_count"] = len(geojson_dataset.get("features", ""))
@@ -513,20 +449,22 @@ async def fetch_dataset(req: ReqFetchDataset):
         while progress <= 100 and progress_check_counts < 1:
             if progress == 100:
                 plan = await get_plan(plan_name)
-                
+
                 # execute in db merge+deduplicate all datasets
                 output_filenames = await transform_plan_items(req, plan)
-                geojson_dataset["full_load_geojson"] = await get_full_load_geojson(output_filenames)
+                geojson_dataset["full_load_geojson"] = (
+                    await get_full_load_geojson(output_filenames)
+                )
                 break
             else:
                 # TODO this is useless, because background task only start after a response has been provided by the endpoint
                 # async sleep for 10 seconds and call full_data_load again
                 await asyncio.sleep(10)
-                progress = await full_load(req,plan_name,layer_id,next_page_token)
-            
-            progress_check_counts +=1
+                progress = await full_load(
+                    req, plan_name, layer_id, next_page_token
+                )
 
-        
+            progress_check_counts += 1
 
     return geojson_dataset
 
@@ -535,9 +473,7 @@ async def save_lyr(req: ReqSavePrdcerLyer) -> str:
     user_data = await load_user_profile(req.user_id)
 
     # Check for duplicate prdcer_layer_name
-    new_layer_name = req.model_dump(exclude={"user_id"})[
-        "prdcer_layer_name"
-    ]
+    new_layer_name = req.model_dump(exclude={"user_id"})["prdcer_layer_name"]
     for layer in user_data["prdcer"]["prdcer_lyrs"].values():
         if layer["prdcer_layer_name"] == new_layer_name:
             raise HTTPException(
@@ -558,7 +494,6 @@ async def save_lyr(req: ReqSavePrdcerLyer) -> str:
             await update_dataset_layer_matching(
                 req.prdcer_lyr_id, req.bknd_dataset_id
             )
-        
 
     return "Producer layer created successfully"
 
@@ -681,6 +616,8 @@ async def fetch_lyr_map_data(req: ReqPrdcerLyrMapData) -> ResLyrMapData:
         first_feature = dataset.get("features", [])[0]
         properties = list(first_feature.get("properties", {}).keys())
 
+        num_records = len(dataset.get("features"))
+
     return ResLyrMapData(
         type="FeatureCollection",
         features=dataset.get("features", []),
@@ -692,7 +629,7 @@ async def fetch_lyr_map_data(req: ReqPrdcerLyrMapData) -> ResLyrMapData:
         layer_legend=layer_metadata.get("layer_legend"),
         layer_description=layer_metadata.get("layer_description"),
         city_name=layer_metadata.get("city_name"),
-        records_count=dataset_info.get("records_count"),
+        records_count=num_records,
         is_zone_lyr="false",
         progress=random.randint(0, 100),
     )
@@ -893,17 +830,6 @@ async def fetch_ctlg_lyrs(req: ReqFetchCtlgLyrs) -> List[ResLyrMapData]:
         raise
 
 
-def calculate_thresholds(values: List[float]) -> List[float]:
-    """
-    Calculates threshold values to divide a set of values into three categories.
-    """
-    try:
-        sorted_values = sorted(values)
-        n = len(sorted_values)
-        return [sorted_values[n // 3], sorted_values[2 * n // 3]]
-    except Exception as e:
-        raise ValueError(f"Error in calculate_thresholds: {str(e)}")
-
 
 async def load_area_intelligence_categories(req: ReqCityCountry = "") -> Dict:
     """
@@ -991,17 +917,11 @@ async def given_layer_fetch_dataset(layer_id: str):
     return all_datasets, layer_metadata
 
 
-
-
 async def get_user_profile(req):
     return await load_user_profile(req.user_id)
 
 
-async def update_profile(req):
-    return await update_user_profile_settings(req)
-
-
-async def load_distance_drive_time_polygon(req: Req_src_distination) -> dict:
+async def load_distance_drive_time_polygon(req: ReqSrcDistination) -> dict:
     """
     Returns: {
         "distance in km": float,
@@ -1031,10 +951,6 @@ async def load_distance_drive_time_polygon(req: Req_src_distination) -> dict:
         "drive_time_in_min": round(drive_time_minutes, 2),
         "drive_polygon": leg.polyline,
     }
-
-
-# llm agent call
-
 
 async def update_profile(req):
     return await update_user_profile_settings(req)

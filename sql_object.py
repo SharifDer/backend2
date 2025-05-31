@@ -51,6 +51,13 @@ class SqlObject:
             AND longitude BETWEEN $4 AND $5
         LIMIT $6 OFFSET $7;
     """
+    real_estate_full_data: str = """
+        SELECT url, price, city, latitude, longitude, category 
+        FROM "schema_marketplace".saudi_real_estate
+        WHERE "category" = ANY($1)
+            AND latitude BETWEEN $2 AND $3
+            AND longitude BETWEEN $4 AND $5;
+    """
     create_datasets_table: str = """
     CREATE SCHEMA IF NOT EXISTS "schema_marketplace";
     
