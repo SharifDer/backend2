@@ -548,7 +548,7 @@ def get_grids_of_data(
 
         # Check alignment
         if len(income_values) != len(origins):
-            logger.error(
+            logger.warning(
                 f"MISMATCH: income ({len(income_values)}) vs origins ({len(origins)})"
             )
             income_values = income_values[: len(origins)]
@@ -955,7 +955,7 @@ def select_nbrs_with_sum(
     logger.info(
         f"Cluster built from seed {i}: {len(nbrs)} cells, {value:,.0f} total customers"
     )
-    logger.info(f"  Cells included: {nbrs}")
+
     logger.info(
         f"  Load balancing: {100*value/max_share:.1f}% of target capacity"
     )
