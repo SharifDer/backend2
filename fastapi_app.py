@@ -159,7 +159,7 @@ from backend_common.stripe_backend import (
 )
 from recolor_filter import (
     color_based_on_agent,
-    color_based_on,
+    recolor_based_on,
     filter_based_on,
 )
 from storage import fetch_intelligence_by_viewport
@@ -706,17 +706,17 @@ async def ep_fetch_gradient_colors():
 
 
 @app.post(
-    CONF.gradient_color_based_on_zone,
+    CONF.recolor_based,
     response_model=ResModel[list[ResGradientColorBasedOnZone]],
 )
-async def ep_process_color_based_on(
+async def ep_recolor_based_on(
     req: ReqModel[ReqGradientColorBasedOnZone], request: Request
 ):
     response = await request_handling(
         req.request_body,
         ReqGradientColorBasedOnZone,
         ResModel[list[ResGradientColorBasedOnZone]],
-        color_based_on,
+        recolor_based_on,
         wrap_output=True,
     )
     return response
@@ -1119,7 +1119,7 @@ async def update_user_profile_endpoint(req: ReqModel[UserProfileSettings]):
 
 
 @app.post(
-    CONF.gradient_color_based_on_zone + "_llm",
+    CONF.recolor_based + "_llm",
     response_model=ResModel[ValidationResult],
 )
 async def ep_process_color_based_on_agent(
