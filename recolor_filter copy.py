@@ -124,7 +124,7 @@ def average_metric_of_surrounding_points(
         return None
 
 
-def filter_locations_by_drive_time(
+def filter_locations_by_estimated_drive_time(
     nearest_locations: List[Dict[str, Any]], coverage_minutes: float
 ) -> List[Dict[str, Any]]:
     """
@@ -263,95 +263,6 @@ def create_name_based_layers(
     return new_layers
 
 
-# filter by drive time
-async def filter_by_drive_time(
-    change_layer_dataset: Dict[str, Any],
-    based_on_coordinates: List[Dict[str, float]],
-    to_be_changed_coordinates: List[Dict[str, float]],
-    coverage_minutes: float,
-    num_points_per_target: int = 2,
-) -> Dict[str, List[Dict]]:
-    """
-    Filter geographic points based on drive time calculations using existing helper functions.
-
-    Args:
-        change_layer_dataset: Dataset containing features to be filtered
-        based_on_coordinates: List of reference point coordinates
-        to_be_changed_coordinates: List of target point coordinates
-        coverage_minutes: Maximum allowed drive time in minutes
-        num_points_per_target: Number of nearest points to consider per target
-
-    Returns:
-        Dictionary containing three categories of features:
-        - within_time: Features within the specified drive time
-        - outside_time: Features exceeding the specified drive time
-        - unallocated: Features with no valid route information
-    """
-    # Get nearest points using existing function
-    nearest_locations = await filter_for_nearest_points(
-        based_on_coordinates,
-        to_be_changed_coordinates,
-        num_points_per_target=num_points_per_target,
-    )
-
-    # Filter locations by estimated drive time
-    filtered_nearest_locations = filter_locations_by_drive_time(
-        nearest_locations, coverage_minutes
-    )
-
-    # Calculate actual routes with Google Maps
-    route_results = await calculate_nearest_points_drive_time(
-        filtered_nearest_locations
-    )
-
-    # Initialize result categories
-    within_time_features = []
-    outside_time_features = []
-    unallocated_features = []
-
-    # Process routes and categorize features
-    for target_routes in route_results:
-        min_static_time = float("inf")
-
-        # Get minimum static drive time from routes
-        for route in target_routes.routes:
-            try:
-                if route.route and route.route[0].static_duration:
-                    static_time = int(
-                        route.route[0].static_duration.replace("s", "")
-                    )
-                    min_static_time = min(min_static_time, static_time)
-            except:
-                continue
-
-        # Find matching point and categorize
-        for change_point in change_layer_dataset["features"]:
-            if (
-                change_point["geometry"]["coordinates"][1]
-                == target_routes.target["latitude"]
-                and change_point["geometry"]["coordinates"][0]
-                == target_routes.target["longitude"]
-            ):
-                feature = assign_point_properties(change_point)
-
-                if min_static_time != float("inf"):
-                    drive_time_minutes = min_static_time / 60
-                    if drive_time_minutes <= coverage_minutes:
-                        within_time_features.append(feature)
-                    else:
-                        outside_time_features.append(feature)
-                else:
-                    unallocated_features.append(feature)
-                break
-
-    return {
-        "within_time": within_time_features,
-        "outside_time": outside_time_features,
-        "unallocated": unallocated_features,
-    }
-
-
-### create drive time layers
 def create_drive_time_layers(
     filtered_features: Dict[str, List[Dict]],
     req: Any,
@@ -554,6 +465,94 @@ async def filter_by_property_and_drive_time(
         ]
 
 
+# filter by drive time
+async def filter_by_drive_time(
+    change_layer_dataset: Dict[str, Any],
+    based_on_coordinates: List[Dict[str, float]],
+    to_be_changed_coordinates: List[Dict[str, float]],
+    coverage_minutes: float,
+    num_points_per_target: int = 2,
+) -> Dict[str, List[Dict]]:
+    """
+    Filter geographic points based on drive time calculations using existing helper functions.
+
+    Args:
+        change_layer_dataset: Dataset containing features to be filtered
+        based_on_coordinates: List of reference point coordinates
+        to_be_changed_coordinates: List of target point coordinates
+        coverage_minutes: Maximum allowed drive time in minutes
+        num_points_per_target: Number of nearest points to consider per target
+
+    Returns:
+        Dictionary containing three categories of features:
+        - within_time: Features within the specified drive time
+        - outside_time: Features exceeding the specified drive time
+        - unallocated: Features with no valid route information
+    """
+    # Get nearest points using existing function
+    nearest_locations = await filter_for_nearest_points(
+        based_on_coordinates,
+        to_be_changed_coordinates,
+        num_points_per_target=num_points_per_target,
+    )
+
+    # Filter locations by estimated drive time
+    filtered_nearest_locations = filter_locations_by_estimated_drive_time(
+        nearest_locations, coverage_minutes
+    )
+
+    # Calculate actual routes with Google Maps
+    route_results = await calculate_nearest_points_drive_time(
+        filtered_nearest_locations
+    )
+
+    # Initialize result categories
+    within_time_features = []
+    outside_time_features = []
+    unallocated_features = []
+
+    # Process routes and categorize features
+    for target_routes in route_results:
+        min_static_time = float("inf")
+
+        # Get minimum static drive time from routes
+        for route in target_routes.routes:
+            try:
+                if route.route and route.route[0].static_duration:
+                    static_time = int(
+                        route.route[0].static_duration.replace("s", "")
+                    )
+                    min_static_time = min(min_static_time, static_time)
+            except:
+                continue
+
+        # Find matching point and categorize
+        for change_point in change_layer_dataset["features"]:
+            if (
+                change_point["geometry"]["coordinates"][1]
+                == target_routes.target["latitude"]
+                and change_point["geometry"]["coordinates"][0]
+                == target_routes.target["longitude"]
+            ):
+                feature = assign_point_properties(change_point)
+
+                if min_static_time != float("inf"):
+                    drive_time_minutes = min_static_time / 60
+                    if drive_time_minutes <= coverage_minutes:
+                        within_time_features.append(feature)
+                    else:
+                        outside_time_features.append(feature)
+                else:
+                    unallocated_features.append(feature)
+                break
+
+    return {
+        "within_time": within_time_features,
+        "outside_time": outside_time_features,
+        "unallocated": unallocated_features,
+    }
+
+
 async def filter_by_property_and_coverage_property(
     change_layer_dataset,
     based_on_coordinates,
@@ -605,7 +604,7 @@ async def filter_by_property_and_coverage_property(
     return filtered_features_cp
 
 
-async def coverage_filter_layers(req: ReqGradientColorBasedOnZone):
+async def filter_layer_by_coverage(req: ReqGradientColorBasedOnZone):
     change_layer_dataset, change_layer_metadata = (
         await given_layer_fetch_dataset(req.change_lyr_id)
     )
@@ -627,9 +626,8 @@ async def coverage_filter_layers(req: ReqGradientColorBasedOnZone):
         }
         for point in change_layer_dataset["features"]
     ]
-    if (
-        req.coverage_property == "drive_time"
-    ):  # currently drive does not take into account ANY based on property
+    if req.coverage_property == "drive_time":
+        # currently drive does not take into account ANY based on property
         # filter by drive time
         filtered_features = await filter_by_drive_time(
             change_layer_dataset=change_layer_dataset,
@@ -671,7 +669,7 @@ async def coverage_filter_layers(req: ReqGradientColorBasedOnZone):
 
 
 # process_based on
-async def process_color_based_on(
+async def color_based_on(
     req: ReqGradientColorBasedOnZone,
 ) -> List[ResGradientColorBasedOnZone]:
     (
@@ -680,7 +678,7 @@ async def process_color_based_on(
         change_layer_metadata,
         based_on_layer_dataset,
         based_on_layer_metadata,
-    ) = await coverage_filter_layers(req=req)
+    ) = await filter_layer_by_coverage(req=req)
     if req.color_based_on == "name":
         # Validate input conditions
         if not req.list_names:
@@ -689,7 +687,8 @@ async def process_color_based_on(
             )
         if req.based_on_lyr_id != req.change_lyr_id:
             raise ValueError(
-                "based_on_lyr_id and change_lyr_id must not be the same")
+                "based_on_lyr_id and change_lyr_id must not be the same"
+            )
 
         # use filter by name function
         filtered_features = filter_by_name(
@@ -886,7 +885,7 @@ async def filter_based_on(req: ReqFilter):
         raise ValueError("No features found based on the given criteria.")
 
 
-async def process_color_based_on_agent(req: ReqPrompt) -> ValidationResult:
+async def color_based_on_agent(req: ReqPrompt) -> ValidationResult:
     prompt = req.prompt
     user_id = req.user_id
     user_layers = req.layers

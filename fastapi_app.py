@@ -157,9 +157,9 @@ from backend_common.stripe_backend import (
     fetch_wallet,
     deduct_from_wallet,
 )
-from recoler_filter import (
-    process_color_based_on_agent,
-    process_color_based_on,
+from recolor_filter import (
+    color_based_on_agent,
+    color_based_on,
     filter_based_on,
 )
 from storage import fetch_intelligence_by_viewport
@@ -716,7 +716,7 @@ async def ep_process_color_based_on(
         req.request_body,
         ReqGradientColorBasedOnZone,
         ResModel[list[ResGradientColorBasedOnZone]],
-        process_color_based_on,
+        color_based_on,
         wrap_output=True,
     )
     return response
@@ -1129,7 +1129,7 @@ async def ep_process_color_based_on_agent(
         req.request_body,
         ReqPrompt,
         ResModel[ValidationResult],
-        process_color_based_on_agent,
+        color_based_on_agent,
         wrap_output=True,
     )
     return response
