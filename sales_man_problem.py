@@ -16,6 +16,9 @@ from typing import Tuple
 import asyncio
 import logging
 
+import matplotlib.pyplot as plt
+
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
@@ -134,7 +137,6 @@ def filter_data_by_bounding_box(
     # Add longitude and latitude columns
     places["longitude"] = places.geometry.x
     places["latitude"] = places.geometry.y
-
     return places
 
 
@@ -169,7 +171,7 @@ def create_grid(
         f"Study area bounds: [{minx:.4f}, {miny:.4f}] to [{maxx:.4f}, {maxy:.4f}]"
     )
     logger.info(
-        f"Total study area: {total_area:.2f} square degrees ({total_area * 111.32**2:.2f} km²)"
+        f"Total study area: {total_area:.2f} square degrees ({total_area * 111.32**2:.2f} km² approx)"
     )
 
     # Calculate optimal grid size using spatial statistical theory
@@ -183,7 +185,6 @@ def create_grid(
     logger.info(
         f"Calculated optimal grid size: {a_grid_size:.6f} degrees ({a_grid_size * 111.32:.2f} km)"
     )
-    logger.info("This means ~1 population data point per grid cell on average")
 
     # Use calculated optimal size if no manual override provided
     # Allows for adaptive grid resolution based on data density
@@ -192,7 +193,7 @@ def create_grid(
         logger.info("Using calculated optimal grid size")
     else:
         logger.info(
-            f"Using manual override grid size: {grid_size:.6f} degrees ({grid_size * 111.32:.2f} km)"
+            f"Using manual grid size: {grid_size:.6f} degrees ({grid_size * 111.32:.2f} km)"
         )
 
     # Calculate expected number of grid cells
@@ -724,7 +725,6 @@ def get_grids_of_data(
         logger.error("  NO SPATIAL OVERLAP between origins and grid!")
 
     # Sample a few points to check spatial join manually
-    # Sample a few points to check spatial join manually
     logger.info("Sample spatial join check:")
     for i in range(min(3, len(origins))):
         point = origins.iloc[i].geometry
@@ -961,6 +961,65 @@ def select_nbrs_with_sum(
     )
 
     return nbrs
+
+
+def plot_results(
+    grided_data: gpd.GeoDataFrame,
+    columns: list[str],
+    n_cols: int,
+    n_rows: int,
+    colors: list[str],
+    alpha: float = 0.8,
+    show_legends: bool = True,
+    edge_color: str = "white",
+    show_title: bool = True,
+    subplot_size: tuple = (8, 8),
+    title=None,
+) -> None:
+    """
+    args:
+    ----
+    `grided_data` is the geodataframe
+    `n_cols` is the number of cols in th plot
+    `n_rows` is the number of rows in th plot
+    `colors` if the list of color maps for each plot
+    `alpha` is the opacity of the colors
+    `show_legends` flag to turn legeneds on or off
+    `edge_color` to define the edge colors of the gridcells
+    `show_title` flag to show or hide the title
+    `subplot_size` is a tuple (width, height) for each individual subplot in inches
+    """
+    grid = grided_data.copy(deep=True)
+    single_fig_width, single_fig_height = subplot_size
+
+    fig = plt.figure(
+        figsize=(
+            single_fig_width * n_cols + n_cols,
+            single_fig_height * n_rows + n_rows,
+        )
+    )
+
+    for i, column in enumerate(columns, 1):
+        ax = plt.subplot(n_rows, n_cols, i)
+        grid.set_crs(epsg=4326, inplace=True)
+        grid.to_crs(epsg=3857).plot(
+            column=f"{column}",
+            legend=show_legends,
+            cmap=colors[i - 1],
+            edgecolor=edge_color,
+            linewidth=0.1,
+            alpha=alpha,
+            ax=ax,
+        )
+        ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron)
+        ax.axis("off")
+        if show_title:
+            if title is not None:
+                if len(title) == len(columns):
+                    ax.set_title(title[i - 1], fontsize=10, pad=10)
+    plt.tight_layout(pad=2.0)  # Add padding between subplots
+    plt.subplots_adjust(top=0.85, hspace=0.3, wspace=0.2)  # Manual adjustment
+    plt.show()
 
 
 async def get_clusters_for_sales_man(
@@ -1238,96 +1297,62 @@ async def get_clusters_for_sales_man(
         logger.warning(f"  {unassigned} cells remain unassigned")
 
     logger.info("Sales territory clustering completed successfully")
+    # logger.info("saving file")
+    # masked_grided_data.to_file("sales_territories.geojson", driver="GeoJSON")
+    # places.to_file("places.geojson", driver="GeoJSON")
 
+    # places["group"] = -1
+    # for i in masked_grided_data.group.unique():
+    #     cluster = (
+    #         masked_grided_data.loc[masked_grided_data.group == i]
+    #         .union_all()
+    #         .convex_hull
+    #     )
+    #     places.loc[places.geometry.within(cluster), "group"] = i
 
-    # import matplotlib.pyplot as plt
-    # colors = ["Greens", "Reds", "Blues", "Purples", "Oranges", "YlOrBr", "plasma"]
-    # data_columns = [col for col in masked_grided_data.columns if col != 'geometry']
-    # for i, column in enumerate(data_columns):
-    #     # Create a dataframe with geometry FIRST, then the data column
-    #     single_column_data = masked_grided_data[['geometry', column]].copy()
-        
+    # plot_results(
+    #     places,
+    #     ["group"],
+    #     1,
+    #     1,
+    #     ["tab20c"],
+    #     alpha=1,
+    #     show_legends=False,
+    #     edge_color=None,
+    #     show_title=True,
+    #     title=["Cluster of markets"],
+    # )
+
+    # for column, color, title in zip(
+    #     [
+    #         "number_of_persons",
+    #         "effective_population",
+    #         "number_of_supermarkets",
+    #         "number_of_potential_customers",
+    #     ],
+    #     ["Greens", "Reds", "Blues", "Purples"],
+    #     [
+    #         "Number of persons",
+    #         "Effective population",
+    #         "Number of supermarkets",
+    #         "Number of potential customers",
+    #     ],
+    # ):
     #     plot_results(
-    #         single_column_data, 
-    #         n_cols=1, 
-    #         n_rows=1, 
-    #         colors=[colors[i]], 
-    #         alpha=0.75, 
-    #         subplot_size=(8, 8)
+    #         masked_grided_data,
+    #         [column],
+    #         1,
+    #         1,
+    #         [color],
+    #         alpha=1,
+    #         show_legends=True,
+    #         edge_color=None,
+    #         show_title=True,
+    #         title=[title],
     #     )
 
-    # # For the group plot
-    # group_data = masked_grided_data[["geometry", "group"]].copy()
-    # plot_results(group_data, 1, 1, ["tab20c"], 
-    #             alpha=1, show_legends=False, edge_color=None, show_title=False, 
-    #             subplot_size=(6, 6))
-
+    # you now have two dataframes:
+    # 1 is the masked_grided_data containing the clusters for the population in the form of grids
+    # 2 is the places containing the points for each destination clustered using the group column
+    # So its up to you which one you ant to return or if you want to return
     return masked_grided_data.to_json()
-
-
-def plot_results(
-    grided_data: gpd.GeoDataFrame,
-    n_cols: int,
-    n_rows: int,
-    colors: list[str],
-    alpha: float = 0.8,
-    show_legends: bool = True,
-    edge_color: str = "white",
-    show_title: bool = True,
-    subplot_size: tuple = (8, 8),
-) -> None:
-    """
-    args:
-    ----
-    `grided_data` is the geodataframe
-    `n_cols` is the number of cols in th plot
-    `n_rows` is the number of rows in th plot
-    `colors` if the list of color maps for each plot
-    `alpha` is the opacity of the colors
-    `show_legends` flag to turn legeneds on or off
-    `edge_color` to define the edge colors of the gridcells
-    `show_title` flag to show or hide the title
-    `subplot_size` is a tuple (width, height) for each individual subplot in inches
-    """
-    grid = grided_data.copy(deep=True)
-    single_fig_width, single_fig_height = subplot_size
-
-    fig = plt.figure(
-        figsize=(
-            single_fig_width * n_cols + n_cols,
-            single_fig_height * n_rows + n_rows,
-        )
-    )
-
-    for i, column in enumerate(grid.columns[1:], 1):
-        ax = plt.subplot(n_rows, n_cols, i)
-        grid[f"log_{column}"] = np.log1p(grid[column])
-        vmax = grid[f"log_{column}"].quantile(0.95)
-        vmin = grid[f"log_{column}"].quantile(0.05)
-        grid.set_crs(epsg=4326, inplace=True)
-        grid.to_crs(epsg=3857).plot(
-            column=f"log_{column}",
-            legend=show_legends,
-            cmap=colors[i - 1],
-            edgecolor=edge_color,
-            linewidth=0.1,
-            vmin=vmin,
-            vmax=vmax,
-            alpha=alpha,
-            ax=ax,
-        )
-        ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron)
-        ax.axis("off")
-        if show_title:
-            # Use shorter, cleaner titles and smaller font
-            clean_title = (
-                column.replace("_", " ").replace("number of", "Count:").title()
-            )
-            ax.set_title(
-                clean_title, fontsize=10, pad=10
-            )  # Smaller font + padding
-
-    # Add proper spacing to prevent overlap
-    plt.tight_layout(pad=2.0)  # Add padding between subplots
-    plt.subplots_adjust(top=0.85, hspace=0.3, wspace=0.2)  # Manual adjustment
-    plt.show()
