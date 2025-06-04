@@ -30,6 +30,9 @@ import json
 import time
 from fastapi import HTTPException
 
+
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -533,6 +536,38 @@ async def load_dataset(dataset_id: str, fetch_full_plan_datasets=False) -> Dict:
     """
     Loads a dataset from file based on its ID.
     """
+
+    #TODO temporary soultion this shouldn't be needed if we were removing the properties from the dataset before saving
+    def select_sub_properties(dataset):
+        fields = [
+            "displayName", "rating", "formattedAddress", "internationalPhoneNumber",
+            "types", "priceLevel", "primaryType", "userRatingCount", "location",
+            "name", "id"
+        ]
+    
+        filtered_features = []
+    
+        for feature in dataset.get("features", []):
+            # Create new filtered feature with proper GeoJSON structure
+            filtered_feature = {
+                "type": feature.get("type", "Feature"),
+                "geometry": feature.get("geometry"),  # Keep the geometry
+                "properties": {}  # Start with empty properties dict
+            }
+            
+            # Only add the properties we want
+            feature_properties = feature.get("properties", {})
+            for field in fields:
+                if field in feature_properties:
+                    filtered_feature["properties"][field] = feature_properties[field]
+            
+            filtered_features.append(filtered_feature)
+    
+        # Update the dataset with filtered features
+        dataset["features"] = filtered_features
+        return dataset
+
+
     # if the dataset_id contains the word plan '21.57445341427591_39.1728_30000.0_mosque__plan_mosque_Saudi Arabia_Jeddah@#$9'
     # isolate the plan's name from the dataset_id = mosque__plan_mosque_Saudi Arabia_Jeddah
     # load the plan's json file
@@ -598,6 +633,8 @@ async def load_dataset(dataset_id: str, fetch_full_plan_datasets=False) -> Dict:
             # Create the final combined GeoJSON
             feat_collec["features"] = all_features
             feat_collec["properties"] = list(properties_set)
+        #TODO temporary soultion this shouldn't be needed if we were removing the properties from the dataset before saving
+        feat_collec = select_sub_properties(feat_collec)
     
     elif "real_estate" in dataset_id:
         # Parse the real estate dataset ID to extract bounding box and type
@@ -675,6 +712,9 @@ async def load_dataset(dataset_id: str, fetch_full_plan_datasets=False) -> Dict:
 
         if json_content:
             feat_collec = orjson.loads(json_content.get("response_data", "{}"))
+
+        #TODO temporary soultion this shouldn't be needed if we were removing the properties from the dataset before saving
+        feat_collec = select_sub_properties(feat_collec)
 
     return feat_collec
 

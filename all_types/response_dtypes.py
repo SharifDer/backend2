@@ -115,7 +115,7 @@ class NearestPointRouteResponse(BaseModel):
     routes: List[Union[RouteInfo, dict]]
 
 
-class ResGradientColorBasedOnZone(ResLyrMapData):
+class ResRecolorBasedon(ResLyrMapData):
     sub_lyr_id: str  # This is the additional property
 
 
@@ -141,7 +141,7 @@ class ResGetPaymentMethods(BaseModel):
 
 # types for llm agents
 class ResGradientColorBasedOnZoneLLM(BaseModel):
-    layers: List[ResGradientColorBasedOnZone]
+    layers: List[ResRecolorBasedon]
     explanation: str  # This is the additional property
 
 

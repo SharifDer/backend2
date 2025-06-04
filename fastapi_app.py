@@ -45,7 +45,7 @@ from all_types.request_dtypes import (
     ReqCostEstimate,
     ReqSavePrdcerCtlg,
     ReqDeletePrdcerCtlg,
-    ReqGradientColorBasedOnZone,
+    ReqRecolorBasedon,
     ReqStreeViewCheck,
     ReqSavePrdcerLyer,
     ReqFetchCtlgLyrs,
@@ -78,7 +78,7 @@ from all_types.response_dtypes import (
     ResFetchDataset,
     ResCostEstimate,
     ResAddPaymentMethod,
-    ResGradientColorBasedOnZone,
+    ResRecolorBasedon,
     ResGetPaymentMethods,
     ResLyrMapData,
     card_metadata,
@@ -707,15 +707,15 @@ async def ep_fetch_gradient_colors():
 
 @app.post(
     CONF.recolor_based,
-    response_model=ResModel[list[ResGradientColorBasedOnZone]],
+    response_model=ResModel[list[ResRecolorBasedon]],
 )
 async def ep_recolor_based_on(
-    req: ReqModel[ReqGradientColorBasedOnZone], request: Request
+    req: ReqModel[ReqRecolorBasedon], request: Request
 ):
     response = await request_handling(
         req.request_body,
-        ReqGradientColorBasedOnZone,
-        ResModel[list[ResGradientColorBasedOnZone]],
+        ReqRecolorBasedon,
+        ResModel[list[ResRecolorBasedon]],
         recolor_based_on,
         wrap_output=True,
     )
@@ -1149,13 +1149,13 @@ async def ep_process_color_based_on_agent(
 
 @app.post(
     CONF.filter_based_on,
-    response_model=ResModel[list[ResGradientColorBasedOnZone]],
+    response_model=ResModel[list[ResRecolorBasedon]],
 )
 async def filter_based_on_(req: ReqModel[ReqFilter], request: Request):
     response = await request_handling(
         req.request_body,
         ReqFilter,
-        ResModel[list[ResGradientColorBasedOnZone]],
+        ResModel[list[ResRecolorBasedon]],
         filter_based_on,
         wrap_output=True,
     )

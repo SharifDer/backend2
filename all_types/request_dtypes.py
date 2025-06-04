@@ -115,11 +115,11 @@ class ReqNearestRoute(ReqPrdcerLyrMapData):
     points: List[Coordinate]
 
 
-class ReqGradientColorBasedOnZone(BaseModel):
+class ReqRecolorBasedon(BaseModel):
     color_grid_choice: list[str]
     change_lyr_id: str
     change_lyr_name: str
-    change_lyr_orginal_color: Optional[str] = "#CCCCCC"
+    change_lyr_current_color: Optional[str] = "#CCCCCC"
     change_lyr_new_color: Optional[str] = "#FFFFFF"
     based_on_lyr_id: str
     based_on_lyr_name: str
@@ -127,6 +127,7 @@ class ReqGradientColorBasedOnZone(BaseModel):
     coverage_property: str  # [Drive_time or Radius]
     color_based_on: str  # ["rating" or "user_ratings_total"]
     list_names: Optional[List[str]] = []
+    comparison_type: str
     
 # User prompt -> llm
 class ReqPrompt(BaseModel):
@@ -139,7 +140,7 @@ class ValidationResult(BaseModel):
     reason: Optional[str] = None
     suggestions: Optional[List[str]] = None
     endpoint: Optional[str] = None
-    body: ReqGradientColorBasedOnZone = None
+    body: ReqRecolorBasedon = None
 
 
 
@@ -151,7 +152,7 @@ class ReqLLMFetchDataset(BaseModel):
         description = "Original query passed by the user."
     )
 
-class ReqFilter(ReqGradientColorBasedOnZone):
+class ReqFilter(ReqRecolorBasedon):
     threshold: float|str
     
 class ReqSrcDistination(BaseModel):

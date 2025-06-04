@@ -1,4 +1,4 @@
-from all_types.request_dtypes import (ReqGradientColorBasedOnZone,ValidationResult)
+from all_types.request_dtypes import (ReqRecolorBasedon,ValidationResult)
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
@@ -36,7 +36,7 @@ class ExplanationAgent:
 class ReqGradientColorBasedOnZoneAgent:
   def __init__(self):
     self.model=self.__getmodel()
-    self.parser=PydanticOutputParser(pydantic_object=ReqGradientColorBasedOnZone)
+    self.parser=PydanticOutputParser(pydantic_object=ReqRecolorBasedon)
     self.system_prompt=self.__create_system_prompt()
     self.format_instruction=self.parser.get_format_instructions()
     self.template=ChatPromptTemplate.from_messages(
@@ -372,7 +372,7 @@ class OutputValidationAgent:
         """
         return SYSTEM_PROMPT
     
-    def __call__(self, user_prompt: str, processed_output: ReqGradientColorBasedOnZone, available_layers) -> ValidationResult:
+    def __call__(self, user_prompt: str, processed_output: ReqRecolorBasedon, available_layers) -> ValidationResult:
         # Validate the output
         try:
             response = self.chain.invoke(
