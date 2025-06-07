@@ -385,7 +385,7 @@ def create_layer_configs(
     filter_type: str,
     comparison_type: str,
     threshold: float,
-    req: Any,
+    req: ReqRecolorBasedon,
     unit: str = ""
 ) -> List[LayerConfig]:
     """Create layer configurations based on filter type and comparison."""
@@ -404,7 +404,7 @@ def create_layer_configs(
                 "feature_key": "unmatched",
                 "category": "unmatched",
                 "name_suffix": "Unmatched Names",
-                "color": req.change_lyr_orginal_color,
+                "color": req.change_lyr_current_color,
                 "legend": "No name match",
                 "description": "Features without matching names",
             },
@@ -420,7 +420,7 @@ def create_layer_configs(
                 "feature_key": "within_time",
                 "category": "primary_condition",
                 "name_suffix": f"Drive Time {symbol} {threshold}m",
-                "color": req.color_grid_choice[0] if hasattr(req, 'color_grid_choice') else req.change_lyr_new_color,
+                "color": req.change_lyr_new_color,
                 "legend": f"Drive Time {symbol} {threshold} min",
                 "description": f"Points {primary_desc} drive time",
             },
@@ -428,7 +428,7 @@ def create_layer_configs(
                 "feature_key": "outside_time",
                 "category": "opposite_condition",
                 "name_suffix": f"Drive Time {'>' if comparison_type == 'less' else '<'} {threshold}m",
-                "color": req.color_grid_choice[-1] if hasattr(req, 'color_grid_choice') else req.change_lyr_current_color,
+                "color": req.change_lyr_current_color,
                 "legend": f"Drive Time {'>' if comparison_type == 'less' else '<'} {threshold} min",
                 "description": f"Points {opposite_desc} drive time",
             },
@@ -661,6 +661,7 @@ async def recolor_based_on(req: ReqRecolorBasedon) -> List[ResRecolorBasedon]:
     
     # Fetch datasets
     change_dataset, change_metadata = await given_layer_fetch_dataset(req.change_lyr_id)
+    city_name = change_metadata.get("city_name", "")
     
     # Handle name-based filtering
     if req.color_based_on == "name":
@@ -670,16 +671,11 @@ async def recolor_based_on(req: ReqRecolorBasedon) -> List[ResRecolorBasedon]:
             raise ValueError("based_on_lyr_id and change_lyr_id must be different.")
 
         filtered_features = filter_by_name(change_dataset, req.list_names)
-        layer_configs = create_layer_configs("name", req.comparison_type, 0, req)
-        base_name = f"{req.change_lyr_name}"
+        filter_type = "name"
+        base_name = req.change_lyr_name
         
-        return create_layers_from_config(
-            filtered_features, base_name, layer_configs, 
-            req.change_lyr_id, change_metadata.get("city_name", "")
-        )
-    
     # Handle coverage-based filtering
-    if hasattr(req, "coverage_property") and req.coverage_property:
+    elif hasattr(req, "coverage_property") and req.coverage_property:
         reference_dataset, _ = await given_layer_fetch_dataset(req.based_on_lyr_id)
         reference_coords = extract_coordinates(reference_dataset)
         target_coords = extract_coordinates(change_dataset)
@@ -689,11 +685,8 @@ async def recolor_based_on(req: ReqRecolorBasedon) -> List[ResRecolorBasedon]:
                 change_dataset, target_coords, reference_coords,
                 req.coverage_value, req.comparison_type
             )
-            layer_configs = create_layer_configs(
-                "drive_time", req.comparison_type, req.coverage_value, req
-            )
+            filter_type = "drive_time"
             base_name = f"{req.change_lyr_name} based on {req.based_on_lyr_name}"
-        
         else:  # radius
             valid_coords = filter_by_distance(
                 target_coords, reference_coords, req.coverage_value, 
@@ -702,18 +695,20 @@ async def recolor_based_on(req: ReqRecolorBasedon) -> List[ResRecolorBasedon]:
             filtered_features = create_filter_result_from_coords(
                 change_dataset, valid_coords, target_coords
             )
-            layer_configs = create_layer_configs(
-                "radius", req.comparison_type, req.coverage_value, req, "km"
-            )
-            base_name = f"{req.change_lyr_name}"
+            filter_type = "radius"
+            base_name = req.change_lyr_name
         
-        return create_layers_from_config(
-            filtered_features, base_name, layer_configs,
-            req.change_lyr_id, change_metadata.get("city_name", "")
-        )
-    
     # Handle gradient coloring
-    return await process_gradient_coloring(req)
+    else:
+        return await process_gradient_coloring(req)
+    
+    # Common layer creation logic
+    layer_configs = create_layer_configs(filter_type, req.comparison_type, 
+                                       getattr(req, 'coverage_value', 0), req)
+    layer = create_layers_from_config(
+        filtered_features, base_name, layer_configs, req.change_lyr_id, city_name
+    )
+    return layer
 
 
 async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:

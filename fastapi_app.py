@@ -430,22 +430,6 @@ async def prdcer_lyr_map_data(req: ReqModel[ReqPrdcerLyrMapData]):
     return response
 
 
-# @app.post(
-#     CONF.nearest_lyr_map_data,
-#     description="Get Nearest Point",
-#     response_model=ResModel[list[NearestPointRouteResponse]],
-# )
-# async def calculate_nearest_route(req: ReqModel[ReqNearestRoute]):
-#     response = await request_handling(
-#         req.request_body,
-#         ReqNearestRoute,
-#         ResModel[list[NearestPointRouteResponse]],
-#         fetch_nearest_points_Gmap,
-#         wrap_output=True,
-#     )
-#     return response
-
-
 @app.post(
     CONF.save_producer_catalog,
     response_model=ResModel[str],
@@ -1133,18 +1117,6 @@ async def ep_process_color_based_on_agent(
         wrap_output=True,
     )
     return response
-
-
-# from LLM import BusinessPromptRequest, BusinessPromptResponse, analyze_prompt_completeness,create_vector_store
-
-# vector_store = create_vector_store()
-
-
-# @app.post("/analyze-business-prompt")
-# async def analyze_business_prompt(request: BusinessPromptRequest):
-
-#     response = await analyze_prompt_completeness(request.user_prompt, vector_store=vector_store)
-#     return response
 
 
 @app.post(
