@@ -320,6 +320,8 @@ async def refresh_id_token(req: ReqRefreshToken) -> dict[str, Any]:
         response["localId"] = response["user_id"]
         # drop certain keys from reponse like id_token, refresh_token, expires_in, user_id
         keys_to_drop = ["id_token", "refresh_token", "expires_in", "user_id"]
+        # sync sleep
+        asyncio.sleep(1)
         response = {
             key: value
             for key, value in response.items()

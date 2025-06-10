@@ -890,7 +890,7 @@ city_handles = 500_tokens      # 5 handles × 100 tokens each
 
 ## 9. Complete Tool Architecture
 
-### The Single Data Fetcher Tool
+#### Tool 1: The Single Data Fetcher Tool
 
 ```python
 class UnifiedGeoDataFetcher:
@@ -924,8 +924,6 @@ class UnifiedGeoDataFetcher:
             inputSchema=ReqFetchDataset.model_json_schema()
         )
 ```
-
-### Additional Analysis Tools for Report Generation
 
 #### Tool 2: Market Intelligence Analyzer
 ```python

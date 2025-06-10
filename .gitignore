@@ -24,3 +24,5 @@ all_types/__pycache__/**
 # user files
 docker-compose.yml
 
+
+static/*

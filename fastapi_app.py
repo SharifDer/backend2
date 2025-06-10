@@ -1,7 +1,10 @@
 import logging
 import uuid
+import os
+import glob
+import time
+from fastapi.staticfiles import StaticFiles
 from typing import Optional, Type, Callable, Awaitable, Any, TypeVar, Union
-from backend_common.common_endpoints import app
 import stripe
 from fastapi import (
     Body,
@@ -15,6 +18,7 @@ from fastapi import (
     File,
     Form,
 )
+from all_types.response_dtypes import ResSalesman
 from fetch_dataset_llm import process_llm_query
 import json
 from backend_common.background import set_background_tasks
@@ -222,7 +226,32 @@ def create_formatted_example(model_class):
     return example
 
 
-# app = FastAPI()
+app = FastAPI()
+
+# Create static directory and mount static files
+os.makedirs("static/plots", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+def cleanup_old_plots(max_age_hours: int = 24, static_dir: str = "static/plots"):
+    """
+    Remove plot files older than specified hours
+    """
+    try:
+        pattern = os.path.join(static_dir, "*.png")
+        current_time = time.time()
+        max_age_seconds = max_age_hours * 3600
+        
+        deleted_count = 0
+        for filepath in glob.glob(pattern):
+            file_age = current_time - os.path.getctime(filepath)
+            if file_age > max_age_seconds:
+                os.remove(filepath)
+                deleted_count += 1
+                
+        logger.info(f"Cleaned up {deleted_count} old plot files")
+                
+    except Exception as e:
+        logger.error(f"Error during plot cleanup: {str(e)}")
 
 # Enable CORS
 origins = [CONF.enable_CORS_url]
@@ -251,6 +280,8 @@ async def background_tasks_middleware(request, call_next):
 async def startup_event():
     await Database.create_pool()
     await firebase_db.initialize_all()
+    # Clean up old plots on startup
+    cleanup_old_plots()
 
 
 @app.on_event("shutdown")
@@ -1166,9 +1197,10 @@ async def ep_fetch_population_by_viewport(
     return response
 
 
+
 @app.post(
     CONF.temp_sales_man_problem,
-    response_model=Any,
+    response_model=ResModel[ResSalesman],
     dependencies=[Depends(JWTBearer())],
 )
 async def ep_fetch_clusters_for_sales_man(
@@ -1177,7 +1209,7 @@ async def ep_fetch_clusters_for_sales_man(
     response = await request_handling(
         req.request_body,
         ReqClustersForSalesManData,
-        Any,
+        ResModel[ResSalesman],
         get_clusters_for_sales_man,
         wrap_output=True,
     )

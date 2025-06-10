@@ -1,0 +1,7 @@
+{
+  "fastapi_base_url": "http://fastapi-container:8000",
+  "port": 8001,
+  "session_ttl_hours": 8,
+  "cleanup_interval_hours": 1,
+  "temp_storage_path": "/tmp/sessions"
+}

@@ -15,7 +15,10 @@ import contextily as ctx
 from typing import Tuple
 import asyncio
 import logging
-
+import os
+import uuid
+from datetime import datetime
+from typing import Optional
 import matplotlib.pyplot as plt
 
 
@@ -975,19 +978,12 @@ def plot_results(
     show_title: bool = True,
     subplot_size: tuple = (8, 8),
     title=None,
-) -> None:
+    save_to_file: bool = False,
+    filename: Optional[str] = None,
+    static_dir: str = "static/plots",
+) -> Optional[str]:
     """
-    args:
-    ----
-    `grided_data` is the geodataframe
-    `n_cols` is the number of cols in th plot
-    `n_rows` is the number of rows in th plot
-    `colors` if the list of color maps for each plot
-    `alpha` is the opacity of the colors
-    `show_legends` flag to turn legeneds on or off
-    `edge_color` to define the edge colors of the gridcells
-    `show_title` flag to show or hide the title
-    `subplot_size` is a tuple (width, height) for each individual subplot in inches
+    Enhanced to optionally save plot as file and return URL path
     """
     grid = grided_data.copy(deep=True)
     single_fig_width, single_fig_height = subplot_size
@@ -1017,9 +1013,93 @@ def plot_results(
             if title is not None:
                 if len(title) == len(columns):
                     ax.set_title(title[i - 1], fontsize=10, pad=10)
-    plt.tight_layout(pad=2.0)  # Add padding between subplots
-    plt.subplots_adjust(top=0.85, hspace=0.3, wspace=0.2)  # Manual adjustment
-    plt.show()
+
+    plt.tight_layout(pad=2.0)
+    plt.subplots_adjust(top=0.85, hspace=0.3, wspace=0.2)
+
+    if save_to_file:
+        # Create directory if it doesn't exist
+        os.makedirs(static_dir, exist_ok=True)
+
+        # Generate unique filename
+        if filename is None:
+            filename = f"plot_{uuid.uuid4().hex[:8]}"
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        full_filename = f"{timestamp}_{filename}.png"
+        filepath = os.path.join(static_dir, full_filename)
+
+        # Save the plot
+        plt.savefig(filepath, dpi=300, bbox_inches="tight", facecolor="white")
+        plt.close(fig)  # Important: close to free memory
+
+        # Return URL path that FastAPI can serve
+        return f"/static/plots/{full_filename}"
+    else:
+        plt.show()
+        plt.close(fig)
+        return None
+
+
+def generate_all_plots(
+    masked_grided_data: gpd.GeoDataFrame,
+    places: gpd.GeoDataFrame,
+    request_id: str = None,
+) -> dict:
+    """
+    Generate all plots and save them as static files
+    """
+    if request_id is None:
+        request_id = uuid.uuid4().hex[:8]
+
+    plots = {}
+
+    # Cluster of markets plot
+    plots["cluster_markets"] = plot_results(
+        places,
+        ["group"],
+        1,
+        1,
+        ["tab20c"],
+        alpha=1,
+        show_legends=False,
+        edge_color=None,
+        show_title=True,
+        title=["Cluster of markets"],
+        save_to_file=True,
+        filename=f"{request_id}_cluster_markets",
+    )
+
+    # Individual metric plots
+    metrics = [
+        ("number_of_persons", "Greens", "Number of persons"),
+        ("effective_population", "Reds", "Effective population"),
+        ("number_of_supermarkets", "Blues", "Number of supermarkets"),
+        (
+            "number_of_potential_customers",
+            "Purples",
+            "Number of potential customers",
+        ),
+    ]
+
+    for column, color, title in metrics:
+        plot_key = column.replace("_", "-")
+        plots[plot_key] = plot_results(
+            masked_grided_data,
+            [column],
+            1,
+            1,
+            [color],
+            alpha=1,
+            show_legends=True,
+            edge_color=None,
+            show_title=True,
+            title=[title],
+            save_to_file=True,
+            filename=f"{request_id}_{column}",
+        )
+
+    return plots
 
 
 async def get_clusters_for_sales_man(
@@ -1301,58 +1381,39 @@ async def get_clusters_for_sales_man(
     # masked_grided_data.to_file("sales_territories.geojson", driver="GeoJSON")
     # places.to_file("places.geojson", driver="GeoJSON")
 
-    # places["group"] = -1
-    # for i in masked_grided_data.group.unique():
-    #     cluster = (
-    #         masked_grided_data.loc[masked_grided_data.group == i]
-    #         .union_all()
-    #         .convex_hull
-    #     )
-    #     places.loc[places.geometry.within(cluster), "group"] = i
+    places["group"] = -1
+    for i in masked_grided_data.group.unique():
+        cluster = (
+            masked_grided_data.loc[masked_grided_data.group == i]
+            .union_all()
+            .convex_hull
+        )
+        places.loc[places.geometry.within(cluster), "group"] = i
 
-    # plot_results(
-    #     places,
-    #     ["group"],
-    #     1,
-    #     1,
-    #     ["tab20c"],
-    #     alpha=1,
-    #     show_legends=False,
-    #     edge_color=None,
-    #     show_title=True,
-    #     title=["Cluster of markets"],
-    # )
-
-    # for column, color, title in zip(
-    #     [
-    #         "number_of_persons",
-    #         "effective_population",
-    #         "number_of_supermarkets",
-    #         "number_of_potential_customers",
-    #     ],
-    #     ["Greens", "Reds", "Blues", "Purples"],
-    #     [
-    #         "Number of persons",
-    #         "Effective population",
-    #         "Number of supermarkets",
-    #         "Number of potential customers",
-    #     ],
-    # ):
-    #     plot_results(
-    #         masked_grided_data,
-    #         [column],
-    #         1,
-    #         1,
-    #         [color],
-    #         alpha=1,
-    #         show_legends=True,
-    #         edge_color=None,
-    #         show_title=True,
-    #         title=[title],
-    #     )
-
+    # Generate unique request ID for this session
+    request_id = uuid.uuid4().hex[:8]
+    logger.info(f"Generating plots for request {request_id}")
+    
+    # Generate plots and get their URLs
+    plot_urls = generate_all_plots(masked_grided_data, places, request_id)
+    
+    logger.info("Sales territory clustering and plot generation completed successfully")
+    
     # you now have two dataframes:
     # 1 is the masked_grided_data containing the clusters for the population in the form of grids
     # 2 is the places containing the points for each destination clustered using the group column
     # So its up to you which one you ant to return or if you want to return
-    return masked_grided_data.to_json()
+    # Return both data and plot URLs
+    return {
+        "success": True,
+        "request_id": request_id,
+        "plots": plot_urls,
+        "metadata": {
+            "total_customers": int(total_customers),
+            "clusters_created": clusters_created,
+            "target_customers_per_territory": int(equitable_share),
+            "city_name": req.city_name,
+            "country_name": req.country_name
+        }
+    }
+

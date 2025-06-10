@@ -27,3 +27,7 @@ contextily
 geopandas
 shapely
 python-dateutil
+pydantic-ai
+mcp
+mcp[cli]
+sse-starlette

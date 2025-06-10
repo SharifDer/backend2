@@ -193,3 +193,10 @@ class PopulationViewportData(BaseModel):
     min_lat: Optional[float] = None
     max_lng: Optional[float] = None
     max_lat: Optional[float] = None
+
+
+class ResSalesman(BaseModel):
+    success: bool
+    request_id: str
+    plots: dict[str, str]
+    metadata: dict[str, Any]

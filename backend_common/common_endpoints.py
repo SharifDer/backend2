@@ -1,38 +1,10 @@
 from fastapi import Body, HTTPException, status, FastAPI, Request, Depends
 from backend_common.auth import JWTBearer
-from backend_common.dtypes.auth_dtypes import (
-    ReqCreateFirebaseUser,
-    ReqChangeEmail,
-    ReqResetPassword,
-    ReqConfirmReset,
-    ReqChangePassword,
-    ReqRefreshToken,
-    UserId,
-    ReqUserLogin,
-    ReqUserProfile,
-    ReqUserProfile,
-)
-from backend_common.request_processor import request_handling
-from typing import Dict, List, TypeVar, Generic, Literal, Any, Optional, Union
-from backend_common.auth import (
-    create_firebase_user,
-    login_user,
-    my_verify_id_token,
-    reset_password,
-    confirm_reset,
-    change_password,
-    refresh_id_token,
-    change_email,
-)
-from backend_common.stripe_backend.customers import create_stripe_customer
-
-app = FastAPI()
 
 
-@app.get("/index", dependencies=[Depends(JWTBearer())])
-# this needs to use request_handling
-def index():
-    return {"message": "Hello World"}
+
+
+
 
 
 # @app.post("/create_firebase_stripe_user", response_model=list[Dict[Any, Any]])
