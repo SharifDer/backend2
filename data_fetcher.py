@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime, timezone
 import logging
 import random
+from fuzzywuzzy import process, fuzz
 import re
 import asyncio
 from urllib.parse import unquote, urlparse
@@ -103,13 +104,13 @@ async def fetch_census_realestate(
         if data_type == "real_estate" or (
             data_type == "commercial" and req.country_name == "Saudi Arabia"
         ):
-            (dataset, 
-            bknd_dataset_id, 
-            next_page_token) = await get_real_estate_dataset_from_storage(
-                bknd_dataset_id,
-                req=req,
-                next_page_token=next_page_token,
-                data_type=data_type,
+            (dataset, bknd_dataset_id, next_page_token) = (
+                await get_real_estate_dataset_from_storage(
+                    bknd_dataset_id,
+                    req=req,
+                    next_page_token=next_page_token,
+                    data_type=data_type,
+                )
             )
             if dataset:
                 dataset = convert_strings_to_ints(dataset)
@@ -222,7 +223,8 @@ def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
     Returns:
     - Special category if ALL terms belong to that category
     - "google_categories" if ANY terms are Google or custom terms
-    - Raises error if mixing Google/custom with special categories
+    - Raises HTTPException if any terms are not in approved categories (with fuzzy suggestions)
+    - Raises HTTPException if mixing Google/custom with special categories
     """
     if not boolean_query:
         return None
@@ -247,6 +249,44 @@ def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
     if not terms:
         return None
 
+    # Create a set of all approved terms from all categories and organize by category
+    approved_terms = set()
+    categories_with_terms = {}
+
+    for category_name, category_terms in categories.items():
+        if isinstance(category_terms, list):
+            approved_terms.update(category_terms)
+            categories_with_terms[category_name] = category_terms
+
+    # Check if all terms are in the approved list
+    invalid_terms = terms - approved_terms
+    if invalid_terms:
+        # Generate fuzzy suggestions for each invalid term
+        suggestions = {}
+        for invalid_term in invalid_terms:
+            # Get top 1 closest match
+            closest_match = process.extractOne(
+                invalid_term, list(approved_terms), scorer=fuzz.ratio
+            )
+
+            # Only suggest if score > 60 to avoid poor suggestions
+            if closest_match and closest_match[1] > 60:
+                suggestions[invalid_term] = {"did_you_mean": closest_match[0]}
+            else:
+                suggestions[invalid_term] = {"message": "No close match found"}
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "message": "Invalid terms found in boolean query",
+                "invalid_terms": list(invalid_terms),
+                "suggestions": suggestions,
+                "help": "Use terms from the approved categories list below or try the suggested alternatives",
+                "available_categories": categories_with_terms,
+                "total_available_terms": len(approved_terms),
+            },
+        )
+
     # Check non-Google categories first
     for category, category_terms in categories.items():
         if category not in GOOGLE_CATEGORIES:
@@ -254,8 +294,35 @@ def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
             if matches:
                 # If we found any special category terms, ALL terms must belong to this category
                 if len(matches) != len(terms):
-                    raise ValueError(
-                        "Cannot mix special category terms with other terms"
+                    non_matching_terms = terms - matches
+
+                    # Generate suggestions for non-matching terms within this category
+                    category_suggestions = {}
+                    for term in non_matching_terms:
+                        closest_in_category = process.extractOne(
+                            term, category_terms, scorer=fuzz.ratio
+                        )
+
+                        if closest_in_category and closest_in_category[1] > 60:
+                            category_suggestions[term] = {
+                                "did_you_mean": closest_in_category[0]
+                            }
+                        else:
+                            category_suggestions[term] = {
+                                "message": f"No close match in {category} category"
+                            }
+
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail={
+                            "message": f"Cannot mix {category} terms with other category terms",
+                            "category": category,
+                            "valid_category_terms": list(matches),
+                            "invalid_mixed_terms": list(non_matching_terms),
+                            "suggestions": category_suggestions,
+                            "suggestion": f"Use only {category} terms or only general/Google category terms",
+                            "available_categories": categories_with_terms,
+                        },
                     )
                 return category
 
@@ -397,9 +464,6 @@ async def fetch_dataset(req: ReqFetchDataset):
         ReqCityCountry(country_name=req.country_name, city_name=req.city_name)
     )
 
-    # if search type contains "category_search" and "keyword_search", need to escape the spaces in the keyword items
-
-    # Now using boolean_query instead of included_types
     data_type = determine_data_type(req.boolean_query, categories)
 
     if (
@@ -830,7 +894,6 @@ async def fetch_ctlg_lyrs(req: ReqFetchCtlgLyrs) -> List[ResLyrMapData]:
         raise
 
 
-
 async def load_area_intelligence_categories(req: ReqCityCountry = "") -> Dict:
     """
     Loads and returns a dictionary of area intelligence categories.
@@ -843,12 +906,6 @@ async def poi_categories(req: ReqCityCountry = "") -> Dict:
     Provides a comprehensive list of place categories, including Google places,
     real estate, and other custom categories.
     """
-    # google_categories = load_google_categories()
-
-    # get city lat and long
-    # geo_data = get_req_geodata(req.city_name, req.country_name)
-    # non_ggl_categories = fetch_db_categories_by_lat_lng(geo_data.bounding_box)
-    # categories = {**google_categories, **non_ggl_categories}
 
     # combine all category types
     categories = {
@@ -951,6 +1008,7 @@ async def load_distance_drive_time_polygon(req: ReqSrcDistination) -> dict:
         "drive_time_in_min": round(drive_time_minutes, 2),
         "drive_polygon": leg.polyline,
     }
+
 
 async def update_profile(req):
     return await update_user_profile_settings(req)

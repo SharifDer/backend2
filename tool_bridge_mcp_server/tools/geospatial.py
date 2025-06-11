@@ -35,6 +35,8 @@ FASTAPI_BASE_URL = "http://localhost:8000"
 def register_geospatial_tools(mcp: FastMCP):
     """Register all geospatial tools by defining them within this function's scope."""
 
+    logger.info("Registering geospatial tools with MCP server")
+
     # --- The tool is now a simple decorated function, not a class method ---
     @mcp.tool(
         name="fetch_geospatial_data",

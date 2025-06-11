@@ -1,3 +1,7 @@
+# ===== CONFIGURE LOGGING FIRST =====
+# Import the configured logger
+from mcp_logging import logger
+from mcp_logging import setup_session_logging
 import os
 import sys
 
@@ -14,8 +18,6 @@ from config_factory import CONF  # You'll need your FastAPI CONF object
 import asyncio
 import json
 import uuid
-import argparse
-import logging
 import sys
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Tuple
@@ -24,14 +26,13 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
-# REMOVED: from typing import cast
 
 # FastMCP imports
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 # --- NEW IMPORT FROM THE CONTEXT FILE ---
-from context import AppContext, get_app_context
+from context import AppContext
 
 # Import your async JSON utilities
 from backend_common.common_storage import use_json, convert_to_serializable
@@ -43,14 +44,6 @@ from tools.optimize_sales_territories import (
     register_territory_optimization_tools,
 )
 from tools.auth_tools import register_auth_tools
-
-# ===== Logging Configuration =====
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stderr)],
-)
-logger = logging.getLogger(__name__)
 
 
 # ===== Configuration =====
@@ -75,7 +68,7 @@ class SessionManager:
         )
 
     async def create_session(self) -> SessionInfo:
-        """Create a new session with unique ID"""
+        """Create a new session with dedicated logging"""
         session_id = str(uuid.uuid4())[:8]
         session_path = self.base_path / session_id
         session_path.mkdir(parents=True, exist_ok=True)
@@ -86,18 +79,34 @@ class SessionManager:
             + timedelta(hours=config.session_ttl_hours),
         )
 
-        # Store session metadata using async use_json
+        # Store session metadata
         metadata_path = str(session_path / "session_metadata.json")
         session_data = convert_to_serializable(session_info.model_dump())
         await use_json(metadata_path, "w", session_data)
 
+
+
+        setup_session_logging(session_id, session_path)
+
         self.current_session = session_info
         logger.info(
-            "Created new session: %s (expires: %s)",
-            session_id,
-            session_info.expires_at,
+            f"Created new session: {session_id} (expires: {session_info.expires_at})"
         )
+
         return session_info
+
+    async def cleanup_session(self, session_id: str):
+        """Clean up session and its logging"""
+        from .mcp_logging import end_session_logging
+
+        end_session_logging(session_id)
+
+        import shutil
+
+        session_path = self.base_path / session_id
+        if session_path.exists():
+            shutil.rmtree(session_path)
+            logger.info("Cleaned up expired session: %s", session_id)
 
     async def get_current_session(self) -> Optional[SessionInfo]:
         """Get current session"""
@@ -225,15 +234,6 @@ class SessionManager:
 
         # Token is still valid, return it
         return session.user_id, session.id_token
-
-    async def cleanup_session(self, session_id: str):
-        """Clean up expired session files"""
-        import shutil
-
-        session_path = self.base_path / session_id
-        if session_path.exists():
-            shutil.rmtree(session_path)
-            logger.info("Cleaned up expired session: %s", session_id)
 
 
 class HandleManager:
@@ -758,6 +758,7 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
 
 # ===== FastMCP Server =====
 mcp = FastMCP("saudi-location-intelligence", lifespan=app_lifespan)
+
 # Register all tools
 # --- NEW REGISTRATION CALL ---
 register_auth_tools(mcp)
@@ -798,7 +799,6 @@ def get_server_config() -> str:
 def main():
     """Main entry point with hot reloading enabled"""
     logger.info("🇸🇦 Saudi Location Intelligence MCP Server")
-    logger.info("🔥 Hot reloading enabled for development")
 
     # You can still check sys.argv manually if needed
     transport = "stdio"  # or "sse"

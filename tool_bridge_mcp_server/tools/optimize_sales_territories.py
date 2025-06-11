@@ -92,7 +92,7 @@ def register_territory_optimization_tools(mcp: FastMCP):
             description="Maximum distance customers will travel to reach services (km). Typical values: 2-5km urban, 5-15km rural"
         ),
         boolean_query: str = Field(
-            default="supermarket OR grocery OR retail",
+            default="supermarket OR grocery_store OR retail",
             description="Business categories to analyze. Examples: 'supermarket', 'restaurant AND NOT fast_food', 'retail OR shopping'"
         ),
         include_raw_data: bool = Field(
