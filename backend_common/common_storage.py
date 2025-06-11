@@ -1,3 +1,5 @@
+# --- START OF FILE backend_common/common_storage.py ---
+
 import logging
 import uuid
 from datetime import datetime, date
@@ -18,9 +20,6 @@ from backend_common.logger import logging
 logger = logging.getLogger(__name__)
 
 
-
-
-
 class FileLock:
     def __init__(self):
         self.locks = {}
@@ -39,12 +38,6 @@ file_lock_manager = FileLock()
 def to_serializable(obj: Any) -> Any:
     """
     Convert a Pydantic model or any other object to a JSON-serializable format.
-
-    Args:
-    obj (Any): The object to convert.
-
-    Returns:
-    Any: A JSON-serializable representation of the object.
     """
     if isinstance(obj, dict):
         return {k: to_serializable(v) for k, v in obj.items()}
@@ -65,15 +58,6 @@ def to_serializable(obj: Any) -> Any:
 def convert_to_serializable(obj: Any) -> Any:
     """
     Convert an object to a JSON-serializable format and verify serializability.
-
-    Args:
-    obj (Any): The object to convert.
-
-    Returns:
-    Any: A JSON-serializable representation of the object.
-
-    Raises:
-    ValueError: If the object cannot be serialized to JSON.
     """
     try:
         serializable_obj = to_serializable(obj)
@@ -89,8 +73,10 @@ async def use_json(
     async with file_lock_manager.acquire(file_path):
         if mode == "w":
             try:
+                # --- MODIFIED: Writes compact JSON for speed ---
+                content_to_write = await to_json_string_async(json_content)
                 async with aiofiles.open(file_path, mode="w") as file:
-                    await file.write(json.dumps(json_content, indent=2))
+                    await file.write(content_to_write)
             except IOError:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -117,3 +103,27 @@ async def use_json(
         else:
             raise ValueError("Invalid mode. Use 'r' for read or 'w' for write.")
 
+# --- MODIFIED ASYNC UTILITY FUNCTION ---
+async def to_json_string_async(
+    data_obj: Any, indent: Optional[int] = None, ensure_ascii: bool = False
+) -> str:
+    """
+    Asynchronously converts a Python object to a compact JSON string.
+
+    This function uses asyncio.to_thread to run the CPU-bound json.dumps
+    in a separate thread, preventing it from blocking the main event loop.
+    By default, `indent` is None, creating a compact string for maximum performance.
+
+    Args:
+        data_obj (Any): The Python object to serialize.
+        indent (Optional[int]): For debugging, can be set to 2 for pretty-printing.
+        ensure_ascii (bool): If False, allows non-ASCII characters.
+
+    Returns:
+        str: A JSON formatted string (compact by default).
+    """
+    # NOTE: `separators` is the key for the most compact representation.
+    separators = (',', ':') if indent is None else None
+    return await asyncio.to_thread(
+        json.dumps, data_obj, indent=indent, ensure_ascii=ensure_ascii, separators=separators
+    )

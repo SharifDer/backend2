@@ -1,6 +1,7 @@
 # --- START OF FILE tools/auth_tools.py ---
 
 import aiohttp
+import asyncio
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
 
@@ -13,9 +14,11 @@ sys.path.insert(
 )
 from config_factory import CONF
 
-# --- NEW, TYPED IMPORT ---
-# We import both the helper and the context class for full type support.
+
 from tool_bridge_mcp_server.context import get_app_context
+
+# Import the new async utility from your common storage module
+from backend_common.common_storage import to_json_string_async
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,6 +30,8 @@ def register_auth_tools(mcp: FastMCP):
     """
 
     logger.info("Registering authentication tools with MCP server")
+
+    # ... (user_login and list_stored_data tools remain unchanged) ...
 
     @mcp.tool()
     async def user_login(
@@ -131,7 +136,36 @@ def register_auth_tools(mcp: FastMCP):
             logger.exception("Error listing stored data")
             return f"❌ Error listing data: {str(e)}"
 
-# In your auth_tools.py or create debug_tools.py
+    @mcp.tool()
+    async def get_data_from_handle(
+        handle: str = Field(
+            description="The data handle of the file to inspect (e.g., 'territory_optimization_riyadh_...json')."
+        ),
+    ) -> str:
+        """
+        Retrieves and displays the raw, pretty-printed JSON content of a stored data file.
+        This tool is fully asynchronous to avoid blocking the server.
+        """
+        try:
+            app_ctx = get_app_context(mcp)
+            session_manager = app_ctx.session_manager
+            handle_manager = app_ctx.handle_manager
+
+            session = await session_manager.get_current_session()
+            if not session:
+                return "❌ No active session found."
+
+            data = await handle_manager.read_data(handle)
+            if data is None:
+                return f"❌ Error: No data found for handle `{handle}`."
+
+            # We explicitly ask for pretty-printing just for this tool's output
+            pretty_json = await to_json_string_async(data, indent=2)
+
+            return f"📄 **Content of data handle `{handle}`:**\n\n```json\n{pretty_json}\n```"
+        except Exception as e:
+            logger.exception(f"Error retrieving data from handle: {handle}")
+            return f"❌ An unexpected error occurred while reading handle `{handle}`: {str(e)}"
 
     @mcp.tool()
     async def get_current_session_logs(lines: int = 50) -> str:
@@ -143,30 +177,34 @@ def register_auth_tools(mcp: FastMCP):
             # Get current session from context
             app_ctx = get_app_context(mcp)
             session_manager = app_ctx.session_manager
-            
+
             session = await session_manager.get_current_session()
             if not session:
                 return "❌ No active session found"
-            
+
             session_id = session.session_id
-            
+
             # Find the current session log file
             session_path = session_manager.base_path / session_id
             log_files = list(session_path.glob(f"session_{session_id}_*.log"))
-            
+
             if not log_files:
                 return f"📂 No log file found for session {session_id}"
-            
+
             # Get the most recent log file for this session
             current_log_file = max(log_files, key=lambda f: f.stat().st_mtime)
-            
-            with open(current_log_file, 'r', encoding='utf-8') as f:
+
+            with open(current_log_file, "r", encoding="utf-8") as f:
                 all_lines = f.readlines()
-                recent_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
-            
-            return f"📋 **Your Session ({session_id}) - Recent {len(recent_lines)} log entries:**\n\n" + "".join(recent_lines)
-            
+                recent_lines = (
+                    all_lines[-lines:] if len(all_lines) > lines else all_lines
+                )
+
+            return (
+                f"📋 **Your Session ({session_id}) - Recent {len(recent_lines)} log entries:**\n\n"
+                + "".join(recent_lines)
+            )
+
         except Exception as e:
             logger.exception("Error reading current session logs")
             return f"❌ Error reading session logs: {str(e)}"
-# --- END OF FILE tools/auth_tools.py ---

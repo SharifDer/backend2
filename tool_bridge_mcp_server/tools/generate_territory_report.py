@@ -646,20 +646,20 @@ def register_territory_report_tools(mcp: FastMCP):
 
             # Retrieve and validate data
             try:
-                territory_data = await handle_manager.read_data_from_handle(data_handle)
+                territory_data = await handle_manager.read_data(data_handle)
                 if not territory_data or not territory_data.get("success"):
-                    return f"❌ Error: Invalid data for handle `{data_handle}`. Please run territory optimization again."
+                    return f"❌ Error: Invalid or unsuccessful data for handle `{data_handle}`. Please run territory optimization again."
             except Exception as e:
-                return f"❌ Error retrieving data: {str(e)}"
+                return f"❌ Error retrieving data for handle `{data_handle}`: {str(e)}"
 
-            # Extract data components
-            full_data = safe_get(territory_data, "data", {})
-            metadata = safe_get(full_data, "metadata", {})
-            plots = safe_get(full_data, "plots", {})
+
+            metadata = safe_get(territory_data, "metadata", {})
+            plots = safe_get(territory_data, "plots", {})
             request_id = safe_get(territory_data, "request_id", "unknown")
-            territory_analytics = safe_get(full_data, "territory_analytics", [])
-            business_insights = safe_get(full_data, "business_insights", {})
-            performance_metrics = safe_get(full_data, "performance_metrics", {})
+            territory_analytics = safe_get(territory_data, "territory_analytics", [])
+            business_insights = safe_get(territory_data, "business_insights", {})
+            performance_metrics = safe_get(territory_data, "performance_metrics", {})
+
 
             if not metadata:
                 return "❌ Error: No metadata found in territory data. Please run territory optimization again."
@@ -696,5 +696,4 @@ def register_territory_report_tools(mcp: FastMCP):
         except Exception as e:
             logger.exception("Critical error in generate_territory_report")
             return f"❌ Error generating report: {str(e)}"
-
 # --- END OF FILE generate_territory_report.py ---
