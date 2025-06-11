@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, cast
 # This helps prevent circular dependencies if you add more complex types
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
-    from .mcp_server import SessionManager, DataHandleManager
+    from .mcp_server import SessionManager, HandleManager
 
 @dataclass
 class AppContext:
@@ -24,7 +24,7 @@ class AppContext:
     without creating a circular dependency.
     """
     session_manager: "SessionManager"
-    handle_manager: "DataHandleManager"
+    handle_manager: "HandleManager"
 
 def get_app_context(mcp: "FastMCP") -> AppContext:
     """

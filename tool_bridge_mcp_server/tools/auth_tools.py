@@ -79,4 +79,35 @@ def register_auth_tools(mcp: FastMCP):
             logger.exception("An unexpected error occurred during the login process.")
             return "An internal error occurred during login. Please try again later."
 
+
+    @mcp.tool(
+        name="list_stored_data",
+        description="List all stored data files in your current session"
+    )
+    async def list_stored_data() -> str:
+        """List all data files stored in the current session"""
+        try:
+            app_ctx = get_app_context(mcp)
+            session_manager = app_ctx.session_manager
+            handle_manager = app_ctx.handle_manager
+
+            session = await session_manager.get_current_session()
+            if not session:
+                return "❌ No active session found."
+
+            files = await handle_manager.list_session_data(session.session_id)
+            
+            if not files:
+                return "📂 No data files found in current session."
+
+            result = "📂 **Stored Data Files**:\n\n"
+            for file_info in files:
+                result += f"• **{file_info['handle']}** ({file_info['data_type']} - {file_info['location']})\n"
+                result += f"  Size: {file_info['size_bytes']:,} bytes | Modified: {file_info['modified_at']}\n\n"
+            
+            return result
+
+        except Exception as e:
+            logger.exception("Error listing stored data")
+            return f"❌ Error listing data: {str(e)}"
 # --- END OF FILE tools/auth_tools.py ---

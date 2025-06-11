@@ -1,6 +1,8 @@
 import os
 import sys
 
+from mcp_dtypes import DataHandle, SessionInfo
+
 # Add the grandparent directory to sys.path for imports
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -16,16 +18,17 @@ import argparse
 import logging
 import sys
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, Tuple
 from pathlib import Path
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+
 # REMOVED: from typing import cast
 
 # FastMCP imports
 from mcp.server.fastmcp import FastMCP
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 # --- NEW IMPORT FROM THE CONTEXT FILE ---
 from context import AppContext, get_app_context
@@ -35,12 +38,15 @@ from backend_common.common_storage import use_json, convert_to_serializable
 
 # Tool imports
 from tools.geospatial import register_geospatial_tools
-from tools.market_intelligence import register_market_intelligence_tools
-from tools.site_optimization import register_site_optimization_tools
+from tools.generate_territory_report import register_territory_report_tools
+from tools.optimize_sales_territories import (
+    register_territory_optimization_tools,
+)
 from tools.auth_tools import register_auth_tools
+
 # ===== Logging Configuration =====
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler(sys.stderr)],
 )
@@ -53,45 +59,10 @@ class Config(BaseModel):
 
     session_ttl_hours: int = 8
     cleanup_interval_hours: int = 1
-    temp_storage_path: str = "/tmp/sessions"
+    temp_storage_path: str = str(Path(__file__).parent / "sessions")
 
 
 config = Config()
-
-
-# ===== Data Models =====
-class DataHandle(BaseModel):
-    """Lightweight handle for stored data"""
-
-    data_handle: str = Field(description="Unique identifier for the data")
-    session_id: str = Field(description="Session this data belongs to")
-    data_type: str = Field(description="Type of data stored")
-    location: Optional[str] = Field(
-        default=None, description="Geographic location if applicable"
-    )
-    created_at: datetime = Field(default_factory=datetime.now)
-    expires_at: datetime = Field(description="When this handle expires")
-    file_path: str = Field(description="Path to the JSON file storing the data")
-    summary: Dict[str, Any] = Field(
-        description="Summary statistics about the data"
-    )
-    schema_info: Dict[str, str] = Field(
-        description="Schema of the stored data", alias="schema"
-    )
-
-
-class SessionInfo(BaseModel):
-    """Session management information"""
-
-    session_id: str
-    created_at: datetime = Field(default_factory=datetime.now)
-    expires_at: datetime
-    data_handles: List[str] = Field(default_factory=list)
-    # --- NEW FIELDS FOR AUTH ---
-    user_id: Optional[str] = None
-    id_token: Optional[str] = None
-    refresh_token: Optional[str] = None
-    token_expires_at: Optional[datetime] = None
 
 
 # ===== Session Manager =====
@@ -265,184 +236,479 @@ class SessionManager:
             logger.info("Cleaned up expired session: %s", session_id)
 
 
-# ===== Data Handle Manager =====
-class DataHandleManager:
+class HandleManager:
     def __init__(self, session_manager: SessionManager):
         self.session_manager = session_manager
-        logger.info("Data handle manager initialized")
+        logger.info("Effective data manager initialized")
 
-    async def store_data_and_create_handle(
-        self,
-        data: Any,
-        data_type: str,
-        location: str,
-        session_id: str,
-        summary: Dict[str, Any] = None,
-    ) -> DataHandle:
-        """Store data in JSON file and return lightweight handle"""
-        timestamp = datetime.now().strftime("%Y%m%d")
-        handle_id = f"{data_type}_{location}_{timestamp}_{session_id}"
+    async def store_data(self, data_type: str, location: str, data: Any) -> str:
+        """Store data and return simple handle"""
 
-        session_path = self.session_manager.base_path / session_id
-        file_name = f"{data_type}_{location}.json"
-        file_path = str(session_path / file_name)
+        session = await self.session_manager.get_current_session()
+        session_path = self.session_manager.base_path / session.session_id
+        session_path.mkdir(parents=True, exist_ok=True)
+        session_id = session.session_id if session else "unknown"
 
-        # Convert data to serializable format
-        if isinstance(data, BaseModel):
-            data_dict = convert_to_serializable(data.model_dump())
-        else:
-            data_dict = convert_to_serializable(data)
-
-        # Store data as JSON using async use_json
-        await use_json(file_path, "w", data_dict)
-
-        if summary is None:
-            summary = self._generate_summary(data_dict)
-
-        handle = DataHandle(
-            data_handle=handle_id,
-            session_id=session_id,
-            data_type=data_type,
-            location=location,
-            expires_at=datetime.now()
-            + timedelta(hours=config.session_ttl_hours),
-            file_path=file_path,
-            summary=summary,
-            schema_info=self._extract_schema(data_dict),
-        )
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        handle = f"{data_type}_{location}_{timestamp}_{session_id}.json"
+        file_path = str(session_path / handle)
 
         logger.info(
-            "Created data handle: %s for %s data in %s",
-            handle_id,
-            data_type,
-            location,
+            f"STORE: Saving {data_type} data for {location} to {handle}"
         )
+
+        # Convert and store data
+        serializable_data = convert_to_serializable(data)
+        await use_json(file_path, "w", serializable_data)
+
+        # Touch session to update access time for cleanup
+        await self._touch_session(session.session_id)
+
+        logger.info(f"STORE: Successfully stored data with handle: {handle}")
         return handle
 
-    async def read_data_from_handle(self, handle_id: str) -> Optional[Dict]:
-        """Read data from handle"""
+    async def read_data(self, handle: str) -> Optional[Dict]:
+        """Read data using simple handle"""
         session = await self.session_manager.get_current_session()
-        if not session:
-            logger.warning(
-                "No current session when trying to read handle: %s", handle_id
-            )
-            return None
+        session_path = self.session_manager.base_path / session.session_id
+        file_path = str(session_path / handle)
 
-        parts = handle_id.split("_")
-        if len(parts) >= 3:
-            data_type = parts[0]
-            location = parts[1]
+        logger.info(f"READ: Loading data from handle: {handle}")
 
-            session_path = self.session_manager.base_path / session.session_id
-            file_path = str(session_path / f"{data_type}_{location}.json")
-
-            # Read data using async use_json
+        if os.path.exists(file_path):
             data = await use_json(file_path, "r")
-            if data is not None:
-                logger.info("Successfully read data from handle: %s", handle_id)
+            if data:
+                # Update session access time
+                await self._touch_session(session.session_id)
+                logger.info(f"READ: Successfully loaded data from {handle}")
                 return data
-            else:
-                logger.warning(
-                    "File not found for handle: %s at path: %s",
-                    handle_id,
-                    file_path,
-                )
-        else:
-            logger.warning("Invalid handle format: %s", handle_id)
+
+        logger.warning(f"READ: No data found for handle: {handle}")
         return None
 
-    async def update_handle_registry(self, session_id: str, handle_id: str):
-        """Update session metadata with new handle"""
-        session_path = self.session_manager.base_path / session_id
-        metadata_path = str(session_path / "session_metadata.json")
+    async def list_session_data(
+        self, session_id: str = None
+    ) -> list[Dict[str, Any]]:
+        """List all data files in a session"""
+        if not session_id:
+            session = await self.session_manager.get_current_session()
+            session_id = session.session_id if session else None
 
-        # Read current metadata
-        metadata = await use_json(metadata_path, "r")
-        if metadata:
-            if "data_handles" not in metadata:
-                metadata["data_handles"] = []
-            if handle_id not in metadata["data_handles"]:
-                metadata["data_handles"].append(handle_id)
-                # Write updated metadata
-                await use_json(metadata_path, "w", metadata)
-                logger.info(
-                    "Updated handle registry for session %s with handle %s",
-                    session_id,
-                    handle_id,
+        if not session_id:
+            return []
+
+        session_path = self.session_manager.base_path / session_id
+
+        if not session_path.exists():
+            return []
+
+        files = []
+        for file_path in session_path.glob("*.json"):
+            if file_path.name == "session_info.json":  # Skip metadata
+                continue
+
+            stat = file_path.stat()
+
+            # Parse filename to extract data_type and location
+            name_parts = file_path.stem.split("_", 1)
+            data_type = name_parts[0] if name_parts else "unknown"
+            location = name_parts[1] if len(name_parts) > 1 else "unknown"
+
+            files.append(
+                {
+                    "handle": file_path.name,
+                    "data_type": data_type,
+                    "location": location,
+                    "size_bytes": stat.st_size,
+                    "created_at": datetime.fromtimestamp(stat.st_ctime),
+                    "modified_at": datetime.fromtimestamp(stat.st_mtime),
+                }
+            )
+
+        return sorted(files, key=lambda x: x["modified_at"], reverse=True)
+
+    async def remove_data(self, handle: str, session_id: str = None) -> bool:
+        """Remove specific data file"""
+        if not session_id:
+            session = await self.session_manager.get_current_session()
+            session_id = session.session_id if session else None
+
+        if not session_id:
+            return False
+
+        session_path = self.session_manager.base_path / session_id
+        file_path = session_path / handle
+
+        try:
+            if file_path.exists():
+                file_path.unlink()
+                logger.info(f"REMOVE: Deleted data file: {handle}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"REMOVE: Failed to delete {handle}: {e}")
+            return False
+
+    # ===================== CLEANUP METHODS =====================
+
+    async def cleanup_expired_sessions(
+        self, max_age_hours: int = 24
+    ) -> Dict[str, Any]:
+        """Remove sessions older than max_age_hours"""
+        logger.info(
+            f"CLEANUP: Starting cleanup of sessions older than {max_age_hours} hours"
+        )
+
+        cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
+        sessions_dir = self.session_manager.base_path
+
+        if not sessions_dir.exists():
+            return {"cleaned": 0, "freed_mb": 0, "errors": []}
+
+        cleaned_count = 0
+        freed_bytes = 0
+        errors = []
+
+        for session_dir in sessions_dir.iterdir():
+            if not session_dir.is_dir():
+                continue
+
+            try:
+                # Check last access time
+                last_access = await self._get_session_last_access(
+                    session_dir.name
                 )
 
-    def _generate_summary(self, data: Any) -> Dict[str, Any]:
-        """Generate summary statistics for data"""
-        if (
-            isinstance(data, dict)
-            and "type" in data
-            and data["type"] == "FeatureCollection"
-        ):
-            features = data.get("features", [])
-            districts = set()
-            for feature in features:
-                if "district" in feature.get("properties", {}):
-                    districts.add(feature["properties"]["district"])
+                if last_access and last_access < cutoff_time:
+                    # Calculate size before deletion
+                    size = await self._calculate_directory_size(session_dir)
 
+                    # Remove entire session directory
+                    await self._remove_directory_recursive(session_dir)
+
+                    cleaned_count += 1
+                    freed_bytes += size
+                    logger.info(
+                        f"CLEANUP: Removed expired session {session_dir.name}"
+                    )
+
+            except Exception as e:
+                error_msg = f"Failed to cleanup session {session_dir.name}: {e}"
+                errors.append(error_msg)
+                logger.error(f"CLEANUP: {error_msg}")
+
+        result = {
+            "cleaned": cleaned_count,
+            "freed_mb": round(freed_bytes / (1024 * 1024), 2),
+            "errors": errors,
+        }
+
+        logger.info(f"CLEANUP: Completed - {result}")
+        return result
+
+    async def cleanup_large_sessions(
+        self, max_size_mb: int = 100
+    ) -> Dict[str, Any]:
+        """Remove sessions larger than max_size_mb"""
+        logger.info(
+            f"CLEANUP: Starting cleanup of sessions larger than {max_size_mb}MB"
+        )
+
+        sessions_dir = self.session_manager.base_path
+        max_size_bytes = max_size_mb * 1024 * 1024
+
+        if not sessions_dir.exists():
+            return {"cleaned": 0, "freed_mb": 0, "errors": []}
+
+        cleaned_count = 0
+        freed_bytes = 0
+        errors = []
+
+        for session_dir in sessions_dir.iterdir():
+            if not session_dir.is_dir():
+                continue
+
+            try:
+                size = await self._calculate_directory_size(session_dir)
+
+                if size > max_size_bytes:
+                    await self._remove_directory_recursive(session_dir)
+                    cleaned_count += 1
+                    freed_bytes += size
+                    logger.info(
+                        f"CLEANUP: Removed large session {session_dir.name} ({size/1024/1024:.1f}MB)"
+                    )
+
+            except Exception as e:
+                error_msg = (
+                    f"Failed to cleanup large session {session_dir.name}: {e}"
+                )
+                errors.append(error_msg)
+                logger.error(f"CLEANUP: {error_msg}")
+
+        result = {
+            "cleaned": cleaned_count,
+            "freed_mb": round(freed_bytes / (1024 * 1024), 2),
+            "errors": errors,
+        }
+
+        logger.info(f"CLEANUP: Completed large session cleanup - {result}")
+        return result
+
+    async def cleanup_oldest_sessions(
+        self, keep_count: int = 50
+    ) -> Dict[str, Any]:
+        """Keep only the newest N sessions, remove the rest"""
+        logger.info(f"CLEANUP: Keeping only {keep_count} newest sessions")
+
+        sessions_dir = self.session_manager.base_path
+
+        if not sessions_dir.exists():
+            return {"cleaned": 0, "freed_mb": 0, "errors": []}
+
+        # Get all sessions with their last access times
+        sessions = []
+        for session_dir in sessions_dir.iterdir():
+            if not session_dir.is_dir():
+                continue
+
+            try:
+                last_access = await self._get_session_last_access(
+                    session_dir.name
+                )
+                sessions.append((session_dir, last_access or datetime.min))
+            except Exception as e:
+                logger.error(
+                    f"CLEANUP: Error getting session info for {session_dir.name}: {e}"
+                )
+
+        # Sort by last access (newest first) and keep only the top N
+        sessions.sort(key=lambda x: x[1], reverse=True)
+        sessions_to_remove = sessions[keep_count:]
+
+        cleaned_count = 0
+        freed_bytes = 0
+        errors = []
+
+        for session_dir, _ in sessions_to_remove:
+            try:
+                size = await self._calculate_directory_size(session_dir)
+                await self._remove_directory_recursive(session_dir)
+                cleaned_count += 1
+                freed_bytes += size
+                logger.info(f"CLEANUP: Removed old session {session_dir.name}")
+            except Exception as e:
+                error_msg = (
+                    f"Failed to cleanup old session {session_dir.name}: {e}"
+                )
+                errors.append(error_msg)
+                logger.error(f"CLEANUP: {error_msg}")
+
+        result = {
+            "cleaned": cleaned_count,
+            "freed_mb": round(freed_bytes / (1024 * 1024), 2),
+            "errors": errors,
+        }
+
+        logger.info(f"CLEANUP: Completed oldest session cleanup - {result}")
+        return result
+
+    async def get_storage_stats(self) -> Dict[str, Any]:
+        """Get comprehensive storage statistics"""
+        sessions_dir = self.session_manager.base_path
+
+        if not sessions_dir.exists():
             return {
-                "count": len(features),
-                "type": "FeatureCollection",
-                "districts": list(districts),
+                "total_sessions": 0,
+                "total_size_mb": 0,
+                "total_files": 0,
+                "largest_session_mb": 0,
+                "oldest_session": None,
+                "newest_session": None,
             }
-        elif isinstance(data, list):
-            return {"count": len(data), "sample_size": min(5, len(data))}
-        elif isinstance(data, dict):
-            return {"keys": list(data.keys())[:5], "size": len(data)}
-        return {"type": str(type(data))}
 
-    def _extract_schema(self, data: Any) -> Dict[str, str]:
-        """Extract basic schema from data"""
-        if isinstance(data, dict) and "features" in data and data["features"]:
-            properties = data["features"][0].get("properties", {})
-            return {k: type(v).__name__ for k, v in properties.items()}
-        elif isinstance(data, list) and data:
-            item = data[0]
-            if isinstance(item, dict):
-                return {k: type(v).__name__ for k, v in item.items()}
-        elif isinstance(data, dict):
-            return {k: type(v).__name__ for k, v in data.items()}
-        return {"type": str(type(data))}
+        total_size = 0
+        total_files = 0
+        session_count = 0
+        largest_size = 0
+        oldest_time = datetime.max
+        newest_time = datetime.min
+
+        for session_dir in sessions_dir.iterdir():
+            if not session_dir.is_dir():
+                continue
+
+            session_count += 1
+
+            try:
+                # Calculate session size and file count
+                size, files = await self._calculate_directory_stats(session_dir)
+                total_size += size
+                total_files += files
+
+                if size > largest_size:
+                    largest_size = size
+
+                # Get session times
+                last_access = await self._get_session_last_access(
+                    session_dir.name
+                )
+                if last_access:
+                    if last_access < oldest_time:
+                        oldest_time = last_access
+                    if last_access > newest_time:
+                        newest_time = last_access
+
+            except Exception as e:
+                logger.error(
+                    f"STATS: Error processing session {session_dir.name}: {e}"
+                )
+
+        return {
+            "total_sessions": session_count,
+            "total_size_mb": round(total_size / (1024 * 1024), 2),
+            "total_files": total_files,
+            "largest_session_mb": round(largest_size / (1024 * 1024), 2),
+            "oldest_session": (
+                oldest_time if oldest_time != datetime.max else None
+            ),
+            "newest_session": (
+                newest_time if newest_time != datetime.min else None
+            ),
+        }
+
+    # ===================== HELPER METHODS =====================
+
+    async def _touch_session(self, session_id: str):
+        """Update session access time"""
+        session_path = self.session_manager.base_path / session_id
+        info_path = session_path / "session_info.json"
+
+        try:
+            info = {
+                "session_id": session_id,
+                "last_access": datetime.now().isoformat(),
+                "created_at": datetime.now().isoformat(),
+            }
+
+            # If session info exists, preserve created_at
+            if info_path.exists():
+                existing = await use_json(str(info_path), "r")
+                if existing and "created_at" in existing:
+                    info["created_at"] = existing["created_at"]
+
+            await use_json(str(info_path), "w", info)
+        except Exception as e:
+            logger.error(f"TOUCH: Failed to update session {session_id}: {e}")
+
+    async def _get_session_last_access(
+        self, session_id: str
+    ) -> Optional[datetime]:
+        """Get last access time for a session"""
+        session_path = self.session_manager.base_path / session_id
+        info_path = session_path / "session_info.json"
+
+        try:
+            if info_path.exists():
+                info = await use_json(str(info_path), "r")
+                if info and "last_access" in info:
+                    return datetime.fromisoformat(info["last_access"])
+
+            # Fallback to directory modification time
+            if session_path.exists():
+                return datetime.fromtimestamp(session_path.stat().st_mtime)
+
+        except Exception as e:
+            logger.error(
+                f"ACCESS_TIME: Error getting session time for {session_id}: {e}"
+            )
+
+        return None
+
+    async def _calculate_directory_size(self, directory: Path) -> int:
+        """Calculate total size of directory in bytes"""
+        total_size = 0
+        try:
+            for file_path in directory.rglob("*"):
+                if file_path.is_file():
+                    total_size += file_path.stat().st_size
+        except Exception as e:
+            logger.error(f"SIZE: Error calculating size for {directory}: {e}")
+        return total_size
+
+    async def _calculate_directory_stats(
+        self, directory: Path
+    ) -> Tuple[int, int]:
+        """Calculate total size and file count for directory"""
+        total_size = 0
+        file_count = 0
+        try:
+            for file_path in directory.rglob("*"):
+                if file_path.is_file():
+                    total_size += file_path.stat().st_size
+                    file_count += 1
+        except Exception as e:
+            logger.error(f"STATS: Error calculating stats for {directory}: {e}")
+        return total_size, file_count
+
+    async def _remove_directory_recursive(self, directory: Path):
+        """Safely remove directory and all contents"""
+        try:
+            import shutil
+
+            shutil.rmtree(directory)
+        except Exception as e:
+            logger.error(f"REMOVE: Failed to remove directory {directory}: {e}")
+            raise
 
 
 # ===== Session Cleanup Task =====
-# (This function remains the same, but it will be *called* from the lifespan manager)
-async def cleanup_expired_sessions():
-    """Periodic cleanup of expired sessions"""
-    logger.info("Background session cleanup task started.")
+async def cleanup_expired_sessions(handle_manager: HandleManager):
+    """Periodic cleanup of expired sessions using HandleManager"""
+    logger.info("Background session cleanup task started with HandleManager.")
     while True:
         try:
-            session_manager = SessionManager()
-            base_path = session_manager.base_path
+            # Use the HandleManager's built-in cleanup methods
+            logger.info("Starting automated cleanup cycle...")
 
-            if base_path.exists():
-                for session_dir in base_path.iterdir():
-                    if session_dir.is_dir():
-                        metadata_path = str(
-                            session_dir / "session_metadata.json"
-                        )
-                        # Use a simple file check to avoid async overhead if not necessary,
-                        # or keep use_json if you prefer consistency.
-                        if os.path.exists(metadata_path):
-                            metadata = await use_json(metadata_path, "r")
-                            if metadata and "expires_at" in metadata:
-                                try:
-                                    expires_at = datetime.fromisoformat(
-                                        metadata["expires_at"]
-                                    )
-                                    if datetime.now() > expires_at:
-                                        await session_manager.cleanup_session(
-                                            session_dir.name
-                                        )
-                                except (ValueError, TypeError):
-                                    logger.warning(
-                                        "Could not parse 'expires_at' from %s",
-                                        metadata_path,
-                                    )
+            # Clean expired sessions (older than 24 hours)
+            expired_stats = await handle_manager.cleanup_expired_sessions(
+                max_age_hours=config.session_ttl_hours or 24
+            )
+
+            # Clean large sessions (over 100MB)
+            large_stats = await handle_manager.cleanup_large_sessions(
+                max_size_mb=100
+            )
+
+            # Get storage statistics
+            storage_stats = await handle_manager.get_storage_stats()
+
+            # If total storage is too high, clean oldest sessions
+            if storage_stats["total_size_mb"] > 500:  # Over 500MB total
+                oldest_stats = await handle_manager.cleanup_oldest_sessions(
+                    keep_count=50  # Keep only 50 newest sessions
+                )
+                logger.info(f"Storage cleanup: {oldest_stats}")
+
+            # Log cleanup results
+            total_cleaned = expired_stats["cleaned"] + large_stats["cleaned"]
+            total_freed = expired_stats["freed_mb"] + large_stats["freed_mb"]
+
+            if total_cleaned > 0:
+                logger.info(
+                    f"Cleanup completed: {total_cleaned} sessions removed, "
+                    f"{total_freed:.1f}MB freed. Storage stats: {storage_stats}"
+                )
+            else:
+                logger.info(
+                    f"Cleanup completed: No sessions removed. Storage stats: {storage_stats}"
+                )
+
+            # Log any errors
+            all_errors = expired_stats["errors"] + large_stats["errors"]
+            if all_errors:
+                logger.warning(f"Cleanup errors: {all_errors}")
 
             await asyncio.sleep(
                 config.cleanup_interval_hours * 3600
@@ -452,7 +718,8 @@ async def cleanup_expired_sessions():
             logger.info("Background session cleanup task cancelled.")
             break  # Exit the loop when cancelled
         except Exception as e:
-            logger.error("Error in session cleanup: %s", e)
+            logger.error(f"Error in session cleanup: {e}")
+            logger.exception("Full cleanup error details:")
             await asyncio.sleep(300)  # Sleep 5 minutes on error
 
 
@@ -461,25 +728,24 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     """Manage application lifecycle with type-safe context"""
     # Initialize components
     session_manager = SessionManager()
-    handle_manager = DataHandleManager(session_manager)
-
+    handle_manager = HandleManager(session_manager)  # Updated name
     logger.info("🚀 Saudi Location Intelligence MCP Server starting...")
 
-    # -----FIXED SECTION START-----
-    # Start the background task here, where the event loop is guaranteed to be running.
-    cleanup_task = asyncio.create_task(cleanup_expired_sessions())
-    # -----FIXED SECTION END-----
+    # Start the background task with HandleManager
+    cleanup_task = asyncio.create_task(
+        cleanup_expired_sessions(handle_manager)  # Pass HandleManager
+    )
 
     try:
         yield AppContext(
-            session_manager=session_manager, handle_manager=handle_manager
+            session_manager=session_manager,
+            handle_manager=handle_manager,  # Updated name
         )
     finally:
         logger.info(
             "🛑 Saudi Location Intelligence MCP Server shutting down..."
         )
-        # -----FIXED SECTION START-----
-        # Cleanly shut down the background task.
+        # Cleanly shut down the background task
         logger.info("Cancelling background cleanup task...")
         cleanup_task.cancel()
         try:
@@ -488,7 +754,6 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
             logger.info(
                 "Background cleanup task has been successfully cancelled."
             )
-        # -----FIXED SECTION END-----
 
 
 # ===== FastMCP Server =====
@@ -497,8 +762,8 @@ mcp = FastMCP("saudi-location-intelligence", lifespan=app_lifespan)
 # --- NEW REGISTRATION CALL ---
 register_auth_tools(mcp)
 register_geospatial_tools(mcp)
-register_market_intelligence_tools(mcp)
-register_site_optimization_tools(mcp)
+register_territory_report_tools(mcp)
+register_territory_optimization_tools(mcp)
 
 
 # ===== Resource Implementations =====
@@ -531,55 +796,22 @@ def get_server_config() -> str:
 
 # ===== Main Function =====
 def main():
-    """Main entry point with transport selection"""
-    parser = argparse.ArgumentParser(
-        description="Saudi Location Intelligence MCP Server"
-    )
-    parser.add_argument(
-        "--transport",
-        choices=["stdio", "sse"],
-        default="stdio",
-        help="Transport type: stdio (for Claude Desktop) or sse (for web/inspector)",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8001,
-        help="Port for SSE transport (default: 8001)",
-    )
-
-    args = parser.parse_args()
-
+    """Main entry point with hot reloading enabled"""
     logger.info("🇸🇦 Saudi Location Intelligence MCP Server")
-    logger.info("Transport: %s", args.transport)
+    logger.info("🔥 Hot reloading enabled for development")
 
-    # -----FIXED SECTION-----
-    # The asyncio.create_task call is removed from here.
-    # The lifespan manager now handles it.
+    # You can still check sys.argv manually if needed
+    transport = "stdio"  # or "sse"
+    port = 8001
 
-    if args.transport == "stdio":
+    if transport == "stdio":
         logger.info(
             "📱 Starting stdio transport (compatible with Claude Desktop)"
         )
-        logger.info("💡 Add this server to your Claude Desktop configuration:")
-        logger.info('   "saudi-location-intelligence": {')
-        logger.info('     "command": "python",')
-        logger.info(
-            '     "args": ["%s", "--transport", "stdio"]',
-            os.path.abspath(__file__),
-        )
-        logger.info("   }")
         mcp.run(transport="stdio")
-
-    elif args.transport == "sse":
-        logger.info(
-            "🌐 Starting SSE transport on http://localhost:%d", args.port
-        )
-        logger.info(
-            "🔍 Test with MCP Inspector: mcp dev --server-url http://localhost:%d",
-            args.port,
-        )
-        mcp.run(transport="sse", port=args.port)
+    else:
+        logger.info(f"🌐 Starting SSE transport on http://localhost:{port}")
+        mcp.run(transport="sse", port=port)
 
 
 if __name__ == "__main__":

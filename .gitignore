@@ -26,3 +26,4 @@ docker-compose.yml
 
 
 static/*
+tool_bridge_mcp_server/sessions/*

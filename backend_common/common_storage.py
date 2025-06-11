@@ -117,6 +117,3 @@ async def use_json(
         else:
             raise ValueError("Invalid mode. Use 'r' for read or 'w' for write.")
 
-
-# Apply the decorator to all functions in this module
-apply_decorator_to_module(logger)(__name__)

@@ -36,4 +36,5 @@ dependencies = [
     "sympy>=1.14.0",
     "uvicorn>=0.14.0",
     "websockets>=15.0.1",
+    "uvicorn[standard]",
 ]

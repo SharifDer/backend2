@@ -172,3 +172,4 @@ class ReqIntelligenceData(BaseModel):
 class ReqClustersForSalesManData(BooleanQuery, UserId,ReqCityCountry):
     num_sales_man: int
     distance_limit: float = 2.5
+    include_raw_data: bool = False

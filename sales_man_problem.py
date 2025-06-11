@@ -1393,18 +1393,184 @@ async def get_clusters_for_sales_man(
     # Generate unique request ID for this session
     request_id = uuid.uuid4().hex[:8]
     logger.info(f"Generating plots for request {request_id}")
-    
+
     # Generate plots and get their URLs
     plot_urls = generate_all_plots(masked_grided_data, places, request_id)
-    
-    logger.info("Sales territory clustering and plot generation completed successfully")
-    
+
+    logger.info(
+        "Sales territory clustering and plot generation completed successfully"
+    )
+
+    # Generate territory-level analytics (currently only logged)
+    territory_analytics = []
+    territory_boundaries = []
+
+    for group_id in range(req.num_sales_man):
+        if group_id in groups:
+            # Extract territory data that's currently only logged
+            territory_data = masked_grided_data[
+                masked_grided_data["group"] == group_id
+            ]
+
+            # Calculate comprehensive territory metrics
+            territory_stats = {
+                "territory_id": group_id,
+                "grid_cells": len(groups[group_id]),
+                "total_population": int(
+                    territory_data["number_of_persons"].sum()
+                ),
+                "effective_population": round(
+                    territory_data["effective_population"].sum(), 2
+                ),
+                "facility_count": int(
+                    territory_data["number_of_supermarkets"].sum()
+                ),
+                "potential_customers": int(
+                    territory_data["number_of_potential_customers"].sum()
+                ),
+                "market_share_percentage": round(
+                    (
+                        territory_data["number_of_potential_customers"].sum()
+                        / total_customers
+                    )
+                    * 100,
+                    1,
+                ),
+                "avg_accessibility": round(
+                    territory_data["effective_population"].mean(), 2
+                ),
+                "population_density": round(
+                    territory_data["number_of_persons"].sum()
+                    / len(groups[group_id]),
+                    0,
+                ),
+                "facility_density": round(
+                    territory_data["number_of_supermarkets"].sum()
+                    / len(groups[group_id]),
+                    2,
+                ),
+            }
+            territory_analytics.append(territory_stats)
+
+            # Create territory boundary geometry
+            territory_boundary = {
+                "territory_id": group_id,
+                "boundary_geometry": territory_data.union_all().convex_hull.__geo_interface__,
+                "centroid": territory_data.geometry.centroid.union_all().__geo_interface__,
+                "area_km2": round(
+                    territory_data.union_all().area * 111.32**2, 2
+                ),  # Convert to km²
+            }
+            territory_boundaries.append(territory_boundary)
+
+    # Generate business intelligence insights
+    total_population = sum(t["total_population"] for t in territory_analytics)
+    total_facilities = sum(t["facility_count"] for t in territory_analytics)
+
+    # Market balance analysis
+    customer_variance = np.var(
+        [t["potential_customers"] for t in territory_analytics]
+    )
+    population_variance = np.var(
+        [t["total_population"] for t in territory_analytics]
+    )
+
+    business_insights = {
+        "market_balance_score": round(
+            100
+            - (customer_variance / (total_customers / req.num_sales_man) * 100),
+            1,
+        ),
+        "population_distribution_score": round(
+            100
+            - (
+                population_variance
+                / (total_population / req.num_sales_man)
+                * 100
+            ),
+            1,
+        ),
+        "avg_customers_per_territory": round(
+            total_customers / req.num_sales_man, 0
+        ),
+        "avg_facilities_per_territory": round(
+            total_facilities / req.num_sales_man, 1
+        ),
+        "territory_efficiency_ratio": round(
+            total_customers / total_facilities, 1
+        ),
+        "accessibility_analysis": {
+            "high_accessibility_territories": len(
+                [
+                    t
+                    for t in territory_analytics
+                    if t["avg_accessibility"]
+                    > np.mean(
+                        [t["avg_accessibility"] for t in territory_analytics]
+                    )
+                ]
+            ),
+            "service_desert_territories": len(
+                [t for t in territory_analytics if t["facility_density"] < 1.0]
+            ),
+            "well_served_territories": len(
+                [t for t in territory_analytics if t["facility_density"] >= 2.0]
+            ),
+        },
+        "optimization_recommendations": generate_optimization_recommendations(
+            territory_analytics, req
+        ),
+    }
+
+    # Performance metrics for territory comparison
+    performance_metrics = {
+        "territory_rankings": {
+            "highest_potential": max(
+                territory_analytics, key=lambda t: t["potential_customers"]
+            ),
+            "most_efficient": max(
+                territory_analytics,
+                key=lambda t: t["potential_customers"]
+                / max(t["facility_count"], 1),
+            ),
+            "most_accessible": max(
+                territory_analytics, key=lambda t: t["avg_accessibility"]
+            ),
+            "largest_coverage": max(
+                territory_boundaries, key=lambda t: t["area_km2"]
+            ),
+        },
+        "equity_analysis": {
+            "customer_balance": {
+                "standard_deviation": round(
+                    np.std(
+                        [t["potential_customers"] for t in territory_analytics]
+                    ),
+                    0,
+                ),
+                "coefficient_variation": round(
+                    np.std(
+                        [t["potential_customers"] for t in territory_analytics]
+                    )
+                    / np.mean(
+                        [t["potential_customers"] for t in territory_analytics]
+                    ),
+                    3,
+                ),
+            },
+            "workload_balance": calculate_workload_balance(territory_analytics),
+        },
+    }
+    # Return comprehensive analysis data
+
     # you now have two dataframes:
     # 1 is the masked_grided_data containing the clusters for the population in the form of grids
     # 2 is the places containing the points for each destination clustered using the group column
     # So its up to you which one you ant to return or if you want to return
     # Return both data and plot URLs
-    return {
+
+    # Core response data
+    response_data = {
         "success": True,
         "request_id": request_id,
         "plots": plot_urls,
@@ -1413,7 +1579,107 @@ async def get_clusters_for_sales_man(
             "clusters_created": clusters_created,
             "target_customers_per_territory": int(equitable_share),
             "city_name": req.city_name,
-            "country_name": req.country_name
-        }
+            "country_name": req.country_name,
+            "analysis_date": datetime.now().isoformat(),
+            "distance_limit_km": req.distance_limit,
+            "business_type": req.boolean_query,
+        },
+        "territory_analytics": territory_analytics,
+        "territory_boundaries": territory_boundaries,
+        "business_insights": business_insights,
+        "performance_metrics": performance_metrics,
     }
 
+    # Geographic summary calculations
+    geographic_summary = {
+        "total_area_km2": round(
+            sum(t["area_km2"] for t in territory_boundaries), 2
+        ),
+        "population_density_per_km2": round(
+            total_population
+            / sum(t["area_km2"] for t in territory_boundaries),
+            1,
+        ),
+        "facility_density_per_km2": round(
+            total_facilities
+            / sum(t["area_km2"] for t in territory_boundaries),
+            3,
+        ),
+    }
+
+    # Raw data (conditional)
+    if req.include_raw_data:
+        raw_cluster_data = {
+            "grid_data_geojson": masked_grided_data.to_json(),
+            "places_data_geojson": places.to_json(),
+        }
+    else:
+        raw_cluster_data = None
+
+    # Add remaining fields
+    response_data["geographic_summary"] = geographic_summary
+    response_data["raw_cluster_data"] = raw_cluster_data
+
+    return response_data
+
+
+def generate_optimization_recommendations(territory_analytics, req):
+    """Generate strategic recommendations based on territory analysis"""
+    recommendations = []
+
+    # Analyze territory imbalances
+    customers = [t["potential_customers"] for t in territory_analytics]
+    avg_customers = np.mean(customers)
+
+    for territory in territory_analytics:
+        if territory["potential_customers"] < avg_customers * 0.85:
+            recommendations.append(
+                f"Territory {territory['territory_id']}: Consider expanding boundaries - below average market potential"
+            )
+        elif territory["potential_customers"] > avg_customers * 1.15:
+            recommendations.append(
+                f"Territory {territory['territory_id']}: Consider subdividing - above average workload"
+            )
+
+        if territory["facility_density"] < 0.5:
+            recommendations.append(
+                f"Territory {territory['territory_id']}: Service desert - consider additional facilities"
+            )
+
+    # Strategic insights
+    if len(recommendations) == 0:
+        recommendations.append(
+            "Territories are well-balanced for equitable sales operations"
+        )
+
+    recommendations.append(
+        f"Optimal distance limit ({req.distance_limit}km) ensures good accessibility coverage"
+    )
+    recommendations.append(
+        "Regular reassessment recommended as market conditions evolve"
+    )
+
+    return recommendations
+
+
+def calculate_workload_balance(territory_analytics):
+    """Calculate workload balance metrics"""
+    workloads = [
+        t["potential_customers"] / max(t["facility_count"], 1)
+        for t in territory_analytics
+    ]
+
+    return {
+        "avg_customers_per_facility": round(np.mean(workloads), 1),
+        "workload_standard_deviation": round(np.std(workloads), 1),
+        "most_efficient_territory": min(
+            territory_analytics,
+            key=lambda t: t["potential_customers"]
+            / max(t["facility_count"], 1),
+        )["territory_id"],
+        "least_efficient_territory": max(
+            territory_analytics,
+            key=lambda t: t["potential_customers"]
+            / max(t["facility_count"], 1),
+        )["territory_id"],
+    }

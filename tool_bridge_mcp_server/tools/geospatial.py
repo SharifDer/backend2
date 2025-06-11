@@ -193,19 +193,13 @@ def register_geospatial_tools(mcp: FastMCP):
                 "general"  # You can add your logic to determine data_type here
             )
 
-            handle = await handle_manager.store_data_and_create_handle(
-                data=dataset,
-                data_type=data_type,
+            handle = await handle_manager.store_data(
+                data_type="geospatial_data",
                 location=city_name.lower().replace(" ", "_"),
-                session_id=session.session_id,
-                summary=summary,
+                data=dataset
             )
 
-            await handle_manager.update_handle_registry(
-                session.session_id, handle.data_handle
-            )
-
-            return f"✅ Data fetched. Handle: `{handle.data_handle}`. Summary: {summary['count']} records found for '{boolean_query}' in {city_name}."
+            return f"✅ Data fetched. Handle: `{handle}`. Summary: {summary['count']} records found for '{boolean_query}' in {city_name}."
 
         except Exception as e:
             logger.exception("Critical error in fetch_geospatial_data")
