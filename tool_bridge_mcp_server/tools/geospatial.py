@@ -1,17 +1,44 @@
-import asyncio
-from datetime import datetime
+# --- START OF FILE geospatial.py ---
+
+import logging
+import os
+import sys
+
+# Add the grandparent directory to sys.path for imports
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+)
+
+# Import aiohttp if not already there
+import aiohttp
+from config_factory import CONF
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
+
+# Import your existing Pydantic models from the FastAPI backend
+import sys
+import os
+
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+)
+
+from all_types.request_dtypes import ReqFetchDataset
+from tool_bridge_mcp_server.context import get_app_context
+
+logger = logging.getLogger(__name__)
+
+# --- Configuration is now a simple module-level constant ---
+FASTAPI_BASE_URL = "http://localhost:8000"
+
 
 def register_geospatial_tools(mcp: FastMCP):
-    """Register geospatial data fetching tools"""
-    
-    @mcp.tool()
-    def fetch_geospatial_data(
-        city_name: str,
-        boolean_query: str,
-        data_source: str = "poi"
-    ) -> str:
-        """Universal geospatial data fetcher for Saudi Arabia that ALWAYS returns GeoJSON format.
+    """Register all geospatial tools by defining them within this function's scope."""
+
+    # --- The tool is now a simple decorated function, not a class method ---
+    @mcp.tool(
+        name="fetch_geospatial_data",
+        description="""Universal geospatial data fetcher for Saudi Arabia that ALWAYS returns GeoJSON format.
         
         🎯 Data Sources Available:
         - Real estate properties (warehouses, commercial, residential)
@@ -36,125 +63,153 @@ def register_geospatial_tools(mcp: FastMCP):
         
         Returns:
             Data handle ID and summary information
-        """
-        # Get application context
-        ctx = mcp.get_context()
-        app_ctx = ctx.request_context.lifespan_context
-        session_manager = app_ctx.session_manager
-        handle_manager = app_ctx.handle_manager
-        
-        # MCP Protocol Logging
-        ctx.request_context.session.send_log_message(
-            level="info",
-            data=f"Starting geospatial data fetch for {city_name} - Data source: {data_source}"
-        )
-        
-        # Ensure we have a session
-        session = asyncio.run(session_manager.get_current_session())
-        if not session:
-            session = asyncio.run(session_manager.create_session())
-            ctx.request_context.session.send_log_message(
-                level="info",
-                data=f"Created new session: {session.session_id}"
+        """,
+    )
+    async def fetch_geospatial_data(
+        # Note: 'self' is removed
+        lat: float = Field(description="Latitude of the search center point"),
+        lng: float = Field(description="Longitude of the search center point"),
+        radius: float = Field(
+            default=5000, description="Search radius in meters"
+        ),
+        boolean_query: str = Field(
+            description="Boolean search query. Examples: 'warehouse OR logistics', 'restaurant AND NOT fast_food', 'gas_station'"
+        ),
+        city_name: str = Field(
+            description="Name of the Saudi city (e.g., Riyadh, Jeddah, Dammam)"
+        ),
+        country_name: str = Field(
+            default="Saudi Arabia", description="Country name"
+        ),
+        action: str = Field(
+            default="sample",
+            description="'sample' for quick preview (20 records) or 'full data' for complete dataset",
+        ),
+        user_id: str = Field(
+            default="default_user", description="User ID for the request"
+        ),
+        include_only_sub_properties: bool = Field(
+            default=True,
+            description="If true, returns only essential properties for each feature",
+        ),
+        include_rating_info: bool = Field(
+            default=False,
+            description="If true, includes detailed rating and review information",
+        ),
+    ) -> str:
+        """Fetch user-specific geospatial data. Requires user to be logged in."""
+
+        try:
+            app_ctx = get_app_context(mcp)
+            session_manager = app_ctx.session_manager
+            handle_manager = app_ctx.handle_manager
+
+
+            # --- THIS IS THE KEY CHANGE ---
+            # Get the valid user_id and token for this session
+            user_id, id_token = await session_manager.get_valid_id_token()
+
+            if not id_token or not user_id:
+                return "❌ Error: You are not logged in. Please use the `user_login` tool first."
+            
+            # Session for handle management
+            session = await session_manager.get_current_session()
+            if not session:
+                session = await session_manager.create_session()
+
+            req_body = ReqFetchDataset(
+                lat=lat,
+                lng=lng,
+                radius=radius,
+                boolean_query=boolean_query,
+                city_name=city_name,
+                country_name=country_name,
+                action=action,
+                user_id=user_id,
+                include_only_sub_properties=include_only_sub_properties,
+                include_rating_info=include_rating_info,
+                page_token="",
+                ids_and_location_only=False,
+                search_type="category_search",
             )
-        
-        ctx.request_context.session.send_log_message(
-            level="info",
-            data=f"Generating {data_source} data for {city_name} with query: {boolean_query}"
-        )
-        
-        # Generate dummy GeoJSON data based on data source
-        if data_source == "real_estate":
-            data = {
-                "type": "FeatureCollection",
-                "features": [
-                    {
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [46.6753 + i*0.001, 24.7136 + i*0.001]
-                        },
-                        "properties": {
-                            "id": f"property_{i}",
-                            "price": 100000 + (i * 1000),
-                            "size_sqm": 200 + (i % 100),
-                            "type": "warehouse" if i % 3 == 0 else "commercial",
-                            "district": f"District_{i % 5}",
-                            "name": f"Property {i}",
-                            "availability": "available" if i % 4 != 0 else "rented"
-                        }
-                    }
-                    for i in range(1000)
-                ]
+
+            request_payload = {
+                "message": "Fetching Saudi location data via MCP",
+                "request_info": {},
+                "request_body": req_body.model_dump(),
             }
-        elif data_source == "demographics":
-            data = {
-                "type": "FeatureCollection",
-                "features": [
-                    {
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [46.6753 + i*0.002, 24.7136 + i*0.002]
-                        },
-                        "properties": {
-                            "area_id": f"demo_{i}",
-                            "population": 1000 + (i * 50),
-                            "avg_income": 8000 + (i % 20) * 500,
-                            "age_group_dominant": ["18-30", "31-45", "46-60"][i % 3],
-                            "district": f"District_{i % 5}",
-                            "density_per_sqkm": 500 + (i % 100)
-                        }
-                    }
-                    for i in range(300)
-                ]
+
+            # Call the original, secure, user-facing endpoint
+            endpoint_url = f"http://localhost:8000{CONF.fetch_dataset}"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {id_token}" # Use the real user's token
             }
-        else:  # POI
-            data = {
-                "type": "FeatureCollection",
-                "features": [
-                    {
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [46.6753 + i*0.001, 24.7136 + i*0.001]
-                        },
-                        "properties": {
-                            "name": f"POI_{i}",
-                            "category": ["restaurant", "gas_station", "mosque", "supermarket", "bank"][i % 5],
-                            "rating": 4.0 + (i % 10) / 10,
-                            "district": f"District_{i % 5}",
-                            "opening_hours": "24/7" if i % 3 == 0 else "06:00-22:00",
-                            "popular_times": ["morning", "afternoon", "evening"][i % 3]
-                        }
-                    }
-                    for i in range(500)
-                ]
+
+            logger.info(f"Calling user-specific endpoint for user {user_id}: {endpoint_url}")
+
+
+            async with aiohttp.ClientSession() as session_http:
+                async with session_http.post(
+                    endpoint_url,
+                    json=request_payload,
+                    headers=headers,
+                ) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        logger.error(
+                            f"FastAPI error: {response.status} - {error_text}"
+                        )
+                        return f"Error fetching data: {response.status} - {error_text}"
+                    response_data = await response.json()
+
+            dataset = response_data.get("data", {})
+            if not dataset or not dataset.get("features"):
+                return f"No data returned from the backend for query: '{boolean_query}' in {city_name}."
+
+            features = dataset.get("features", [])
+            districts = {
+                f.get("properties", {}).get("district")
+                for f in features
+                if f.get("properties", {}).get("district")
             }
-        
-        # Store data and create handle
-        handle = asyncio.run(handle_manager.store_data_and_create_handle(
-            data=data,
-            data_type=data_source,
-            location=city_name.lower(),
-            session_id=session.session_id
-        ))
-        
-        ctx.request_context.session.send_log_message(
-            level="info",
-            data=f"Successfully stored {len(data['features'])} features and created handle: {handle.data_handle}"
-        )
-        
-        districts = handle.summary.get("districts", [])
-        response = (
-            f"✅ Saudi location data fetched and stored successfully!\n\n"
-            f"📋 **Data Handle:** `{handle.data_handle}`\n"
-            f"📊 **Summary:** {handle.summary['count']} records covering {len(districts)} districts\n"
-            f"🏙️ **City:** {city_name}\n"
-            f"🔍 **Query:** {boolean_query}\n"
-            f"📈 **Data Source:** {data_source}\n"
-            f"📍 **Districts:** {', '.join(districts[:3])}{'...' if len(districts) > 3 else ''}\n\n"
-            f"💡 Use this handle with analysis and optimization tools!"
-        )
-        
-        return response
+            property_types = {
+                f.get("properties", {}).get("primaryType")
+                for f in features
+                if f.get("properties", {}).get("primaryType")
+            }
+
+            summary = {
+                "count": len(features),
+                "city": city_name,
+                "search_query": boolean_query,
+                "districts": list(districts)[:10],
+                "property_types": list(property_types)[:10],
+                "has_more_data": bool(dataset.get("next_page_token")),
+                "progress": dataset.get("progress", 0),
+            }
+
+            data_type = (
+                "general"  # You can add your logic to determine data_type here
+            )
+
+            handle = await handle_manager.store_data_and_create_handle(
+                data=dataset,
+                data_type=data_type,
+                location=city_name.lower().replace(" ", "_"),
+                session_id=session.session_id,
+                summary=summary,
+            )
+
+            await handle_manager.update_handle_registry(
+                session.session_id, handle.data_handle
+            )
+
+            return f"✅ Data fetched. Handle: `{handle.data_handle}`. Summary: {summary['count']} records found for '{boolean_query}' in {city_name}."
+
+        except Exception as e:
+            logger.exception("Critical error in fetch_geospatial_data")
+            return f"Error during data fetch: {str(e)}"
+
+
+# --- END OF FILE geospatial.py ---

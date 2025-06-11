@@ -714,7 +714,8 @@ async def load_dataset(dataset_id: str, fetch_full_plan_datasets=False) -> Dict:
             feat_collec = orjson.loads(json_content.get("response_data", "{}"))
 
         #TODO temporary soultion this shouldn't be needed if we were removing the properties from the dataset before saving
-        feat_collec = select_sub_properties(feat_collec)
+        if feat_collec:
+            feat_collec = select_sub_properties(feat_collec)
 
     return feat_collec
 
