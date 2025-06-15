@@ -2,7 +2,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import Any
 from fastapi import Depends, HTTPException, status, Request
-from backend_common.logging_wrapper import apply_decorator_to_module
+from logging_wrapper import apply_decorator_to_module
 from fastapi.security import OAuth2PasswordBearer
 from backend_common.dtypes.auth_dtypes import (
     ReqCreateFirebaseUser,
@@ -31,11 +31,7 @@ import asyncio
 from fastapi import BackgroundTasks
 import time
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

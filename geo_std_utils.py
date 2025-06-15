@@ -8,11 +8,7 @@ from geopy.geocoders import Nominatim
 from all_types.request_dtypes import ReqFetchDataset, ReqGeodata
 from constants import load_country_city
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 
@@ -118,10 +114,6 @@ def get_req_geodata(city_name: str, country_name: str) -> Optional[ReqGeodata]:
 def fetch_lat_lng_bounding_box(req: ReqFetchDataset) -> ReqFetchDataset:
     # If lat and lng are provided directly, use them
     if req.lat and req.lng:
-        # This block will only execute if:
-        # - req.lat is not None AND req.lat is not 0 AND req.lat is not 0.0
-        # AND
-        # - req.lng is not None AND req.lng is not 0 AND req.lng is not 0.0
         req._bounding_box = expand_bounding_box(req.lat, req.lng)
         return req
 

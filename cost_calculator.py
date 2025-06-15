@@ -2,17 +2,13 @@ from all_types.request_dtypes import ReqFetchDataset
 from all_types.response_dtypes import ResCostEstimate
 from use_json import use_json
 import logging
-from backend_common.logging_wrapper import apply_decorator_to_module
+from logging_wrapper import apply_decorator_to_module
 from boolean_query_processor import optimize_query_sequence
 import json
 import math
 from typing import Dict, Optional
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 COST_PER_1000_CALLS = 40

@@ -3,25 +3,21 @@ from fastapi import HTTPException
 from typing import List
 from geo_std_utils import cover_circle_with_seven_circles_helper
 from parrallel_create_duplicate_rules import create_duplicate_rules
-from utils import make_ggl_layer_filename
+from naming_strings import get_plan_name_and_index, make_dataset_filename, TOKEN_SEPARATOR, make_next_page_token_name, make_plan_name
 from use_json import use_json
 import asyncio
 from backend_common.database import Database
 import json
 import numpy as np
 import pandas as pd
-from backend_common.logging_wrapper import apply_decorator_to_module
+from logging_wrapper import apply_decorator_to_module
 import logging
 from geopy.distance import geodesic
 
 import json
 from geopy.distance import geodesic
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,9 +30,10 @@ RADIUS_ZOOM_MULTIPLIER = {
     937.5: 31.25,  # 6
     468.75: 15.625,  # 7
 }
-DEDUPLICATE_RULES_PATH = 'Backend/layer_category_country_city_matching/full_data_plans/duplicate_rules.json'
+DEDUPLICATE_RULES_PATH = "Backend/layer_category_country_city_matching/full_data_plans/duplicate_rules.json"
 with open(DEDUPLICATE_RULES_PATH, "r") as f:
     DEDUPLICATE_RULES = json.load(f)
+
 
 def calculate_category_multiplier(index):
     """Calculate category multiplier based on result position."""
@@ -92,9 +89,7 @@ def add_popularity_score_category(features):
 
 
 async def get_plan(plan_name):
-    file_path = (
-        f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
-    )
+    file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
     # use json file
     json_content = await use_json(file_path, "r")
     return json_content
@@ -136,7 +131,9 @@ async def process_plan_popularity(plan_name: str):
 
         # Collect all features from all response_data
         all_features = []
-        feature_map = {}  # Map to keep track of features by (address, coordinates)
+        feature_map = (
+            {}
+        )  # Map to keep track of features by (address, coordinates)
 
         for result in results:
             try:
@@ -148,7 +145,9 @@ async def process_plan_popularity(plan_name: str):
 
                 for feature in features:
                     address = feature["properties"].get("address")
-                    coordinates = tuple(feature["geometry"].get("coordinates", []))
+                    coordinates = tuple(
+                        feature["geometry"].get("coordinates", [])
+                    )
                     if address and coordinates:
                         key = (address, coordinates)
                         feature_map[key] = feature
@@ -165,7 +164,8 @@ async def process_plan_popularity(plan_name: str):
 
         # Sort all features globally based on popularity_score
         all_features.sort(
-            key=lambda x: x["properties"].get("popularity_score", 0), reverse=True
+            key=lambda x: x["properties"].get("popularity_score", 0),
+            reverse=True,
         )
         all_features = add_popularity_score_category(all_features)
 
@@ -185,7 +185,9 @@ async def process_plan_popularity(plan_name: str):
                 updated_features = []
                 for feature in features:
                     address = feature["properties"].get("address")
-                    coordinates = tuple(feature["geometry"].get("coordinates", []))
+                    coordinates = tuple(
+                        feature["geometry"].get("coordinates", [])
+                    )
                     key = (address, coordinates)
                     if key in sorted_feature_map:
                         updated_feature = sorted_feature_map[key]
@@ -207,8 +209,13 @@ async def process_plan_popularity(plan_name: str):
                 if "popularity_score" not in new_response_data["properties"]:
                     new_response_data["properties"].append("popularity_score")
 
-                if "popularity_score_category" not in new_response_data["properties"]:
-                    new_response_data["properties"].append("popularity_score_category")
+                if (
+                    "popularity_score_category"
+                    not in new_response_data["properties"]
+                ):
+                    new_response_data["properties"].append(
+                        "popularity_score_category"
+                    )
 
                 update_query = """
                     UPDATE schema_marketplace.datasets 
@@ -217,7 +224,9 @@ async def process_plan_popularity(plan_name: str):
                 """
 
                 await Database.execute(
-                    update_query, json.dumps(new_response_data), result["filename"]
+                    update_query,
+                    json.dumps(new_response_data),
+                    result["filename"],
                 )
                 success_count += 1
                 print(
@@ -273,9 +282,7 @@ def cover_circle_with_seven_circles(
     }
 
 
-def create_string_list(
-    circle_hierarchy, type_string, include_hierarchy=False
-):
+def create_string_list(circle_hierarchy, type_string, include_hierarchy=False):
     result = []
     circles_to_process = [(circle_hierarchy, "1")]
     total_circles = 0
@@ -290,7 +297,9 @@ def create_string_list(
         circle_string = f"{lat}_{lng}_{radius * 1000}_{type_string}"
 
         center_marker = "*" if circle["is_center"] else ""
-        circle_string += f"_circle={number}{center_marker}_circleNumber={total_circles}"
+        circle_string += (
+            f"_circle={number}{center_marker}_circleNumber={total_circles}"
+        )
 
         result.append(circle_string)
 
@@ -311,7 +320,9 @@ class Counter:
 
 
 class Circle:
-    def __init__(self, center, radius, level, id, counter, is_center, min_radius=2):
+    def __init__(
+        self, center, radius, level, id, counter, is_center, min_radius=2
+    ):
         self.counts = counter.get_value()
         self.center = np.round(center[0], 4), np.round(center[1], 4)
         self.radius = radius
@@ -350,27 +361,25 @@ class Circle:
         }
 
 
-
 def filter_circles(circle_list):
     # Extract the first circle's details (lon, lat, radius)
     first_circle = circle_list[0]
-    parts = first_circle.split('_')    
+    parts = first_circle.split("_")
     lon0 = float(parts[0])  # First part is longitude
     lat0 = float(parts[1])  # Second part is latitude
-    radius0 = float(parts[2]) * 1.1 # Third part is radius in meters
+    radius0 = float(parts[2]) * 1.1  # Third part is radius in meters
 
-    
     filtered = [first_circle]
     center0 = (lat0, lon0)  # Correct order for geopy (lat, lon)
-    
+
     for circle_str in circle_list[1:]:
-        current_parts = circle_str.split('_')       
+        current_parts = circle_str.split("_")
         current_lon = float(current_parts[0])  # Longitude is first part
         current_lat = float(current_parts[1])  # Latitude is second part
-        
+
         current_center = (current_lat, current_lon)  # Correct order for geopy
         distance = geodesic(center0, current_center).meters
-        
+
         if distance <= radius0:
             filtered.append(circle_str)
 
@@ -400,14 +409,14 @@ def process_circles(input_strings):
     # }
     # # Generate all combinations of rules
     # duplicate_rules = {}
-    
+
     # # For patterns like 1.2.5 -> 1.1.2
     # for x in range(1, 8):
     #     for key, value in base_rules.items():
     #         source = f"{x}.{key}"
     #         target = f"{x}.{value}"
     #         duplicate_rules[source] = target
-    
+
     # # For patterns like x.y.2.5 -> x.y.1.2
     # for x in range(1, 8):
     #     for y in range(1, 8):
@@ -415,7 +424,7 @@ def process_circles(input_strings):
     #             source = f"{x}.{y}.{key}"
     #             target = f"{x}.{y}.{value}"
     #             duplicate_rules[source] = target
-    
+
     # # For patterns like x.y.z.2.5 -> x.y.z.1.2
     # for x in range(1, 8):
     #     for y in range(1, 8):
@@ -427,26 +436,25 @@ def process_circles(input_strings):
 
     result = []
     removed_children = {}  # To keep track of removed children for each parent
-    
+
     for s in input_strings:
-        parts = s.split('_')
+        parts = s.split("_")
         circle = None
         for part in parts:
-            if part.startswith('circle='):
-                circle = part.split('=')[1].rstrip('*')
+            if part.startswith("circle="):
+                circle = part.split("=")[1].rstrip("*")
                 break
-        
 
         # Check if it's a child of any circle in duplicate_rules
         is_child = False
         for parent in duplicate_rules.keys():
-            if circle.startswith(parent + '.'):
+            if circle.startswith(parent + "."):
                 is_child = True
                 if parent not in removed_children:
                     removed_children[parent] = []
                 removed_children[parent].append(circle)
                 break
-                
+
         if is_child:
             continue
 
@@ -460,6 +468,7 @@ def process_circles(input_strings):
 
     return result
 
+
 async def create_plan(lng, lat, radius, boolean_query):
     text = boolean_query
     text = text.strip("_")
@@ -469,7 +478,7 @@ async def create_plan(lng, lat, radius, boolean_query):
     )
     db_dict = {}
 
-    def get_data(c:Circle):
+    def get_data(c: Circle):
         data = c.get_dct()
         db_dict[(data["lng"], data["lat"], data["radius"], data["id"])] = data
         for child in data["children"]:
@@ -511,12 +520,8 @@ async def create_plan(lng, lat, radius, boolean_query):
 
 
 async def save_plan(plan_name, plan):
-    file_path = (
-        f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
-    )
+    file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
     await use_json(file_path, "w", plan)
-
-
 
 async def process_req_plan(req: ReqFetchDataset):
     action = req.action
@@ -526,9 +531,11 @@ async def process_req_plan(req: ReqFetchDataset):
 
     if req.page_token == "" and action == "full data":
         # TODO creating the name of the file should be moved to storage
-        tcc_string = make_ggl_layer_filename(req)
-        plan_name = f"plan_{tcc_string}"
-        
+
+        # tcc_string = make_ggl_layer_filename(req)
+        # plan_name = f"plan_{tcc_string}"
+        plan_name = await make_plan_name(req)
+
         try:
             plan = await get_plan(plan_name)
             if not plan:
@@ -551,14 +558,18 @@ async def process_req_plan(req: ReqFetchDataset):
         )
 
         bknd_dataset_id = plan[current_plan_index]
-        next_page_token = f"page_token={plan_name}@#${1}"  # Start with the first search
+
+        # next_page_token = f"page_token={plan_name}{TOKEN_SEPARATOR}{1}"  # Start with the first search
+        next_page_token = await make_next_page_token_name(plan_name, 1)
 
     elif req.page_token != "":
 
-        plan_name, current_plan_index = req.page_token.split("@#$")
-        _, plan_name = plan_name.split("page_token=")
-
-        current_plan_index = int(current_plan_index)
+        # plan_name, current_plan_index = req.page_token.split(f"{TOKEN_SEPARATOR}")
+        # _, plan_name = plan_name.split("page_token=")
+        # current_plan_index = int(current_plan_index)
+        plan_name, current_plan_index = await get_plan_name_and_index(
+            req.page_token
+        )
 
         # # limit to 30 calls per plan
         # if current_plan_index > 30:
@@ -576,21 +587,21 @@ async def process_req_plan(req: ReqFetchDataset):
 
         search_info = plan[current_plan_index].split("_")
         if "end" in search_info[0]:
-            pause=1
+            pause = 1
         req.lng, req.lat, req.radius = (
-        float(search_info[0]),
-        float(search_info[1]),
-        float(search_info[2]),
+            float(search_info[0]),
+            float(search_info[1]),
+            float(search_info[2]),
         )
         next_plan_index = current_plan_index + 1
         if plan[next_plan_index] == "end of search plan":
             next_page_token = ""  # End of search plan
             await process_plan_popularity(plan_name)
         else:
-            next_page_token = f"page_token={plan_name}@#${next_plan_index}"
-
-
-
+            # next_page_token = f"page_token={plan_name}{TOKEN_SEPARATOR}{next_plan_index}"
+            next_page_token = await make_next_page_token_name(
+                plan_name, next_plan_index
+            )
 
     return req, plan_name, next_page_token, current_plan_index, bknd_dataset_id
 
@@ -599,7 +610,9 @@ def add_skip_to_subcircles(plan: list, token_plan_index: str):
     circle_string = plan[token_plan_index]
     # Extract the circle number from the input string
 
-    circle_number = circle_string.split("_circle=")[1].split("_")[0].replace("*", "")
+    circle_number = (
+        circle_string.split("_circle=")[1].split("_")[0].replace("*", "")
+    )
 
     def is_subcircle(circle):
         circle = "_circle=" + circle.split("_circle=")[1]
@@ -628,47 +641,115 @@ def get_next_non_skip_index(rectified_plan, current_plan_index):
             return i
 
 
-
 async def rectify_plan(plan_name, current_plan_index):
     plan = await get_plan(plan_name)
     rectified_plan = add_skip_to_subcircles(plan, current_plan_index)
     await save_plan(plan_name, rectified_plan)
-    next_plan_index = get_next_non_skip_index(rectified_plan, current_plan_index)
-    next_page_token = f"page_token={plan_name}@#${next_plan_index}"
+    next_plan_index = get_next_non_skip_index(
+        rectified_plan, current_plan_index
+    )
+    # next_page_token = f"page_token={plan_name}{TOKEN_SEPARATOR}{next_plan_index}"
+    next_page_token = await make_next_page_token_name(
+        plan_name, next_plan_index
+    )
     if next_plan_index == -1:
         next_page_token = ""
-
-    # req.page_token = req.page_token.split("@#$")[0] + "@#$" + str(next_plan_index)
-    # next_page_token = f"page_token={plan_name}@#${next_plan_index}"
-
     return next_plan_index, next_page_token
+
 
 async def mark_plan_result(plan_name, current_plan_index, has_features):
     """
     Mark a plan item with _success or _fail based on whether data was retrieved.
-    
+
     Args:
         plan_name (str): Name of the plan
         current_plan_index (int): Current index in the plan
         has_features (bool): Whether the request returned features
     """
     plan = await get_plan(plan_name)
-    
+
     # Only modify if we have a valid index and it's not the "end of search plan" item
     if current_plan_index < len(plan) - 1:
         current_item = plan[current_plan_index]
-        
+
         # Remove any existing success/fail markers first to avoid duplicates
         current_item = current_item.replace("_success", "").replace("_fail", "")
-        
+
         if has_features:
             plan[current_plan_index] = current_item + "_success"
         else:
             plan[current_plan_index] = current_item + "_fail"
-        
+
         await save_plan(plan_name, plan)
-    
+
     return plan
+
+
+async def transform_plan_items(
+    req: ReqFetchDataset, plan_list: List[str]
+) -> List[str]:
+    datsets_filenames = []
+    plan_name = await make_plan_name(req)
+
+    for original_index, item_string in enumerate(plan_list):
+        if item_string.endswith("_success"):
+            parts = item_string.split("_")
+
+            # Expecting structure: lat_lng_radius_query_circleInfo..._success
+            # Need at least 5 parts for this: lat, lng, radius, query, circle=...
+            if len(parts) < 5:
+                print(f"Skipping item due to insufficient parts: {item_string}")
+                continue
+
+            lng_val = float(parts[0])
+            lat_val = float(parts[1])
+            radius_val_str = parts[2]  # e.g., "30000.0"
+            radius_val = float(radius_val_str)
+
+            # --- Extract the query string ---
+            # The query is located after "lat_lng_radius_" and before the first "_circle=".
+            # Example: "46.6753_24.7136_30000.0_supermarket_circle=..."
+            # The query part starts after the third underscore.
+
+            # Calculate the starting index of the query part.
+            # This is the length of "lat_lng_radius_"
+            query_start_index = (
+                len(parts[0]) + 1 + len(parts[1]) + 1 + len(parts[2]) + 1
+            )
+
+            # Find the end of the query part (start of "_circle=")
+            query_end_index = item_string.find("_circle=", query_start_index)
+
+            # query_with_underscores is the raw query string from the plan item
+            query_with_underscores = item_string[
+                query_start_index:query_end_index
+            ]
+
+            # For ReqFetchDataset.boolean_query, convert underscores in the extracted query to spaces.
+            # This becomes the base for the `type_string` in `make_dataset_filename`.
+            boolean_query_for_req_object = query_with_underscores.replace(
+                "_", " "
+            )
+            
+            if original_index == 0:
+                next_page_token_string = ""
+            else:
+                next_page_token_string = await make_next_page_token_name(plan_name, original_index)
+
+            # Create the ReqFetchDataset object
+            req = ReqFetchDataset(
+                lat=lat_val,
+                lng=lng_val,
+                radius=radius_val,
+                boolean_query=boolean_query_for_req_object,
+                page_token=next_page_token_string,
+                user_id=req.user_id,
+            )
+
+            # Generate the two versions of the filename and add to results
+            datsets_filenames.append(make_dataset_filename(req))
+
+    return datsets_filenames
 
 
 # Apply the decorator to all functions in this module

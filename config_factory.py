@@ -45,6 +45,7 @@ class ApiConfig(CommonApiConfig):
     apply_zone_layers: str = backend_base_uri + "apply_zone_layers"
     cost_calculator: str = backend_base_uri + "cost_calculator"
     check_street_view: str = backend_base_uri + "check_street_view"
+    hub_expansion_analysis: str = backend_base_uri + "hub_expansion_analysis"
     ggl_nearby_pro_sku_fields: str = (
         "places.accessibilityOptions,places.addressComponents,places.addressDescriptor,places.adrFormatAddress,places.attributions,places.businessStatus,places.containingPlaces,places.displayName,places.formattedAddress,places.googleMapsLinks,places.googleMapsUri,places.iconBackgroundColor,places.iconMaskBaseUri,places.id,places.location,places.name,places.photos,places.plusCode,places.postalAddress,places.primaryType,places.primaryTypeDisplayName,places.pureServiceAreaBusiness,places.shortFormattedAddress,places.subDestinations,places.types,places.utcOffsetMinutes,places.viewport"
     )

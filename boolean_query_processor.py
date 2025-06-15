@@ -4,15 +4,11 @@ import re
 from sympy import parse_expr
 from sympy.logic.boolalg import to_dnf
 from typing import Dict, List, Tuple
-from backend_common.logging_wrapper import apply_decorator_to_module
+from logging_wrapper import apply_decorator_to_module
 from string import ascii_lowercase
 from typing import Tuple, Dict, List
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 
@@ -417,6 +413,10 @@ def separate_boolean_queries(boolean_string:str):
     Keywords are enclosed in @...@.
     Categories are alphanumeric + underscore, not enclosed in @.
     """
+    # seperate category boolean query from keyword boolean query, keyword are wraped in @, and category are not. another clue is space category keywords don't have space
+    # for example      boolean ="""(auto_parts_store OR @auto parts@ OR @car repair@ OR @car parts@ OR @car repair parts@ OR @قطع غيار السيارات@) AND NOT @بنشر@"""
+    # category boolean should be  = """(auto_parts_store)"""
+    # keyword boolean should be  = """(@auto parts@ OR @car repair@ OR @car parts@ OR @car repair parts@ OR @قطع غيار السيارات@) AND NOT @بنشر@"""
 
     # 1. Define a token pattern to capture all parts of the query
     # Order matters: keywords first, then operators, then category-like words, then parentheses.

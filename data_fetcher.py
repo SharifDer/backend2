@@ -37,16 +37,15 @@ from google_api_connector import (
     fetch_ggl_nearby,
     # text_fetch_from_google_maps_api,
     calculate_distance_traffic_route,
-    transform_plan_items,
 )
-from backend_common.logging_wrapper import (
+from logging_wrapper import (
     apply_decorator_to_module,
     preserve_validate_decorator,
 )
-from backend_common.logging_wrapper import log_and_validate
+from logging_wrapper import log_and_validate
 from constants import load_country_city
 from mapbox_connector import MapBoxConnector
-from storage import (
+from storage_methods import (
     GOOGLE_CATEGORIES,
     REAL_ESTATE_CATEGORIES,
     AREA_INTELLIGENCE_CATEGORIES,
@@ -72,13 +71,9 @@ from storage import (
     get_full_load_geojson,
 )
 from boolean_query_processor import reduce_to_single_query
-from popularity_algo import get_plan
+from popularity_algo import get_plan, transform_plan_items
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 
@@ -217,7 +212,9 @@ async def fetch_country_city_data() -> Dict[str, List[Dict[str, float]]]:
     return data
 
 
-def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
+def determine_data_type(
+    req: ReqFetchDataset, categories: Dict
+) -> Optional[str]:
     """
     Determines the data type based on boolean query.
     Returns:
@@ -226,6 +223,8 @@ def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
     - Raises HTTPException if any terms are not in approved categories (with fuzzy suggestions)
     - Raises HTTPException if mixing Google/custom with special categories
     """
+    boolean_query = req.boolean_query
+
     if not boolean_query:
         return None
 
@@ -248,6 +247,11 @@ def determine_data_type(boolean_query: str, categories: Dict) -> Optional[str]:
 
     if not terms:
         return None
+
+    # if req.search_type == "keyword_search":
+    #     # If the search type is text_search, we can assume it's a Google search
+    #     # and return the google_categories directly
+    #     return "google_categories"
 
     # Create a set of all approved terms from all categories and organize by category
     approved_terms = set()
@@ -381,67 +385,67 @@ async def check_purchase(req: ReqFetchDataset, plan_name: str):
             )
 
 
-async def full_load(
+async def bkgnd_full_load(
     req: ReqFetchDataset, plan_name: str, layer_id: str, next_page_token: str
 ):
 
-    # if request action was "full data" then store dataset id in the user profile
-    # the name of the dataset will be the action + cct_layer name
-    # make_ggl_layer_filename
-    progress = 0
-    if req.action == "full data":
+    progress, progress_complete = await fetch_plan_progress(plan_name)
 
-        skip_flag = False
-        plan_progress_ref = (
-            firebase_db.get_async_client()
-            .collection("plan_progress")
-            .document(plan_name)
+    if not progress_complete:
+        get_background_tasks().add_task(
+            excecute_dataset_plan, req, plan_name, layer_id, next_page_token
         )
-        plan_progress_doc = await plan_progress_ref.get()
 
-        if plan_progress_doc.exists:
-            plan_progress_data = plan_progress_doc.to_dict()
-            progress = plan_progress_data.get("progress", 0)
-            completed_at = plan_progress_data.get("completed_at", datetime.min)
+    # if the first query of the full data was successful and returned results continue the fetch data plan in the background
+    # when the user has made a purchase as a background task we should finish the plan, the background taks should execute calls within the same level at the same time in a batch of 5 at a time
+    # when saving the dataset we should save what is the % availability of this dataset based on the plan , plan that is 50% executed means data available 50%
+    # while we are at it we should add the dataset's next refresh date, and a flag saying whether to auto refresh or no
+    # after the initiial api call api call, when we return to the frontend we need to add a new key in the return object saying delay before next call ,
+    # and we should make this delay 3 seconds
+    # in those 3 seconds we hope to allow to backend to advance in the query plan execution
+    # the frontend should display the % as a bar with an indication that this bar is filling in those 3 seconds to reassure the user
+    # we should return this % completetion to the user to display while the user is watiing for his data
 
-            if progress >= 100 and completed_at.replace(
-                tzinfo=timezone.utc
-            ) < datetime.now(timezone.utc) + timedelta(days=90):
-                skip_flag = True
+    # TODO this is seperate, optimisation for foreground process of data retrival from db
+    # then on subsequent calls using next page token the backend should execute calls within the same level at the same time in a batch of 5 at a time
+
+    # TODO
+    # we need to somehow deduplicate our data before we send it to the user, i'm not sure how
+    user_data = await load_user_profile(req.user_id)
+    user_data["prdcer"]["prdcer_dataset"][f"{plan_name}"] = plan_name
+    await update_user_profile(req.user_id, user_data)
+
+    return progress
+
+
+async def fetch_plan_progress(plan_name):
+    progress = 0
+    progress_complete = False
+    plan_progress_ref = (
+        firebase_db.get_async_client()
+        .collection("plan_progress")
+        .document(plan_name)
+    )
+    plan_progress_doc = await plan_progress_ref.get()
+
+    if plan_progress_doc.exists:
+        plan_progress_data = plan_progress_doc.to_dict()
+        progress = plan_progress_data.get("progress", 0)
+        completed_at = plan_progress_data.get("completed_at", datetime.min)
+
+        if progress >= 100 and completed_at.replace(
+            tzinfo=timezone.utc
+        ) < datetime.now(timezone.utc) + timedelta(days=90):
+            progress_complete = True
 
             # check if this plan is currently being fetched in the background by checking that last_updated is more than 30 seconds ago
             # last_updated was saved like this firestore.SERVER_TIMESTAMP
-            last_updated = plan_progress_data.get("last_updated", datetime.min)
-            if last_updated.replace(tzinfo=timezone.utc) > datetime.now(
-                timezone.utc
-            ) - timedelta(seconds=30):
-                skip_flag = True
-
-        if not skip_flag:
-            get_background_tasks().add_task(
-                excecute_dataset_plan, req, plan_name, layer_id, next_page_token
-            )
-
-        # if the first query of the full data was successful and returned results continue the fetch data plan in the background
-        # when the user has made a purchase as a background task we should finish the plan, the background taks should execute calls within the same level at the same time in a batch of 5 at a time
-        # when saving the dataset we should save what is the % availability of this dataset based on the plan , plan that is 50% executed means data available 50%
-        # while we are at it we should add the dataset's next refresh date, and a flag saying whether to auto refresh or no
-        # after the initiial api call api call, when we return to the frontend we need to add a new key in the return object saying delay before next call ,
-        # and we should make this delay 3 seconds
-        # in those 3 seconds we hope to allow to backend to advance in the query plan execution
-        # the frontend should display the % as a bar with an indication that this bar is filling in those 3 seconds to reassure the user
-        # we should return this % completetion to the user to display while the user is watiing for his data
-
-        # TODO this is seperate, optimisation for foreground process of data retrival from db
-        # then on subsequent calls using next page token the backend should execute calls within the same level at the same time in a batch of 5 at a time
-
-        # TODO
-        # we need to somehow deduplicate our data before we send it to the user, i'm not sure how
-        user_data = await load_user_profile(req.user_id)
-        user_data["prdcer"]["prdcer_dataset"][f"{plan_name}"] = plan_name
-        await update_user_profile(req.user_id, user_data)
-
-        return progress
+        last_updated = plan_progress_data.get("last_updated", datetime.min)
+        if last_updated.replace(tzinfo=timezone.utc) > datetime.now(
+            timezone.utc
+        ) - timedelta(seconds=30):
+            progress_complete = True
+    return progress, progress_complete
 
 
 async def fetch_dataset(req: ReqFetchDataset):
@@ -464,7 +468,7 @@ async def fetch_dataset(req: ReqFetchDataset):
         ReqCityCountry(country_name=req.country_name, city_name=req.city_name)
     )
 
-    data_type = determine_data_type(req.boolean_query, categories)
+    data_type = determine_data_type(req, categories)
 
     if (
         data_type == "real_estate"
@@ -477,6 +481,7 @@ async def fetch_dataset(req: ReqFetchDataset):
         geojson_dataset, bknd_dataset_id, next_page_token, plan_name = (
             await fetch_census_realestate(req=req, data_type=data_type)
         )
+        progress = 100
     else:
         city_data = fetch_lat_lng_bounding_box(req)
 
@@ -498,7 +503,32 @@ async def fetch_dataset(req: ReqFetchDataset):
         ) = await fetch_ggl_nearby(req)
 
         await check_purchase(req, plan_name)
-        progress = await full_load(req, plan_name, layer_id, next_page_token)
+
+        if req.action == "full data":
+            if not req.full_load:
+                await bkgnd_full_load(req, plan_name, layer_id, next_page_token)
+
+            if req.full_load:
+                # TODO at the moment we can't do full load unless progress is 100 following background task
+                progress, progress_complete = await fetch_plan_progress(plan_name)
+                progress_check_counts = 0
+                while progress <= 100 and progress_check_counts < 1:
+                    if progress == 100:
+                        plan = await get_plan(plan_name)
+
+                        # execute in db merge+deduplicate all datasets
+                        output_filenames = await transform_plan_items(req, plan)
+                        geojson_dataset = (
+                            await get_full_load_geojson(output_filenames)
+                        )
+                        
+                        break
+                    else:
+                        progress = await bkgnd_full_load(
+                            req, plan_name, layer_id, next_page_token
+                        )
+
+                    progress_check_counts += 1
 
     geojson_dataset["bknd_dataset_id"] = bknd_dataset_id
     geojson_dataset["records_count"] = len(geojson_dataset.get("features", ""))
@@ -506,29 +536,6 @@ async def fetch_dataset(req: ReqFetchDataset):
     geojson_dataset["next_page_token"] = next_page_token
     geojson_dataset["delay_before_next_call"] = 3
     geojson_dataset["progress"] = progress
-    geojson_dataset["full_load_geojson"] = {}
-
-    progress_check_counts = 0
-    if req.action == "full data" and req.full_load:
-        while progress <= 100 and progress_check_counts < 1:
-            if progress == 100:
-                plan = await get_plan(plan_name)
-
-                # execute in db merge+deduplicate all datasets
-                output_filenames = await transform_plan_items(req, plan)
-                geojson_dataset["full_load_geojson"] = (
-                    await get_full_load_geojson(output_filenames)
-                )
-                break
-            else:
-                # TODO this is useless, because background task only start after a response has been provided by the endpoint
-                # async sleep for 10 seconds and call full_data_load again
-                await asyncio.sleep(10)
-                progress = await full_load(
-                    req, plan_name, layer_id, next_page_token
-                )
-
-            progress_check_counts += 1
 
     return geojson_dataset
 

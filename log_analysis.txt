@@ -1,0 +1,463 @@
+================================================================================
+FUNCTION PERFORMANCE ANALYSIS
+================================================================================
+
+Total unique functions analyzed: 35
+Analysis generated from: app.log
+Analysis generated at: 2025-06-14 20:22:27.120299
+
+TOP 10 SLOWEST FUNCTIONS (by median execution time):
+------------------------------------------------------------
+ 1. google_api_connector.fetch_ggl_nearby: 2.6194s median (252 calls)
+ 2. google_api_connector.query_ggl: 2.5987s median (252 calls)
+ 3. google_api_connector.fetch_text_search_ggl_maps_api: 2.5923s median (252 calls)
+ 4. data_fetcher.fetch_dataset: 1.8700s median (1 calls)
+ 5. request_processor.request_handling: 1.1750s median (2 calls)
+ 6. google_api_connector.single_ggl_text_call: 1.0633s median (190 calls)
+ 7. google_api_connector.make_post_api_call: 1.0619s median (190 calls)
+ 8. data_fetcher.check_purchase: 0.8450s median (1 calls)
+ 9. auth.login_user: 0.4707s median (1 calls)
+10. google_api_connector.process_and_store_to_db: 0.3006s median (190 calls)
+
+TOP 10 FASTEST FUNCTIONS (by median execution time):
+------------------------------------------------------------
+ 1. popularity_algo.calculate_category_multiplier: 0.0002s median (3800 calls)
+ 2. boolean_query_processor.replace_boolean_operators: 0.0002s median (253 calls)
+ 3. boolean_query_processor.preserve_space_for_text_search_items: 0.0002s median (506 calls)
+ 4. storage_methods.generate_layer_id: 0.0002s median (1 calls)
+ 5. google_api_connector.build_text_search_payload: 0.0003s median (190 calls)
+ 6. boolean_query_processor.map_boolean_words: 0.0003s median (506 calls)
+ 7. boolean_query_processor.separate_boolean_queries: 0.0003s median (253 calls)
+ 8. data_fetcher.poi_categories: 0.0003s median (1 calls)
+ 9. auth.load_user_profile: 0.0004s median (2 calls)
+10. auth.get_stripe_customer_id: 0.0005s median (1 calls)
+
+FUNCTIONS WITH MOST EXECUTIONS:
+------------------------------------------------------------
+ 1. popularity_algo.calculate_category_multiplier: 3800 executions (0.0002s median)
+ 2. storage_methods.load_dataset: 822 executions (0.2371s median)
+ 3. boolean_query_processor.map_boolean_words: 506 executions (0.0003s median)
+ 4. boolean_query_processor.preserve_space_for_text_search_items: 506 executions (0.0002s median)
+ 5. popularity_algo.get_plan: 505 executions (0.0012s median)
+ 6. storage_methods.store_data_resp: 379 executions (0.2830s median)
+ 7. popularity_algo.process_req_plan: 253 executions (0.0086s median)
+ 8. boolean_query_processor.text_search_query_sequence: 253 executions (0.0045s median)
+ 9. boolean_query_processor.separate_boolean_queries: 253 executions (0.0003s median)
+10. boolean_query_processor.replace_boolean_operators: 253 executions (0.0002s median)
+
+FUNCTIONS WITH HIGHEST TOTAL TIME SPENT:
+------------------------------------------------------------
+ 1. google_api_connector.fetch_ggl_nearby: 547.6548s total (252 calls)
+ 2. google_api_connector.query_ggl: 542.9032s total (252 calls)
+ 3. google_api_connector.fetch_text_search_ggl_maps_api: 541.2766s total (252 calls)
+ 4. google_api_connector.single_ggl_text_call: 231.7981s total (190 calls)
+ 5. google_api_connector.make_post_api_call: 231.5266s total (190 calls)
+ 6. storage_methods.load_dataset: 197.7121s total (822 calls)
+ 7. storage_methods.store_data_resp: 108.2773s total (379 calls)
+ 8. google_api_connector.process_and_store_to_db: 58.5946s total (190 calls)
+ 9. popularity_algo.process_req_plan: 2.3913s total (253 calls)
+10. request_processor.request_handling: 2.3500s total (2 calls)
+
+================================================================================
+DETAILED FUNCTION ANALYSIS
+================================================================================
+
+Function: google_api_connector.fetch_ggl_nearby
+  Execution Count: 252
+  Total Time Sum: 547.6548s
+  Median Time: 2.6194s
+  Min Time: 0.2597s
+  Max Time: 8.5362s
+  Median Core Time: 2.6190s
+  Median Overhead: 0.0004s
+  Overhead %: 0.02%
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: google_api_connector.query_ggl
+  Execution Count: 252
+  Total Time Sum: 542.9032s
+  Median Time: 2.5987s
+  Min Time: 0.2460s
+  Max Time: 8.5115s
+  Median Core Time: 2.5983s
+  Median Overhead: 0.0004s
+  Overhead %: 0.02%
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: google_api_connector.fetch_text_search_ggl_maps_api
+  Execution Count: 252
+  Total Time Sum: 541.2766s
+  Median Time: 2.5923s
+  Min Time: 0.2400s
+  Max Time: 8.5025s
+  Median Core Time: 2.5920s
+  Median Overhead: 0.0003s
+  Overhead %: 0.01%
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: data_fetcher.fetch_dataset
+  Execution Count: 1
+  Total Time Sum: 1.8700s
+  Median Time: 1.8700s
+  Min Time: 1.8700s
+  Max Time: 1.8700s
+  Median Core Time: 1.8697s
+  Median Overhead: 0.0003s
+  Overhead %: 0.02%
+  First Execution: 2025-06-14 19:44:44
+  Last Execution: 2025-06-14 19:44:44
+------------------------------------------------------------
+Function: request_processor.request_handling
+  Execution Count: 2
+  Total Time Sum: 2.3500s
+  Median Time: 1.1750s
+  Min Time: 0.4723s
+  Max Time: 1.8777s
+  Median Core Time: 1.1708s
+  Median Overhead: 0.0042s
+  Overhead %: 0.35%
+  First Execution: 2025-06-14 19:44:22
+  Last Execution: 2025-06-14 19:44:44
+------------------------------------------------------------
+Function: google_api_connector.single_ggl_text_call
+  Execution Count: 190
+  Total Time Sum: 231.7981s
+  Median Time: 1.0633s
+  Min Time: 1.0114s
+  Max Time: 6.9481s
+  Median Core Time: 1.0630s
+  Median Overhead: 0.0003s
+  Overhead %: 0.03%
+  First Execution: 2025-06-14 19:45:10
+  Last Execution: 2025-06-14 19:54:19
+------------------------------------------------------------
+Function: google_api_connector.make_post_api_call
+  Execution Count: 190
+  Total Time Sum: 231.5266s
+  Median Time: 1.0619s
+  Min Time: 1.0100s
+  Max Time: 6.9466s
+  Median Core Time: 1.0614s
+  Median Overhead: 0.0004s
+  Overhead %: 0.04%
+  First Execution: 2025-06-14 19:45:10
+  Last Execution: 2025-06-14 19:54:19
+------------------------------------------------------------
+Function: data_fetcher.check_purchase
+  Execution Count: 1
+  Total Time Sum: 0.8450s
+  Median Time: 0.8450s
+  Min Time: 0.8450s
+  Max Time: 0.8450s
+  Median Core Time: 0.8447s
+  Median Overhead: 0.0003s
+  Overhead %: 0.04%
+  First Execution: 2025-06-14 19:44:44
+  Last Execution: 2025-06-14 19:44:44
+------------------------------------------------------------
+Function: auth.login_user
+  Execution Count: 1
+  Total Time Sum: 0.4707s
+  Median Time: 0.4707s
+  Min Time: 0.4707s
+  Max Time: 0.4707s
+  Median Core Time: 0.4704s
+  Median Overhead: 0.0002s
+  Overhead %: 0.04%
+  First Execution: 2025-06-14 19:44:22
+  Last Execution: 2025-06-14 19:44:22
+------------------------------------------------------------
+Function: google_api_connector.process_and_store_to_db
+  Execution Count: 190
+  Total Time Sum: 58.5946s
+  Median Time: 0.3006s
+  Min Time: 0.2837s
+  Max Time: 0.6885s
+  Median Core Time: 0.2985s
+  Median Overhead: 0.0019s
+  Overhead %: 0.63%
+  First Execution: 2025-06-14 19:45:10
+  Last Execution: 2025-06-14 19:54:19
+------------------------------------------------------------
+Function: storage_methods.store_data_resp
+  Execution Count: 379
+  Total Time Sum: 108.2773s
+  Median Time: 0.2830s
+  Min Time: 0.2676s
+  Max Time: 0.6447s
+  Median Core Time: 0.2809s
+  Median Overhead: 0.0022s
+  Overhead %: 0.78%
+  First Execution: 2025-06-14 19:45:10
+  Last Execution: 2025-06-14 19:54:19
+------------------------------------------------------------
+Function: storage_methods.load_dataset
+  Execution Count: 822
+  Total Time Sum: 197.7121s
+  Median Time: 0.2371s
+  Min Time: 0.2307s
+  Max Time: 0.7360s
+  Median Core Time: 0.2369s
+  Median Overhead: 0.0002s
+  Overhead %: 0.08%
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:54:18
+------------------------------------------------------------
+Function: auth.make_firebase_api_request
+  Execution Count: 1
+  Total Time Sum: 0.1937s
+  Median Time: 0.1937s
+  Min Time: 0.1937s
+  Max Time: 0.1937s
+  Median Core Time: 0.1934s
+  Median Overhead: 0.0003s
+  Overhead %: 0.15%
+  First Execution: 2025-06-14 19:44:22
+  Last Execution: 2025-06-14 19:44:22
+------------------------------------------------------------
+Function: data_fetcher.bkgnd_full_load
+  Execution Count: 1
+  Total Time Sum: 0.1622s
+  Median Time: 0.1622s
+  Min Time: 0.1622s
+  Max Time: 0.1622s
+  Median Core Time: 0.1618s
+  Median Overhead: 0.0004s
+  Overhead %: 0.25%
+  First Execution: 2025-06-14 19:44:44
+  Last Execution: 2025-06-14 19:44:44
+------------------------------------------------------------
+Function: data_fetcher.fetch_plan_progress
+  Execution Count: 2
+  Total Time Sum: 0.2360s
+  Median Time: 0.1180s
+  Min Time: 0.0764s
+  Max Time: 0.1596s
+  Median Core Time: 0.1178s
+  Median Overhead: 0.0002s
+  Overhead %: 0.17%
+  First Execution: 2025-06-14 19:44:44
+  Last Execution: 2025-06-14 19:44:44
+------------------------------------------------------------
+Function: auth.my_verify_id_token
+  Execution Count: 1
+  Total Time Sum: 0.0927s
+  Median Time: 0.0927s
+  Min Time: 0.0927s
+  Max Time: 0.0927s
+  Median Core Time: 0.0923s
+  Median Overhead: 0.0004s
+  Overhead %: 0.43%
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:44:42
+------------------------------------------------------------
+Function: popularity_algo.process_req_plan
+  Execution Count: 253
+  Total Time Sum: 2.3913s
+  Median Time: 0.0086s
+  Min Time: 0.0079s
+  Max Time: 0.0187s
+  Median Core Time: 0.0014s
+  Median Overhead: 0.0072s
+  Overhead %: 83.72%
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: boolean_query_processor.text_search_query_sequence
+  Execution Count: 253
+  Total Time Sum: 1.2078s
+  Median Time: 0.0045s
+  Min Time: 0.0040s
+  Max Time: 0.0231s
+  Median Core Time: 0.0043s
+  Median Overhead: 0.0002s
+  Overhead %: 4.44%
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: popularity_algo.mark_plan_result
+  Execution Count: 252
+  Total Time Sum: 0.8814s
+  Median Time: 0.0034s
+  Min Time: 0.0030s
+  Max Time: 0.0059s
+  Median Core Time: 0.0032s
+  Median Overhead: 0.0002s
+  Overhead %: 5.88%
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: google_api_connector.filter_ggl_data_valid_locations
+  Execution Count: 252
+  Total Time Sum: 0.5172s
+  Median Time: 0.0023s
+  Min Time: 0.0004s
+  Max Time: 0.0053s
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: google_api_connector.select_sub_properties
+  Execution Count: 252
+  Total Time Sum: 0.4445s
+  Median Time: 0.0019s
+  Min Time: 0.0003s
+  Max Time: 0.0072s
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: popularity_algo.save_plan
+  Execution Count: 252
+  Total Time Sum: 0.3960s
+  Median Time: 0.0015s
+  Min Time: 0.0013s
+  Max Time: 0.0027s
+  Median Core Time: 0.0012s
+  Median Overhead: 0.0004s
+  Overhead %: 26.67%
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: popularity_algo.get_plan
+  Execution Count: 505
+  Total Time Sum: 0.6502s
+  Median Time: 0.0012s
+  Min Time: 0.0010s
+  Max Time: 0.0028s
+  Median Core Time: 0.0010s
+  Median Overhead: 0.0002s
+  Overhead %: 16.67%
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: data_fetcher.determine_data_type
+  Execution Count: 1
+  Total Time Sum: 0.0007s
+  Median Time: 0.0007s
+  Min Time: 0.0007s
+  Max Time: 0.0007s
+  Median Core Time: 0.0003s
+  Median Overhead: 0.0004s
+  Overhead %: 57.14%
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:44:42
+------------------------------------------------------------
+Function: auth.update_user_profile
+  Execution Count: 1
+  Total Time Sum: 0.0006s
+  Median Time: 0.0006s
+  Min Time: 0.0006s
+  Max Time: 0.0006s
+  Median Core Time: 0.0001s
+  Median Overhead: 0.0005s
+  Overhead %: 83.33%
+  First Execution: 2025-06-14 19:44:44
+  Last Execution: 2025-06-14 19:44:44
+------------------------------------------------------------
+Function: auth.get_stripe_customer_id
+  Execution Count: 1
+  Total Time Sum: 0.0005s
+  Median Time: 0.0005s
+  Min Time: 0.0005s
+  Max Time: 0.0005s
+  Median Core Time: 0.0002s
+  Median Overhead: 0.0002s
+  Overhead %: 40.00%
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:44:43
+------------------------------------------------------------
+Function: auth.load_user_profile
+  Execution Count: 2
+  Total Time Sum: 0.0009s
+  Median Time: 0.0004s
+  Min Time: 0.0004s
+  Max Time: 0.0005s
+  Median Core Time: 0.0003s
+  Median Overhead: 0.0003s
+  Overhead %: 55.56%
+  First Execution: 2025-06-14 19:44:43
+  Last Execution: 2025-06-14 19:44:44
+------------------------------------------------------------
+Function: data_fetcher.poi_categories
+  Execution Count: 1
+  Total Time Sum: 0.0003s
+  Median Time: 0.0003s
+  Min Time: 0.0003s
+  Max Time: 0.0003s
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:44:42
+------------------------------------------------------------
+Function: boolean_query_processor.separate_boolean_queries
+  Execution Count: 253
+  Total Time Sum: 0.1021s
+  Median Time: 0.0003s
+  Min Time: 0.0002s
+  Max Time: 0.0166s
+  Median Core Time: 0.0001s
+  Median Overhead: 0.0002s
+  Overhead %: 66.67%
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: boolean_query_processor.map_boolean_words
+  Execution Count: 506
+  Total Time Sum: 0.1606s
+  Median Time: 0.0003s
+  Min Time: 0.0001s
+  Max Time: 0.0027s
+  Median Core Time: 0.0002s
+  Median Overhead: 0.0002s
+  Overhead %: 66.67%
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: google_api_connector.build_text_search_payload
+  Execution Count: 190
+  Total Time Sum: 0.0625s
+  Median Time: 0.0003s
+  Min Time: 0.0003s
+  Max Time: 0.0005s
+  First Execution: 2025-06-14 19:45:08
+  Last Execution: 2025-06-14 19:54:18
+------------------------------------------------------------
+Function: storage_methods.generate_layer_id
+  Execution Count: 1
+  Total Time Sum: 0.0002s
+  Median Time: 0.0002s
+  Min Time: 0.0002s
+  Max Time: 0.0002s
+  Median Core Time: 0.0001s
+  Median Overhead: 0.0002s
+  Overhead %: 100.00%
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:44:42
+------------------------------------------------------------
+Function: boolean_query_processor.preserve_space_for_text_search_items
+  Execution Count: 506
+  Total Time Sum: 0.1071s
+  Median Time: 0.0002s
+  Min Time: 0.0001s
+  Max Time: 0.0019s
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: boolean_query_processor.replace_boolean_operators
+  Execution Count: 253
+  Total Time Sum: 0.0524s
+  Median Time: 0.0002s
+  Min Time: 0.0001s
+  Max Time: 0.0010s
+  First Execution: 2025-06-14 19:44:42
+  Last Execution: 2025-06-14 19:54:17
+------------------------------------------------------------
+Function: popularity_algo.calculate_category_multiplier
+  Execution Count: 3800
+  Total Time Sum: 0.7826s
+  Median Time: 0.0002s
+  Min Time: 0.0001s
+  Max Time: 0.0031s
+  First Execution: 2025-06-14 19:45:10
+  Last Execution: 2025-06-14 19:54:19
+------------------------------------------------------------

@@ -26,7 +26,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
-from pydantic import ValidationError
+from hub_expansion_analysis import (
+    analyze_hub_expansion,
+    ReqHubExpansion,
+    ResHubExpansion,
+)
 import asyncio
 from backend_common.dtypes.auth_dtypes import (
     ReqChangeEmail,
@@ -136,7 +140,7 @@ from backend_common.dtypes.stripe_dtypes import (
     DeductWalletReq,
 )
 from backend_common.database import Database
-from backend_common.logging_wrapper import log_and_validate
+from logging_wrapper import log_and_validate
 from backend_common.stripe_backend import (
     create_stripe_product,
     update_stripe_product,
@@ -166,7 +170,7 @@ from recolor_filter import (
     recolor_based_on,
     filter_based_on,
 )
-from storage import fetch_intelligence_by_viewport
+from storage_methods import fetch_intelligence_by_viewport
 from sales_man_problem import get_clusters_for_sales_man
 
 # TODO: Add stripe secret key
@@ -232,7 +236,10 @@ app = FastAPI()
 os.makedirs("static/plots", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-def cleanup_old_plots(max_age_hours: int = 24, static_dir: str = "static/plots"):
+
+def cleanup_old_plots(
+    max_age_hours: int = 24, static_dir: str = "static/plots"
+):
     """
     Remove plot files older than specified hours
     """
@@ -240,18 +247,19 @@ def cleanup_old_plots(max_age_hours: int = 24, static_dir: str = "static/plots")
         pattern = os.path.join(static_dir, "*.png")
         current_time = time.time()
         max_age_seconds = max_age_hours * 3600
-        
+
         deleted_count = 0
         for filepath in glob.glob(pattern):
             file_age = current_time - os.path.getctime(filepath)
             if file_age > max_age_seconds:
                 os.remove(filepath)
                 deleted_count += 1
-                
+
         logger.info(f"Cleaned up {deleted_count} old plot files")
-                
+
     except Exception as e:
         logger.error(f"Error during plot cleanup: {str(e)}")
+
 
 # Enable CORS
 origins = [CONF.enable_CORS_url]
@@ -1197,7 +1205,6 @@ async def ep_fetch_population_by_viewport(
     return response
 
 
-
 @app.post(
     CONF.temp_sales_man_problem,
     response_model=ResModel[ResSalesman],
@@ -1211,6 +1218,24 @@ async def ep_fetch_clusters_for_sales_man(
         ReqClustersForSalesManData,
         ResModel[ResSalesman],
         get_clusters_for_sales_man,
+        wrap_output=True,
+    )
+    return response
+
+
+@app.post(
+    CONF.hub_expansion_analysis,
+    response_model=ResModel[ResHubExpansion],
+    dependencies=[Depends(JWTBearer())],
+)
+async def ep_hub_expansion_analysis(
+    req: ReqModel[ReqHubExpansion], request: Request
+):
+    response = await request_handling(
+        req.request_body,
+        ReqHubExpansion,
+        ResModel[ResHubExpansion],
+        analyze_hub_expansion,
         wrap_output=True,
     )
     return response

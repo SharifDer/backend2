@@ -8,7 +8,7 @@ import requests
 from all_types.request_dtypes import ReqStreeViewCheck, ReqFetchDataset
 from backend_common.utils.utils import convert_strings_to_ints
 from config_factory import CONF
-from backend_common.logging_wrapper import apply_decorator_to_module
+from logging_wrapper import apply_decorator_to_module
 from all_types.response_dtypes import (
     LegInfo,
     TrafficCondition,
@@ -22,22 +22,17 @@ from boolean_query_processor import (
 )
 from geo_std_utils import fetch_lat_lng_bounding_box
 from mapbox_connector import MapBoxConnector
+from naming_strings import make_dataset_filename, make_dataset_filename_part
 from popularity_algo import process_req_plan, rectify_plan,mark_plan_result
-from storage import (
+from storage_methods import (
     load_dataset,
-    make_dataset_filename,
-    make_dataset_filename_part,
     store_data_resp,
     store_place_details,
     load_place_details
 )
 from tests.utils import _get_test_data_for_get_call,_get_test_data_for_post_call,_get_test_data_for_street_view
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 MIN_DELAY = 0.7  # Minimum delay in seconds
@@ -364,7 +359,7 @@ async def build_text_search_payload(
     }
     data = {
         "textQuery": textQuery,
-        "locationBias": {
+        "locationRestriction": {
             "circle": {
                 "center": {
                     "latitude": req.lat,
@@ -407,7 +402,7 @@ async def build_category_search_payload(
 
     return ggl_api_url, headers, data
 
-async def build_compatible_legacy_payload(ggl_api_url, headers, data):
+async def build_compatible_legacy_payload(ggl_api_url, headers, body):
     """
     Converts modern Google Places API payload to legacy format.
     Only includes location, radius, and type/query parameters.
@@ -420,11 +415,11 @@ async def build_compatible_legacy_payload(ggl_api_url, headers, data):
     Returns:
         tuple: (legacy_url, legacy_headers, None)
     """
-    if "textQuery" in data:
+    if "textQuery" in body:
         # Text search
-        text_query = data.get("textQuery", "")
-        location = data.get("locationBias", {}).get("circle", {}).get("center", {})
-        radius = data.get("locationBias", {}).get("circle", {}).get("radius", 1500)
+        text_query = body.get("textQuery", "")
+        location = body.get("locationRestriction", {}).get("circle", {}).get("center", {})
+        radius = body.get("locationRestriction", {}).get("circle", {}).get("radius", 1500)
         
         # Get latitude and longitude
         lat = location.get("latitude")
@@ -438,9 +433,9 @@ async def build_compatible_legacy_payload(ggl_api_url, headers, data):
         }
     else:
         # Category search
-        included_types = data.get("includedTypes", [])
-        location = data.get("locationRestriction", {}).get("circle", {}).get("center", {})
-        radius = data.get("locationRestriction", {}).get("circle", {}).get("radius", 1500)
+        included_types = body.get("includedTypes", [])
+        location = body.get("locationRestriction", {}).get("circle", {}).get("center", {})
+        radius = body.get("locationRestriction", {}).get("circle", {}).get("radius", 1500)
         
         # Get latitude and longitude
         lat = location.get("latitude")
@@ -714,10 +709,6 @@ async def calculate_distance_traffic_route(
 async def query_ggl(
     req: ReqFetchDataset, search_type: str
 ) -> Tuple[List[Dict[str, Any]], str]:
-    # seperate category boolean query from keyword boolean query, keyword are wraped in @, and category are not. another clue is space category keywords don't have space
-    # for example      boolean ="""(auto_parts_store OR @auto parts@ OR @car repair@ OR @car parts@ OR @car repair parts@ OR @قطع غيار السيارات@) AND NOT @بنشر@"""
-    # category boolean should be  = """(auto_parts_store)"""
-    # keyword boolean should be  = """(@auto parts@ OR @car repair@ OR @car parts@ OR @car repair parts@ OR @قطع غيار السيارات@) AND NOT @بنشر@"""
     cat_boolean, kw_boolean = separate_boolean_queries(req.boolean_query)
 
     if "default" in search_type or "category_search" in search_type:
@@ -730,10 +721,6 @@ async def query_ggl(
         dataset = await fetch_text_search_ggl_maps_api(
             req, kw_optimized_queries
         )
-        # ggl_api_resp, _ = await text_fetch_from_google_maps_api(req, kw_optimized_queries)
-        # dataset = await MapBoxConnector.new_ggl_to_boxmap(ggl_api_resp, req.radius)
-        # if ggl_api_resp:
-        #     dataset = convert_strings_to_ints(dataset)
     return dataset
 
 
@@ -897,73 +884,6 @@ def filter_ggl_data_valid_locations(req:ReqFetchDataset, dataset):
             filtered_dataset[key] = value
     
     return filtered_dataset
-
-async def transform_plan_items(req:ReqFetchDataset, plan_list: List[str]) -> List[str]:
-    transformed_items = []
-    
-    # Constants for constructing the page_token string
-    page_token_value_prefix = "page_token=plan_"
-    page_token_value_suffix_base = f"_{req.country_name}_{req.city_name}@#$" # The dynamic index will be appended
-
-    for original_index, item_string in enumerate(plan_list):
-        if item_string.endswith("_success"):
-            parts = item_string.split('_')
-
-            # Expecting structure: lat_lng_radius_query_circleInfo..._success
-            # Need at least 5 parts for this: lat, lng, radius, query, circle=...
-            if len(parts) < 5: 
-                print(f"Skipping item due to insufficient parts: {item_string}")
-                continue
-
-            lng_val = float(parts[0])
-            lat_val = float(parts[1])
-            radius_val_str = parts[2] # e.g., "30000.0"
-            radius_val = float(radius_val_str)
-
-            # --- Extract the query string ---
-            # The query is located after "lat_lng_radius_" and before the first "_circle=".
-            # Example: "46.6753_24.7136_30000.0_supermarket_circle=..."
-            # The query part starts after the third underscore.
-            
-            # Calculate the starting index of the query part.
-            # This is the length of "lat_lng_radius_"
-            query_start_index = len(parts[0]) + 1 + len(parts[1]) + 1 + len(parts[2]) + 1
-
-            # Find the end of the query part (start of "_circle=")
-            query_end_index = item_string.find("_circle=", query_start_index)
-            
-            # query_with_underscores is the raw query string from the plan item
-            query_with_underscores = item_string[query_start_index:query_end_index]
-            
-            # For ReqFetchDataset.boolean_query, convert underscores in the extracted query to spaces.
-            # This becomes the base for the `type_string` in `make_dataset_filename`.
-            boolean_query_for_req_object = query_with_underscores.replace("_", " ")
-            
-            # For the `plan_QUERY_` part of the page_token, we use the query_with_underscores.
-            query_part_for_token_construction = query_with_underscores 
-            
-            if original_index ==0 :
-                full_page_token_value = ""
-            else:
-                full_page_token_value = (
-                    f"{page_token_value_prefix}{query_part_for_token_construction}"
-                    f"{page_token_value_suffix_base}{original_index}"
-                )
-
-            # Create the ReqFetchDataset object
-            req = ReqFetchDataset(
-                lat=lat_val,
-                lng=lng_val,
-                radius=radius_val,
-                boolean_query=boolean_query_for_req_object,
-                page_token=full_page_token_value,
-                user_id=req.user_id,
-            )
-
-            # Generate the two versions of the filename and add to results
-            transformed_items.append(make_dataset_filename(req))
-            
-    return transformed_items
 
 # Apply the decorator to all functions in this module
 apply_decorator_to_module(logger)(__name__)

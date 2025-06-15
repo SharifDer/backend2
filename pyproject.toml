@@ -38,4 +38,5 @@ dependencies = [
     "websockets>=15.0.1",
     "uvicorn[standard]",
     "fuzzywuzzy[speedup]",
+    "py-spy",
 ]

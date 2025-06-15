@@ -1,0 +1,44 @@
+{
+  "parameters": {
+    "analysis_type": "warehouse_expansion_for_delivery_business",
+    
+    "target_destinations": {
+      "proximity_weight": 0.30,
+      "max_acceptable_distance_km": 5,
+      "max_acceptable_time_minutes": 8
+    },
+    
+    "competitor_analysis": {
+      "analysis_radius_km": 2.0,
+      "competitive_advantage_weight": 0.15
+    },
+    
+    "client_requirements": {
+      "max_population_center_distance_km": 10
+    },
+
+    "scoring_weights": {
+      "target_proximity": 0.35,
+      "population_access": 0.30,
+      "rent_efficiency": 0.10,
+      "competitive_advantage": 0.15,
+      "population_coverage": 0.10
+    },
+    
+    "coverage_methodology": {
+      "density_thresholds": {
+        "very_high_density": {"threshold": 8000, "radius_km": 2.0, "max_delivery_minutes": 20},
+        "high_density": {"threshold": 4000, "radius_km": 3.5, "max_delivery_minutes": 25},
+        "medium_density": {"threshold": 2000, "radius_km": 5.0, "max_delivery_minutes": 30},
+        "low_density": {"threshold": 0, "radius_km": 8.0, "max_delivery_minutes": 40}
+      }
+    },
+    
+    "output_preferences": {
+      "top_results_count": 5,
+      "include_route_optimization": true,
+      "include_success_metrics": true,
+      "include_market_analysis": true
+    }
+  }
+}

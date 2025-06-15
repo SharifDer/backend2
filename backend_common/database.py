@@ -7,9 +7,9 @@ from asyncpg.pool import Pool
 from typing import Optional, List
 from contextlib import asynccontextmanager
 import time
-from backend_common.logging_wrapper import apply_decorator_to_module
+from logging_wrapper import apply_decorator_to_module
 
-from backend_common.logger import logging
+from logger import logging
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,9 @@ class Database:
             str: Command completion tag
         """
         formatted_query = cls.generate_sql_script(query, *args)
-        logger.info(f"Executing query: {formatted_query}")
+        max_chars = 400  # Roughly equivalent to 100 words
+        truncated_query = formatted_query[:max_chars] + "..." if len(formatted_query) > max_chars else formatted_query
+        logger.info(f"Executing query: {truncated_query}")
         async with cls.connection() as conn:
             if save_sql_script:
                 unique_id = str(uuid.uuid4())[:8]

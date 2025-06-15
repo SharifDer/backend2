@@ -78,7 +78,7 @@ class ReqFetchDataset(ReqCityCountry, ReqPrdcerLyrMapData, Coordinate):
     boolean_query: Optional[str] = ""
     action: Optional[str] = ""
     page_token: Optional[str] = ""
-    search_type: Optional[str] = "default"
+    search_type: Optional[str] = "category_search"
     text_search: Optional[str] = ""
     zoom_level: Optional[int] = 0
     radius: Optional[float] = 30000.0
@@ -173,3 +173,100 @@ class ReqClustersForSalesManData(BooleanQuery, UserId,ReqCityCountry):
     num_sales_man: int
     distance_limit: float = 2.5
     include_raw_data: bool = False
+
+
+
+
+class ReqHubExpansion(BaseModel):
+    """Default configuration for hub expansion analysis"""
+
+    # Location context
+    city_name: str = "Riyadh"
+    country_name: str = "Saudi Arabia"
+    analysis_bounds: Optional[dict] = {}
+
+    # Target destinations
+    target_search: str = "@الحلقه@"
+    max_target_distance_km: float = 5.0
+    max_target_time_minutes: int = 8
+    search_type: str = "keyword_search"
+
+    # Competitor analysis
+    competitor_name: str = "@نينجا@"
+    competitor_analysis_radius_km: float = 2.0
+    search_type: str = "keyword_search"
+
+    # Hub requirements
+    hub_type: str = "warehouse_for_rent"
+    min_facility_size_m2: Optional[int] = None
+    max_rent_per_m2: Optional[float] = None
+    search_type: str = "category_search"
+
+    # Population requirements
+    max_population_center_distance_km: float = 10.0
+    max_population_center_time_minutes: int = 15
+    min_population_threshold: int = 1000
+
+    # Analysis parameters
+    scoring_weights: Dict[str, float] = {
+        "target_proximity": 0.35,
+        "population_access": 0.30,
+        "rent_efficiency": 0.10,
+        "competitive_advantage": 0.15,
+        "population_coverage": 0.10,
+    }
+
+    # Scoring thresholds
+    scoring_thresholds: Dict[str, Dict[str, float]] = {
+        "target_proximity": {
+            "min_score": 0.0,
+            "max_score": 10.0,
+            "penalty_multiplier": 1.0,
+        },
+        "population_access": {
+            "min_score": 0.0,
+            "max_score": 10.0,
+            "accessibility_bonus_max": 3.0,
+        },
+        "rent_efficiency": {"min_score": 0.0, "max_score": 10.0},
+        "competitive_advantage": {
+            "min_score": 2.0,
+            "max_score": 10.0,
+            "density_penalty_max": 5.0,
+        },
+        "population_coverage": {"min_score": 0.0, "max_score": 10.0},
+    }
+
+    # Coverage methodology
+    density_thresholds: Dict[str, Dict[str, float]] = {
+        "very_high_density": {
+            "threshold": 8000,
+            "radius_km": 2.0,
+            "max_delivery_minutes": 20,
+        },
+        "high_density": {
+            "threshold": 4000,
+            "radius_km": 3.5,
+            "max_delivery_minutes": 25,
+        },
+        "medium_density": {
+            "threshold": 2000,
+            "radius_km": 5.0,
+            "max_delivery_minutes": 30,
+        },
+        "low_density": {
+            "threshold": 0,
+            "radius_km": 8.0,
+            "max_delivery_minutes": 40,
+        },
+    }
+
+    # Output preferences
+    top_results_count: int = 5
+    include_route_optimization: bool = True
+    include_market_analysis: bool = True
+    include_success_metrics: bool = True
+
+    # User context
+    user_id: str = "default_user"
+

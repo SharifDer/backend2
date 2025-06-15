@@ -7,13 +7,9 @@ import hashlib
 import os
 from backend_common.database import Database
 from sql_object import SqlObject
-from backend_common.logging_wrapper import apply_decorator_to_module
+from logging_wrapper import apply_decorator_to_module
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 
@@ -83,8 +79,8 @@ async def _get_test_data_for_post_call(
     if "textQuery" in data:
         # Text search
         text_query = data.get("textQuery", "").replace(" ", "_")
-        location = data.get("locationBias", {}).get("circle", {}).get("center", {})
-        radius = data.get("locationBias", {}).get("circle", {}).get("radius", 1500)
+        location = data.get("locationRestriction", {}).get("circle", {}).get("center", {})
+        radius = data.get("locationRestriction", {}).get("circle", {}).get("radius", 1500)
         lat = location.get("latitude", 0)
         lng = location.get("longitude", 0)
 

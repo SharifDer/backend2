@@ -13,9 +13,9 @@ from fastapi import HTTPException, status
 from pydantic import BaseModel
 
 from backend_common.common_config import CONF
-from backend_common.logging_wrapper import apply_decorator_to_module
+from logging_wrapper import apply_decorator_to_module
 
-from backend_common.logger import logging
+from logger import logging
 
 logger = logging.getLogger(__name__)
 

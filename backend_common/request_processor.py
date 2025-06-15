@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from fastapi import HTTPException, status
 from typing import TypeVar, Optional, Type, Callable, Awaitable, Any
 from pydantic import BaseModel
-from backend_common.logging_wrapper import log_and_validate
+from logging_wrapper import log_and_validate
 import logging
 
 

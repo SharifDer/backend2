@@ -200,3 +200,13 @@ class ResSalesman(BaseModel):
     request_id: str
     plots: dict[str, str]
     metadata: dict[str, Any]
+
+
+class ResHubExpansion(BaseModel):
+    """Response model for hub expansion analysis"""
+
+    analysis_summary: Dict[str, Any]
+    scoring_methodology: Dict[str, Any]
+    primary_recommendation: Dict[str, Any]
+    alternative_locations: List[Dict[str, Any]]
+    market_competitive_analysis: Dict[str, Any]

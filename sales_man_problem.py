@@ -9,7 +9,7 @@ from all_types.request_dtypes import (
     ReqFetchDataset,
     ReqClustersForSalesManData,
 )
-from storage import fetch_intelligence_by_viewport
+from storage_methods import fetch_intelligence_by_viewport
 from data_fetcher import fetch_country_city_data, fetch_dataset
 import contextily as ctx
 from typing import Tuple
@@ -22,11 +22,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
 logger = logging.getLogger(__name__)
 
 

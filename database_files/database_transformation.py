@@ -2,7 +2,7 @@
 import json
 from backend_common.database import Database
 from all_types.response_dtypes import GeoJson
-from storage import (
+from storage_methods import (
     convert_to_serializable,
 )
 
