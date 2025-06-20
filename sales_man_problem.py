@@ -19,8 +19,6 @@ import os
 import uuid
 from datetime import datetime
 from typing import Optional
-import matplotlib.pyplot as plt
-
 
 
 logger = logging.getLogger(__name__)
@@ -231,7 +229,6 @@ def create_grid(
 
     logger.info(f"Created grid GeoDataFrame with CRS: {grid.crs}")
     logger.info("Grid creation completed successfully")
-
     return grid
 
 
@@ -489,14 +486,14 @@ def get_grids_of_data(
         f"  {sum(1 for x in accessibility_counts if x >= 5)} centers have 5+ accessible places (well-served areas)"
     )
 
-    # Compute effective population using accessibility-weighted demographics
+    # Compute population effective purchasing power using accessibility-weighted demographics
     # Implements spatial equity theory: divides population by service availability
-    # Areas with fewer accessible services get higher effective population weights
+    # Areas with fewer accessible services get higher population effective purchasing power weights
     if weights is None:
         # Simple accessibility weighting: population inversely proportional to service access
         # Population centers with fewer accessible markets carry more weight per person
         # Example: 5000 people with 2 markets = 2500 effective pop vs 3000 people with 6 markets = 500 effective pop
-        origins["effective_population"] = (
+        origins["population_purchasing_power"] = (
             origins["population"] / origins["number_of_accessibile_markets"]
         )
         logger.info("Using simple accessibility weighting (no income data)")
@@ -525,7 +522,7 @@ def get_grids_of_data(
         if nan_count > 0:
             median_income = np.nanmedian(income_values)
             logger.info(
-                f"STEP 4 - Calculated median income: ${median_income:,.0f}"
+                f"STEP 4 - Calculated median income: SAR{median_income:,.0f}"
             )
 
             if np.isnan(median_income):
@@ -535,7 +532,7 @@ def get_grids_of_data(
                 income_values = np.ones_like(income_values)
             else:
                 logger.info(
-                    f"STEP 5 - Replacing {nan_count} NaN income values with median: ${median_income:,.0f}"
+                    f"STEP 5 - Replacing {nan_count} NaN income values with median: SAR{median_income:,.0f}"
                 )
                 # CRITICAL: Use the CORRECTED income_values, not the original
                 income_values = np.nan_to_num(income_values, nan=median_income)
@@ -576,7 +573,7 @@ def get_grids_of_data(
             f"STEP 8 - Step 2 (result / accessibility) sample: {step2[:5]}"
         )
         logger.info(
-            f"STEP 8 - Final effective population NaN count: {np.isnan(step2).sum()}"
+            f"STEP 8 - Final population effective purchasing power NaN count: {np.isnan(step2).sum()}"
         )
 
         if np.isnan(step2).sum() > 0:
@@ -591,32 +588,31 @@ def get_grids_of_data(
                 f"  NaN positions in step2: {np.where(np.isnan(step2))[0][:5]}"
             )
 
-        origins["effective_population"] = step2
+        origins["population_purchasing_power"] = step2
         logger.info("Using income-weighted accessibility calculation")
-        logger.info(f"Average income weight: ${np.mean(income_values):,.0f}")
+        logger.info(f"Average income weight: SAR{np.mean(income_values):,.0f}")
         logger.info("=== END INCOME PROCESSING DEBUG ===")
         # ===== END ENHANCED INCOME DEBUGGING =====
 
-    total_effective_pop = origins["effective_population"].sum()
-    logger.info(f"Total effective population: {total_effective_pop:,.0f}")
+    total_population_purchasing_power = origins["population_purchasing_power"].sum()
     logger.info(
-        "Effective population represents purchasing power adjusted for service access"
+        f"Total market value without considering accessibility: {total_population_purchasing_power:,.0f}"
     )
 
     # Calculate market potential for each destination (place/facility)
-    # Implements gravity model theory: sum of accessible effective populations
+    # Implements gravity model theory: sum of accessible population effective purchasing powers
     # Each destination's market size = sum of all populations that can reach it
     market = {
         k: [] for k in range(matrix.shape[1])
     }  # Initialize market potential storage
 
     logger.info("Calculating market potential for each destination...")
-    logger.info("Market calculation diagnostic:")
+    logger.info("Market potential calculation (w/o accessibility) diagnostic:")
     logger.info(
-        f"  Effective population range: {origins['effective_population'].min():.2f} to {origins['effective_population'].max():.2f}"
+        f"  Market potential calculation range: {origins['population_purchasing_power'].min():.2f} to {origins['population_purchasing_power'].max():.2f}"
     )
     logger.info(
-        f"  Effective population NaN count: {origins['effective_population'].isna().sum()}"
+        f"  Market potential NaN count: {origins['population_purchasing_power'].isna().sum()}"
     )
 
     for i in range(matrix.shape[1]):  # Iterate through each destination
@@ -627,12 +623,12 @@ def get_grids_of_data(
             od_cost_matrix.items()
         ):  # Check each origin's accessible destinations
             if i in v:  # If current destination is accessible from origin k
-                # Add origin's effective population to destination's market potential
+                # Add origin's population effective purchasing power to destination's market potential
                 # This implements cumulative accessibility/market catchment theory
-                market[i].append(origins["effective_population"].iloc[k])
+                market[i].append(origins["population_purchasing_power"].iloc[k])
 
     # Aggregate market potential for each destination
-    # Sum all effective populations that can access each destination
+    # Sum all population effective purchasing powers that can access each destination
     # Results in total market size/customer base for each facility
     # Example: Downtown supermarket might have 25,000 total potential customers, suburban one has 8,500
     destinations["market"] = [sum(v) for v in market.values()]
@@ -649,10 +645,10 @@ def get_grids_of_data(
     # ===== INSERT ENHANCED MARKET CALCULATION DEBUGGING HERE =====
     logger.info("=== MARKET CALCULATION DEBUG ===")
     logger.info(
-        f"Total origins with valid effective_population: {sum(~np.isnan(origins['effective_population']))}"
+        f"Total origins with valid market potential: {sum(~np.isnan(origins['population_purchasing_power']))}"
     )
     logger.info(
-        f"Total origins with zero effective_population: {sum(origins['effective_population'] == 0)}"
+        f"Total origins with zero market potential: {sum(origins['population_purchasing_power'] == 0)}"
     )
 
     # Check each destination's market calculation
@@ -671,12 +667,13 @@ def get_grids_of_data(
                 f"  Any NaN contributors: {any(np.isnan(dest_market_contributors))}"
             )
         else:
-            logger.info(f"  No origins can access this destination")
+            logger.info("  No origins can access this destination")
 
     # Check accessibility matrix
     accessible_destinations_per_origin = [
         len(v) for v in od_cost_matrix.values()
     ]
+
     logger.info(
         f"Origins with 0 accessible destinations: {sum(x == 0 for x in accessible_destinations_per_origin)}"
     )
@@ -689,13 +686,13 @@ def get_grids_of_data(
     market_stats = destinations["market"]
     logger.info("Market potential calculated:")
     logger.info(
-        f"  Average market size per destination: {np.mean(market_stats):,.0f} potential customers"
+        f"  Average market size per destination: {np.mean(market_stats):,.0f} potential market value"
     )
     logger.info(
-        f"  Range: {np.min(market_stats):,.0f} to {np.max(market_stats):,.0f} potential customers"
+        f"  Range: {np.min(market_stats):,.0f} to {np.max(market_stats):,.0f} potential market value"
     )
     logger.info(
-        f"  Total market across all destinations: {np.sum(market_stats):,.0f}"
+        f"  Total market value across all destinations: {np.sum(market_stats):,.0f}"
     )
 
     # Create spatial tessellation grid for aggregation analysis
@@ -817,7 +814,7 @@ def get_grids_of_data(
 
     # Check the actual aggregation data
     pop_aggregation = poulation_grid.groupby("index_right")[
-        "effective_population"
+        "population_purchasing_power"
     ].sum()
     places_aggregation = places_grid.groupby("index_right")["market"].sum()
 
@@ -837,12 +834,12 @@ def get_grids_of_data(
             poulation_grid.groupby("index_right")["population"]
             .sum()
             .rename("number_of_persons"),
-            # Effective population aggregation: sum accessibility-weighted population
+            # population effective purchasing power aggregation: sum accessibility-weighted population
             # Accounts for service availability and economic factors
-            # Example: Same grid cell has 8,200 effective population (lower due to good service access)
-            poulation_grid.groupby("index_right")["effective_population"]
+            # Example: Same grid cell has 8,200 population effective purchasing power (lower due to good service access)
+            poulation_grid.groupby("index_right")["population_purchasing_power"]
             .sum()
-            .rename("effective_population"),
+            .rename("population_purchasing_power"),
             # Facility count: number of destinations/places per grid cell
             # Measures service/facility density distribution
             # Example: Commercial grid cell might have 4 supermarkets, residential cell has 0-1
@@ -854,17 +851,16 @@ def get_grids_of_data(
             # Example: Commercial district grid cell has 89,500 potential customers across all its stores
             places_grid.groupby("index_right")["market"]
             .sum()
-            .rename("number_of_potential_customers"),
+            .rename("population_purchasing_potential"),
         ],
         axis=1,  # Concatenate along columns (join datasets horizontally)
-    )
-
-    # Data cleaning: remove empty grid cells with no associated data
+    )    # Data cleaning: remove empty grid cells with no associated data
     # Creates boolean mask to identify cells with at least one non-null value
     # Improves computational efficiency by eliminating sparse spatial units
     mask = (
         ~data.iloc[:, 1:].isna().all(axis=1)
     )  # Check all columns except geometry
+    
     data = (
         data.loc[mask].fillna(0.0).reset_index(drop=True)
     )  # Filter and clean data
@@ -875,10 +871,105 @@ def get_grids_of_data(
         f"  Grid cells with data: {len(data)} ({100*len(data)/len(grid):.1f}%)"
     )
     logger.info(
-        f"  Grid cells with potential customers: {sum(data['number_of_potential_customers'] > 0)}"
+        f"  Grid cells with potential customers purchasing power: {sum(data['population_purchasing_potential'] > 0)}"
     )
 
     return data
+
+
+def create_territory_boundaries(
+    masked_grided_data: gpd.GeoDataFrame,
+    req: ReqClustersForSalesManData,
+    groups: dict,
+) -> Tuple[gpd.GeoDataFrame, dict]:
+    """
+    Create territory boundaries from clustered grid data using convex hull method
+    Based on the provided old code pattern
+    
+    Args:
+        masked_grided_data: The clustered grid data
+        req: The request object with num_sales_man
+        groups: Dictionary mapping group_id to list of grid cell indices
+        
+    Returns:
+        Tuple of (boundaries_gdf, boundaries_geojson_dict)
+    """
+    logger.info("Creating territory boundaries using convex hull method...")
+    
+    # Aggregate data by group (like the old code)
+    aggregated_output = masked_grided_data.groupby("group", observed=False).agg({
+        "number_of_persons": "sum",
+        "population_purchasing_power": "sum", 
+        "number_of_supermarkets": "sum",
+        "population_purchasing_potential": "sum"
+    })
+    
+    logger.info(f"Aggregated data for {len(aggregated_output)} groups")
+    
+    # Create boundaries list similar to old code
+    boundaries = []
+    for group in masked_grided_data.group.unique():
+        if pd.isna(group):  # Skip NaN groups
+            continue
+            
+        # Get territory data for this group
+        territory_data = masked_grided_data.loc[masked_grided_data.group == group]
+        
+        # Create convex hull boundary (like old code)
+        geometry = territory_data.geometry.union_all().convex_hull
+        
+        boundaries.append({
+            "group": group,
+            "geometry": geometry
+        })
+    
+    # Convert to DataFrame and merge with aggregated data
+    boundaries_df = pd.DataFrame(boundaries)
+    boundaries_df = boundaries_df.merge(aggregated_output, on="group", how="left")
+    boundaries_gdf = gpd.GeoDataFrame(boundaries_df)
+    
+    logger.info(f"Created {len(boundaries_gdf)} territory boundaries")
+    
+    # Handle overlapping geometries (like the old code did with .difference())
+    # This prevents overlapping territory boundaries
+    for i in range(len(boundaries_gdf)):
+        current_geom = boundaries_gdf.iloc[i].geometry
+        for j in range(i):
+            if j < len(boundaries_gdf):
+                # Subtract previous territories from current one to avoid overlap
+                prev_geom = boundaries_gdf.iloc[j].geometry
+                try:
+                    current_geom = current_geom.difference(prev_geom)
+                except Exception as e:
+                    logger.warning(f"Could not subtract territory {j} from {i}: {e}")
+        
+        boundaries_gdf.iloc[i, boundaries_gdf.columns.get_loc('geometry')] = current_geom
+    
+    logger.info("Applied difference operations to prevent boundary overlaps")
+    
+    # Create GeoJSON representation for separate return
+    boundaries_geojson = {
+        "type": "FeatureCollection",
+        "features": []
+    }
+    
+    for idx, row in boundaries_gdf.iterrows():
+        feature = {
+            "type": "Feature",
+            "properties": {
+                "group": int(row["group"]) if not pd.isna(row["group"]) else None,
+                "number_of_persons": int(row["number_of_persons"]) if not pd.isna(row["number_of_persons"]) else 0,
+                "population_purchasing_power": float(row["population_purchasing_power"]) if not pd.isna(row["population_purchasing_power"]) else 0,
+                "number_of_supermarkets": int(row["number_of_supermarkets"]) if not pd.isna(row["number_of_supermarkets"]) else 0,
+                "population_purchasing_potential": float(row["population_purchasing_potential"]) if not pd.isna(row["population_purchasing_potential"]) else 0,
+            },
+            "geometry": row["geometry"].__geo_interface__
+        }
+        boundaries_geojson["features"].append(feature)
+    
+    logger.info("Created GeoJSON representation of territory boundaries")
+    
+    return boundaries_gdf, boundaries_geojson
 
 
 def select_nbrs_with_sum(
@@ -917,6 +1008,9 @@ def select_nbrs_with_sum(
     # Initialize accumulator variables for greedy cluster building
     value = 0  # Running sum of indicator values (market potential)
     nbrs = []  # List of neighbor indices to include in cluster
+    # Track cells for logging purposes
+    added_cells = []
+    skipped_cells = []
 
     # Greedy nearest-neighbor selection with capacity constraint
     # Implements load-balancing principle: distribute total workload equally
@@ -927,21 +1021,18 @@ def select_nbrs_with_sum(
         # Skip grid cells already assigned to other clusters
         # Ensures each spatial unit belongs to exactly one cluster (partition constraint)
         if cell_idx in used:
-            logger.debug(f"  Cell {cell_idx} already used, skipping")
+            skipped_cells.append(cell_idx)
             continue
 
         # Add current grid cell's indicator value to cluster total
         # Accumulates market potential/workload for current cluster
-        # Example: Adding grid cells with 2500, 1800, 3200 customers → value = 7500
+        # Example: Adding grid cells with SAR2.5M, SAR1.8M, SAR3.2M market value → total value = SAR7.5M
         cell_value = shares[cell_idx]
         value += cell_value
         nbrs.append(cell_idx)  # Include grid cell in current cluster
-
-        logger.debug(
-            f"  Added cell {cell_idx} with {cell_value:,.0f} customers. Cluster total: {value:,.0f}"
-        )
-
-        # Check if cluster has reached target capacity (load balancing)
+        added_cells.append(
+            cell_idx
+        )  # Check if cluster has reached target capacity (load balancing)
         # Stops growing cluster when maximum share threshold is exceeded
         # Implements equitable distribution of total market potential across clusters
         # Example: If max_share=25000 and value=26300, stop adding cells to this cluster
@@ -951,12 +1042,23 @@ def select_nbrs_with_sum(
             )
             break
 
-    logger.info(
-        f"Cluster built from seed {i}: {len(nbrs)} cells, {value:,.0f} total customers"
-    )
+    # Determine which cells were never considered (after the break or beyond capacity)
+    all_cells = set(x)  # All cells sorted by distance
+    considered_cells = set(added_cells + skipped_cells)
+    never_used_cells = all_cells - considered_cells
 
+    # Log comprehensive cell usage statistics
+    logger.info(
+        f"Cluster built from seed {i}: {len(nbrs)} cells, {value:,.0f} total market value"
+    )
     logger.info(
         f"  Load balancing: {100*value/max_share:.1f}% of target capacity"
+    )
+    logger.info(f"  Added cells: {added_cells}")
+    logger.info(f"  Skipped cells (already used): {skipped_cells}")
+    logger.info(f"  Never considered cells: {list(never_used_cells)}")
+    logger.info(
+        f"  Cell usage summary: {len(added_cells)} added, {len(skipped_cells)} skipped, {len(never_used_cells)} never considered"
     )
 
     return nbrs
@@ -1040,6 +1142,7 @@ def plot_results(
 def generate_all_plots(
     masked_grided_data: gpd.GeoDataFrame,
     places: gpd.GeoDataFrame,
+    boundaries_gdf: gpd.GeoDataFrame = None,
     request_id: str = None,
 ) -> dict:
     """
@@ -1066,15 +1169,39 @@ def generate_all_plots(
         filename=f"{request_id}_cluster_markets",
     )
 
+    # Territory boundaries plot (new plot based on old code)
+    if boundaries_gdf is not None and len(boundaries_gdf) > 0:
+        # Create colormap with the right number of colors for territories
+        import matplotlib.pyplot as plt
+        n_territories = len(boundaries_gdf)
+        plots["territory_boundaries"] = plot_results(
+            boundaries_gdf[["geometry", "group"]],
+            ["group"],
+            1,
+            1,
+            [plt.get_cmap('jet', n_territories)],
+            alpha=1,
+            show_legends=True,
+            edge_color=None,
+            show_title=True,
+            title=["Territory Boundaries"],
+            save_to_file=True,
+            filename=f"{request_id}_territory_boundaries",
+        )
+
     # Individual metric plots
     metrics = [
         ("number_of_persons", "Greens", "Number of persons"),
-        ("effective_population", "Reds", "Effective population"),
+        (
+            "population_purchasing_power",
+            "Reds",
+            "population effective purchasing power",
+        ),
         ("number_of_supermarkets", "Blues", "Number of supermarkets"),
         (
-            "number_of_potential_customers",
+            "population_purchasing_potential",
             "Purples",
-            "Number of potential customers",
+            "population purchasing potential",
         ),
     ]
 
@@ -1100,7 +1227,7 @@ def generate_all_plots(
 
 async def get_clusters_for_sales_man(
     req: ReqClustersForSalesManData,
-) -> gpd.GeoDataFrame:
+) -> dict[any, any]:
     """
     Main funtion to produce the clusters for the salesman problem
     args:
@@ -1183,7 +1310,6 @@ async def get_clusters_for_sales_man(
         full_load=True,
     )
     places = await fetch_dataset(data_load_req)
-    places = places.get("full_load_geojson", {})
 
     # Filter facilities to study area boundaries
     places = filter_data_by_bounding_box(places, bounding_box)
@@ -1202,11 +1328,9 @@ async def get_clusters_for_sales_man(
     logger.info("Generating grid-based spatial aggregation...")
     grided_data = get_grids_of_data(
         population_gdf, places, income_gdf, req.distance_limit
-    )
-
-    # Filter to grid cells with actual market potential
+    )    # Filter to grid cells with actual market potential
     # Removes empty/irrelevant spatial units to focus clustering on viable areas
-    mask = grided_data.number_of_potential_customers > 0
+    mask = grided_data.population_purchasing_potential > 0
     masked_grided_data = grided_data[mask].reset_index(drop=True)
     if len(masked_grided_data) == 0:
         logger.error("No grid cells with market potential found!")
@@ -1216,6 +1340,7 @@ async def get_clusters_for_sales_man(
             "  2. Spatial join failed to assign population to grid cells"
         )
         logger.error("  3. Distance limit is too restrictive")
+        
     logger.info("Grid filtering results:")
     logger.info(f"  Total grid cells: {len(grided_data)}")
     logger.info(
@@ -1253,12 +1378,16 @@ async def get_clusters_for_sales_man(
     # Implements equitable distribution principle: divide total market equally
     # Ensures balanced workload assignment across sales territories
     # Example: 180,000 total customers ÷ 8 salespeople = 22,500 customers per territory
-    total_customers = masked_grided_data["number_of_potential_customers"].sum()
-    equitable_share = total_customers / req.num_sales_man
+    total_purchasing_power = masked_grided_data[
+        "population_purchasing_potential"
+    ].sum()
+    equitable_share = total_purchasing_power / req.num_sales_man
 
     logger.info("Market distribution analysis:")
-    logger.info(f"  Total potential customers: {total_customers:,.0f}")
-    logger.info(f"  Target customers per territory: {equitable_share:,.0f}")
+    logger.info(
+        f"  Total market value: {total_purchasing_power:,.0f}"
+    )
+    logger.info(f"  Target market value per territory: {equitable_share:,.0f}")
     logger.info(
         f"  This represents balanced workload distribution across {req.num_sales_man} salespeople"
     )
@@ -1293,7 +1422,7 @@ async def get_clusters_for_sales_man(
                 matrix[i],  # Distances from seed to all other cells
                 equitable_share,  # Maximum market capacity per cluster
                 masked_grided_data[
-                    "number_of_potential_customers"
+                    "population_purchasing_potential"
                 ].values,  # Market values
                 used,  # Already assigned cells to avoid
             )
@@ -1303,11 +1432,11 @@ async def get_clusters_for_sales_man(
             used.extend(nbrs)  # Mark cells as assigned
 
             cluster_customers = sum(
-                masked_grided_data["number_of_potential_customers"].iloc[idx]
+                masked_grided_data["population_purchasing_potential"].iloc[idx]
                 for idx in nbrs
             )
             logger.info(
-                f"Cluster {j} completed: {len(nbrs)} cells, {cluster_customers:,.0f} customers"
+                f"Cluster {j} completed: {len(nbrs)} cells, {cluster_customers:,.0f} market value"
             )
 
             j += 1  # Move to next cluster
@@ -1353,7 +1482,7 @@ async def get_clusters_for_sales_man(
     # Log final cluster statistics
     cluster_stats = (
         masked_grided_data.groupby("group")
-        .agg({"number_of_potential_customers": ["sum", "count"]})
+        .agg({"population_purchasing_potential": ["sum", "count"]})
         .round(0)
     )
 
@@ -1363,9 +1492,9 @@ async def get_clusters_for_sales_man(
             cells = len(groups[group_id])
             customers = masked_grided_data[
                 masked_grided_data["group"] == group_id
-            ]["number_of_potential_customers"].sum()
+            ]["population_purchasing_potential"].sum()
             logger.info(
-                f"  Cluster {group_id}: {cells} cells, {customers:,.0f} customers ({100*customers/total_customers:.1f}% of total)"
+                f"  Cluster {group_id}: {cells} cells, {customers:,.0f} market value ({100*customers/total_purchasing_power:.1f}% of total)"
             )
 
     unassigned = len(masked_grided_data[masked_grided_data["group"].isna()])
@@ -1376,7 +1505,7 @@ async def get_clusters_for_sales_man(
     # logger.info("saving file")
     # masked_grided_data.to_file("sales_territories.geojson", driver="GeoJSON")
     # places.to_file("places.geojson", driver="GeoJSON")
-
+    # Create a GeoDataFrame for places with group assignments
     places["group"] = -1
     for i in masked_grided_data.group.unique():
         cluster = (
@@ -1390,8 +1519,14 @@ async def get_clusters_for_sales_man(
     request_id = uuid.uuid4().hex[:8]
     logger.info(f"Generating plots for request {request_id}")
 
-    # Generate plots and get their URLs
-    plot_urls = generate_all_plots(masked_grided_data, places, request_id)
+    # Create territory boundaries using the new function
+    logger.info("Creating territory boundaries...")
+    boundaries_gdf, boundaries_geojson = create_territory_boundaries(
+        masked_grided_data, req, groups
+    )
+
+    # Generate plots and get their URLs (now including boundaries)
+    plot_urls = generate_all_plots(masked_grided_data, places, boundaries_gdf=boundaries_gdf, request_id=request_id)
 
     logger.info(
         "Sales territory clustering and plot generation completed successfully"
@@ -1415,25 +1550,25 @@ async def get_clusters_for_sales_man(
                 "total_population": int(
                     territory_data["number_of_persons"].sum()
                 ),
-                "effective_population": round(
-                    territory_data["effective_population"].sum(), 2
+                "population_purchasing_power": round(
+                    territory_data["population_purchasing_power"].sum(), 2
                 ),
                 "facility_count": int(
                     territory_data["number_of_supermarkets"].sum()
                 ),
-                "potential_customers": int(
-                    territory_data["number_of_potential_customers"].sum()
+                "population_purchasing_potential": int(
+                    territory_data["population_purchasing_potential"].sum()
                 ),
                 "market_share_percentage": round(
                     (
-                        territory_data["number_of_potential_customers"].sum()
-                        / total_customers
+                        territory_data["population_purchasing_potential"].sum()
+                        / total_purchasing_power
                     )
                     * 100,
                     1,
                 ),
                 "avg_accessibility": round(
-                    territory_data["effective_population"].mean(), 2
+                    territory_data["population_purchasing_power"].mean(), 2
                 ),
                 "population_density": round(
                     territory_data["number_of_persons"].sum()
@@ -1465,7 +1600,7 @@ async def get_clusters_for_sales_man(
 
     # Market balance analysis
     customer_variance = np.var(
-        [t["potential_customers"] for t in territory_analytics]
+        [t["population_purchasing_power"] for t in territory_analytics]
     )
     population_variance = np.var(
         [t["total_population"] for t in territory_analytics]
@@ -1474,7 +1609,11 @@ async def get_clusters_for_sales_man(
     business_insights = {
         "market_balance_score": round(
             100
-            - (customer_variance / (total_customers / req.num_sales_man) * 100),
+            - (
+                customer_variance
+                / (total_purchasing_power / req.num_sales_man)
+                * 100
+            ),
             1,
         ),
         "population_distribution_score": round(
@@ -1486,14 +1625,14 @@ async def get_clusters_for_sales_man(
             ),
             1,
         ),
-        "avg_customers_per_territory": round(
-            total_customers / req.num_sales_man, 0
+        "avg_customers_purchasing_power_per_territory": round(
+            total_purchasing_power / req.num_sales_man, 0
         ),
         "avg_facilities_per_territory": round(
             total_facilities / req.num_sales_man, 1
         ),
         "territory_efficiency_ratio": round(
-            total_customers / total_facilities, 1
+            total_purchasing_power / total_facilities, 1
         ),
         "accessibility_analysis": {
             "high_accessibility_territories": len(
@@ -1522,11 +1661,12 @@ async def get_clusters_for_sales_man(
     performance_metrics = {
         "territory_rankings": {
             "highest_potential": max(
-                territory_analytics, key=lambda t: t["potential_customers"]
+                territory_analytics,
+                key=lambda t: t["population_purchasing_power"],
             ),
             "most_efficient": max(
                 territory_analytics,
-                key=lambda t: t["potential_customers"]
+                key=lambda t: t["population_purchasing_power"]
                 / max(t["facility_count"], 1),
             ),
             "most_accessible": max(
@@ -1540,16 +1680,25 @@ async def get_clusters_for_sales_man(
             "customer_balance": {
                 "standard_deviation": round(
                     np.std(
-                        [t["potential_customers"] for t in territory_analytics]
+                        [
+                            t["population_purchasing_power"]
+                            for t in territory_analytics
+                        ]
                     ),
                     0,
                 ),
                 "coefficient_variation": round(
                     np.std(
-                        [t["potential_customers"] for t in territory_analytics]
+                        [
+                            t["population_purchasing_power"]
+                            for t in territory_analytics
+                        ]
                     )
                     / np.mean(
-                        [t["potential_customers"] for t in territory_analytics]
+                        [
+                            t["population_purchasing_power"]
+                            for t in territory_analytics
+                        ]
                     ),
                     3,
                 ),
@@ -1571,9 +1720,11 @@ async def get_clusters_for_sales_man(
         "request_id": request_id,
         "plots": plot_urls,
         "metadata": {
-            "total_customers": int(total_customers),
+            "Population_Count": int(population_gdf["Population_Count"].sum()),
+            "total_purchasing_power": int(total_purchasing_power),
             "clusters_created": clusters_created,
-            "target_customers_per_territory": int(equitable_share),
+            "target_customers_purchasing_power_per_territory": int(equitable_share),
+            "purchasing_power_per_territory": int(equitable_share),
             "city_name": req.city_name,
             "country_name": req.country_name,
             "analysis_date": datetime.now().isoformat(),
@@ -1581,7 +1732,9 @@ async def get_clusters_for_sales_man(
             "business_type": req.boolean_query,
         },
         "territory_analytics": territory_analytics,
+        
         "territory_boundaries": territory_boundaries,
+        "territory_boundaries_geojson": boundaries_geojson,  # Add the GeoJSON boundaries
         "business_insights": business_insights,
         "performance_metrics": performance_metrics,
     }
@@ -1592,17 +1745,16 @@ async def get_clusters_for_sales_man(
             sum(t["area_km2"] for t in territory_boundaries), 2
         ),
         "population_density_per_km2": round(
-            total_population
-            / sum(t["area_km2"] for t in territory_boundaries),
+            total_population / sum(t["area_km2"] for t in territory_boundaries),
             1,
         ),
         "facility_density_per_km2": round(
-            total_facilities
-            / sum(t["area_km2"] for t in territory_boundaries),
+            total_facilities / sum(t["area_km2"] for t in territory_boundaries),
             3,
         ),
     }
-
+    
+    # print(masked_grided_data.columns, places.columns)
     # Raw data (conditional)
     if req.include_raw_data:
         raw_cluster_data = {
@@ -1624,15 +1776,15 @@ def generate_optimization_recommendations(territory_analytics, req):
     recommendations = []
 
     # Analyze territory imbalances
-    customers = [t["potential_customers"] for t in territory_analytics]
-    avg_customers = np.mean(customers)
+    territory_purchasing_powers = [t["population_purchasing_power"] for t in territory_analytics]
+    territory_avg_purchasing_power = np.mean(territory_purchasing_powers)
 
     for territory in territory_analytics:
-        if territory["potential_customers"] < avg_customers * 0.85:
+        if territory["population_purchasing_power"] < territory_avg_purchasing_power * 0.85:
             recommendations.append(
                 f"Territory {territory['territory_id']}: Consider expanding boundaries - below average market potential"
             )
-        elif territory["potential_customers"] > avg_customers * 1.15:
+        elif territory["population_purchasing_power"] > territory_avg_purchasing_power * 1.15:
             recommendations.append(
                 f"Territory {territory['territory_id']}: Consider subdividing - above average workload"
             )
@@ -1661,7 +1813,7 @@ def generate_optimization_recommendations(territory_analytics, req):
 def calculate_workload_balance(territory_analytics):
     """Calculate workload balance metrics"""
     workloads = [
-        t["potential_customers"] / max(t["facility_count"], 1)
+        t["population_purchasing_power"] / max(t["facility_count"], 1)
         for t in territory_analytics
     ]
 
@@ -1670,12 +1822,11 @@ def calculate_workload_balance(territory_analytics):
         "workload_standard_deviation": round(np.std(workloads), 1),
         "most_efficient_territory": min(
             territory_analytics,
-            key=lambda t: t["potential_customers"]
+            key=lambda t: t["population_purchasing_power"]
             / max(t["facility_count"], 1),
         )["territory_id"],
         "least_efficient_territory": max(
             territory_analytics,
-            key=lambda t: t["potential_customers"]
+            key=lambda t: t["population_purchasing_power"]
             / max(t["facility_count"], 1),
-        )["territory_id"],
-    }
+        )["territory_id"],    }

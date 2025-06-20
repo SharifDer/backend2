@@ -73,23 +73,28 @@ def normalize_score(
     return final_score
 
 
-async def fetch_population_centers(
-    req: ReqHubExpansion,
-) -> List[Dict[str, Any]]:
-    """Fetch population center data using the intelligence viewport system"""
-
-    # Create a temporary request to get city bounding box
-    temp_req = ReqFetchDataset(
-        city_name=req.city_name,
-        country_name=req.country_name,
-        user_id=req.user_id,
-    )
-    temp_req = fetch_lat_lng_bounding_box(temp_req)
-    bbox_coords = temp_req._bounding_box
-    min_lng = bbox_coords[0]
-    min_lat = bbox_coords[1]
-    max_lng = bbox_coords[2]
-    max_lat = bbox_coords[3]
+async def fetch_population_centers(req: ReqHubExpansion) -> List[Dict[str, Any]]:
+    """Fetch population center data using the intelligence viewport system with population_centers"""
+    
+    # Determine bounding box for analysis
+    if req.analysis_bounds:
+        min_lng = req.analysis_bounds.get("min_lng")
+        min_lat = req.analysis_bounds.get("min_lat") 
+        max_lng = req.analysis_bounds.get("max_lng")
+        max_lat = req.analysis_bounds.get("max_lat")
+    else:
+        # Create a temporary request to get city bounding box
+        temp_req = ReqFetchDataset(
+            city_name=req.city_name,
+            country_name=req.country_name,
+            user_id=req.user_id
+        )
+        temp_req = fetch_lat_lng_bounding_box(temp_req)
+        bbox_coords = temp_req._bounding_box
+        min_lng = bbox_coords[0]
+        min_lat = bbox_coords[1] 
+        max_lng = bbox_coords[2]
+        max_lat = bbox_coords[3]
 
     # Create intelligence data request for population
     intel_req = ReqIntelligenceData(
@@ -100,47 +105,48 @@ async def fetch_population_centers(
         zoom_level=10,  # Appropriate zoom level for city analysis
         user_id=req.user_id,
         population=True,
-        income=False,
+        income=False
     )
 
     # Fetch population data using the intelligence system
     population_data = await fetch_intelligence_by_viewport(intel_req)
 
-    # Process population centers from the intelligence data
-    population_centers = []
+    # Extract population centers from the metadata
+    population_centers_geojson = population_data.get("metadata", {}).get("population_centers")
+    
+    if not population_centers_geojson:
+        # Fallback: if no population_centers in metadata, return empty list
+        return []
 
-    features = population_data.get("features", [])
+    # Process population centers from the dedicated GeoJSON
+    population_centers = []
+    
+    features = population_centers_geojson.get("features", [])
     for feature in features:
         properties = feature.get("properties", {})
         geometry = feature.get("geometry", {})
-
-        # Handle both Point and Polygon geometries
-        if geometry.get("type") == "Point":
-            coordinates = geometry.get("coordinates", [])
-            if len(coordinates) >= 2:
-                lng, lat = coordinates[0], coordinates[1]
-            else:
-                continue
-        elif geometry.get("type") == "Polygon":
-            # For polygons, calculate centroid
-            coords = geometry.get("coordinates", [[]])
-            if coords and coords[0]:
-                # Simple centroid calculation
-                points = coords[0][:-1]  # Remove last point (same as first)
-                lng = sum(p[0] for p in points) / len(points)
-                lat = sum(p[1] for p in points) / len(points)
-            else:
-                continue
+        coordinates = geometry.get("coordinates", [])
+        
+        if len(coordinates) >= 2:
+            lng, lat = coordinates[0], coordinates[1]
         else:
             continue
 
-        population = properties.get(
-            "population", properties.get("TotalPopulation", 0)
-        )
-        density = properties.get(
-            "density", properties.get("PopulationDensity", 0)
-        )
-
+        # Extract population data with multiple possible field names
+        population = properties.get("Population_Count", 
+                    properties.get("population", 
+                    properties.get("TotalPopulation", 0)))
+        
+        # Extract density data with multiple possible field names  
+        density = properties.get("Population_Density_KM2",
+                 properties.get("density", 
+                 properties.get("PopulationDensity", 0)))
+        
+        # Extract additional useful information
+        urban_score = properties.get("urban_score", 0)
+        population_rank = properties.get("population_center_rank", 0)
+        city = properties.get("city", req.city_name)
+        
         # Only include centers above minimum population threshold
         if population > req.min_population_threshold:
             center_data = {
@@ -150,15 +156,23 @@ async def fetch_population_centers(
                 },
                 "population": population,
                 "density": density,
+                "urban_score": urban_score,
+                "population_rank": population_rank,
+                "city": city,
+                "main_id": properties.get("Main_ID", properties.get("id")),
                 "properties": properties,
             }
             population_centers.append(center_data)
 
-    # Sort by population and take top centers
+    # Sort by population rank first (lower rank = higher priority), then by population
     sorted_centers = sorted(
-        population_centers, key=lambda x: x.get("population", 0), reverse=True
+        population_centers, 
+        key=lambda x: (x.get("population_rank", 999), -x.get("population", 0))
     )
-    top_centers = sorted_centers[:8]  # Limit to top 8 population centers
+    
+    # Take top centers based on the requirement, default to 8 if not specified
+    max_centers = getattr(req, 'max_population_centers', 8)
+    top_centers = sorted_centers[:max_centers]
 
     return top_centers
 
@@ -222,25 +236,24 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
         geometry = hub.get("geometry", {})
         coordinates = geometry.get("coordinates", [])
 
-        if len(coordinates) >= 2:
-            # Check size requirement
-            size_m2 = properties.get("area_sqm", properties.get("size_m2", 0))
-            rent_per_m2 = properties.get(
-                "rent_per_sqm", properties.get("price_per_sqm", 0)
-            )
+        # Check size requirement
+        size_m2 = properties.get("area_sqm", properties.get("size_m2", 0))
+        rent_per_m2 = properties.get(
+            "rent_per_sqm", properties.get("price_per_sqm", 0)
+        )
 
-            size_ok = True
-            if req.min_facility_size_m2 and size_m2 < req.min_facility_size_m2:
-                size_ok = False
+        size_ok = True
+        if req.min_facility_size_m2 and size_m2 < req.min_facility_size_m2:
+            size_ok = False
 
-            rent_ok = True
-            if req.max_rent_per_m2 and rent_per_m2 > req.max_rent_per_m2:
-                rent_ok = False
+        rent_ok = True
+        if req.max_rent_per_m2 and rent_per_m2 > req.max_rent_per_m2:
+            rent_ok = False
 
-            if size_ok and rent_ok:
-                qualified_hubs.append(hub)
-                if rent_per_m2 > 0:
-                    all_rents.append(rent_per_m2)
+        if size_ok and rent_ok:
+            qualified_hubs.append(hub)
+            if rent_per_m2 > 0:
+                all_rents.append(rent_per_m2)
 
     # Score each qualified hub using existing scoring functions
     scored_hubs = []
@@ -303,6 +316,8 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
         # Compile hub analysis
         hub_analysis = {
             "hub_id": properties.get("id", f"hub_{len(scored_hubs)}"),
+            "hub_url": properties.get("url", ""),
+            "hub_price": properties.get("price", ""),
             "location": {
                 "coordinates": {"lat": coordinates[1], "lng": coordinates[0]},
                 "address": properties.get(
@@ -405,14 +420,14 @@ def calculate_target_proximity_score(
     hub_lat = hub_location.get("lat", 0.0)
     hub_lng = hub_location.get("lng", 0.0)
 
-    if not target_locations:
-        score = threshold_config.get("min_score", 0.0)
-        details = {
-            "nearest_target": None,
-            "distance_km": None,
-            "time_minutes": None,
-        }
-        return score, details
+    # if not target_locations:
+    #     score = threshold_config.get("min_score", 0.0)
+    #     details = {
+    #         "nearest_target": None,
+    #         "distance_km": None,
+    #         "time_minutes": None,
+    #     }
+    #     return score, details
 
     # Find closest target using standard distance calculation
     min_distance_m = float("inf")
@@ -421,18 +436,18 @@ def calculate_target_proximity_score(
     for target in target_locations:
         target_coords = target.get("geometry", {}).get("coordinates", [])
 
-        if len(target_coords) >= 2:
-            target_lng = target_coords[0]
-            target_lat = target_coords[1]
+        # if len(target_coords) >= 2:
+        target_lng = target_coords[0]
+        target_lat = target_coords[1]
 
-            # Use standard distance calculation method
-            coord1 = {"latitude": hub_lat, "longitude": hub_lng}
-            coord2 = {"latitude": target_lat, "longitude": target_lng}
-            distance_m = calculate_distance(coord1, coord2)
+        # Use standard distance calculation method
+        coord1 = {"latitude": hub_lat, "longitude": hub_lng}
+        coord2 = {"latitude": target_lat, "longitude": target_lng}
+        distance_m = calculate_distance(coord1, coord2)
 
-            if distance_m < min_distance_m:
-                min_distance_m = distance_m
-                closest_target = target
+        if distance_m < min_distance_m:
+            min_distance_m = distance_m
+            closest_target = target
 
     min_distance_km = min_distance_m / 1000.0
 
@@ -612,7 +627,8 @@ def calculate_competitive_advantage_score(
     if not competitor_locations:
         score = max_score
         details = {
-            "nearest_competitor": None,
+            "nearest_competitor_name": None,
+            "nearest_competitor_url": None,
             "distance_km": None,
             "competitors_in_radius": 0,
         }
@@ -626,22 +642,22 @@ def calculate_competitive_advantage_score(
     for competitor in competitor_locations:
         comp_coords = competitor.get("geometry", {}).get("coordinates", [])
 
-        if len(comp_coords) >= 2:
-            comp_lng = comp_coords[0]
-            comp_lat = comp_coords[1]
 
-            # Use standard distance calculation
-            coord1 = {"latitude": hub_lat, "longitude": hub_lng}
-            coord2 = {"latitude": comp_lat, "longitude": comp_lng}
-            distance_m = calculate_distance(coord1, coord2)
-            distance_km = distance_m / 1000.0
+        comp_lng = comp_coords[0]
+        comp_lat = comp_coords[1]
 
-            if distance_m < min_distance_m:
-                min_distance_m = distance_m
-                closest_competitor = competitor
+        # Use standard distance calculation
+        coord1 = {"latitude": hub_lat, "longitude": hub_lng}
+        coord2 = {"latitude": comp_lat, "longitude": comp_lng}
+        distance_m = calculate_distance(coord1, coord2)
+        distance_km = distance_m / 1000.0
 
-            if distance_km <= analysis_radius_km:
-                competitors_in_radius += 1
+        if distance_m < min_distance_m:
+            min_distance_m = distance_m
+            closest_competitor = competitor
+
+        if distance_km <= analysis_radius_km:
+            competitors_in_radius += 1
 
     min_distance_km = min_distance_m / 1000.0
 
@@ -659,17 +675,13 @@ def calculate_competitive_advantage_score(
     density_penalty = min(density_penalty_max, competitors_in_radius * 1.0)
     score = distance_score - density_penalty
 
+    closest_competitor_name = closest_competitor.get("properties", {}).get("name", None)
+    closest_competitor_url = closest_competitor.get("properties", {}).get("googleMapsUri", None)
+    closest_competitor_distance_km = round(min_distance_km, 2)
     details = {
-        "nearest_competitor": (
-            closest_competitor.get("properties", {}).get("name", "Unknown")
-            if closest_competitor
-            else None
-        ),
-        "distance_km": (
-            round(min_distance_km, 2)
-            if min_distance_m != float("inf")
-            else None
-        ),
+        "nearest_competitor_name": closest_competitor_name,
+        "nearest_competitor_url": closest_competitor_url,
+        "distance_km": closest_competitor_distance_km,
         "competitors_in_radius": competitors_in_radius,
     }
 

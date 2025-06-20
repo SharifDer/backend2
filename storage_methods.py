@@ -905,47 +905,17 @@ def combine_income_and_population_data(population_data, income_data):
 
 
 
-def calculate_polygon_area_km2(coordinates):
-    """
-    Calculate approximate area of polygon in square kilometers.
-    Uses simple lat/lng to approximate area (good enough for density calculations).
-    """
-    if not coordinates or not coordinates[0]:
-        return 1  # Default to avoid division by zero
-
-    # Get the outer ring (first array in coordinates)
-    ring = coordinates[0]
-    if len(ring) < 3:
-        return 1
-
-    # Simple area calculation in square degrees, then convert to km2
-    area_sq_degrees = 0
-    n = len(ring) - 1  # Last point same as first, so exclude it
-
-    for i in range(n):
-        j = (i + 1) % n
-        area_sq_degrees += ring[i][0] * ring[j][1]
-        area_sq_degrees -= ring[j][0] * ring[i][1]
-
-    area_sq_degrees = abs(area_sq_degrees) / 2
-
-    # Rough conversion from square degrees to square kilometers
-    lat_avg = sum(point[1] for point in ring[:n]) / n
-    km_per_degree_lat = 111.0
-    km_per_degree_lng = 111.0 * math.cos(math.radians(lat_avg))
-    area_km2 = area_sq_degrees * km_per_degree_lat * km_per_degree_lng
-
-    return max(area_km2, 0.01)  # Minimum area to avoid division by zero
-
-
 async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
     """
     Fetches population data from local GeoJSON files based on viewport and zoom level.
     """
     # TODO first check if the user has purchased intelligence
 
+    population_centers = None  # Initialize population centers
+
     if req.population and not req.income:
-        file_path = f"Backend/population_json_files/v{req.zoom_level}/all_features.geojson"
+        base_path = f"Backend/population_json_files/v{req.zoom_level}/" 
+        file_path =  base_path + "all_features.geojson"
         intelligence_geojson_data = await use_json(file_path, "r")
         layer_type = "population"
         if not intelligence_geojson_data:
@@ -953,6 +923,26 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
                 f"could not find geojson data for zoom level {req.zoom_level}, in folder {file_path}"
             )
         
+        # Load population centers when population is requested
+        centers_file_path =  base_path + "population_centers.geojson"
+        population_centers = await use_json(centers_file_path, "r")
+
+        # Filter population centers based on viewport
+        if population_centers and population_centers.get("features"):
+            filtered_centers = []
+            for center in population_centers["features"]:
+                coords = center.get("geometry", {}).get("coordinates", [])
+                lng, lat = coords[1], coords[0]
+                # Check if point is within viewport bounds
+                if (req.min_lng <= lng <= req.max_lng and 
+                    req.min_lat <= lat <= req.max_lat):
+                    filtered_centers.append(center)
+            
+            # Update population_centers with filtered results
+            population_centers = {
+                **population_centers,
+                "features": filtered_centers
+            } if filtered_centers else None
 
     # if income is also true load income
     if req.income:
@@ -1040,6 +1030,7 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
             "name": f"{layer_type.title()} Density Layer",
             "layer_type": layer_type,
             "zoom_level": req.zoom_level,
+            "population_centers": population_centers,
         },
         "properties": properties,
         "records_count": len(filtered_features),
@@ -1109,3 +1100,38 @@ FROM
 
 # Apply the decorator to all functions in this module
 apply_decorator_to_module(logger)(__name__)
+
+
+
+def calculate_polygon_area_km2(coordinates):
+    """
+    Calculate approximate area of polygon in square kilometers.
+    Uses simple lat/lng to approximate area (good enough for density calculations).
+    """
+    if not coordinates or not coordinates[0]:
+        return 1  # Default to avoid division by zero
+
+    # Get the outer ring (first array in coordinates)
+    ring = coordinates[0]
+    if len(ring) < 3:
+        return 1
+
+    # Simple area calculation in square degrees, then convert to km2
+    area_sq_degrees = 0
+    n = len(ring) - 1  # Last point same as first, so exclude it
+
+    for i in range(n):
+        j = (i + 1) % n
+        area_sq_degrees += ring[i][0] * ring[j][1]
+        area_sq_degrees -= ring[j][0] * ring[i][1]
+
+    area_sq_degrees = abs(area_sq_degrees) / 2
+
+    # Rough conversion from square degrees to square kilometers
+    lat_avg = sum(point[1] for point in ring[:n]) / n
+    km_per_degree_lat = 111.0
+    km_per_degree_lng = 111.0 * math.cos(math.radians(lat_avg))
+    area_km2 = area_sq_degrees * km_per_degree_lat * km_per_degree_lng
+
+    return max(area_km2, 0.01)  # Minimum area to avoid division by zero
+
