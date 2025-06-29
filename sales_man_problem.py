@@ -19,7 +19,7 @@ import os
 import uuid
 from datetime import datetime
 from typing import Optional
-
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,6 @@ async def get_population_and_income(
     )
 
     # Fetch both datasets concurrently
-
     population_task = fetch_intelligence_by_viewport(population_request)
     income_task = fetch_intelligence_by_viewport(income_request)
 
@@ -700,179 +699,35 @@ def get_grids_of_data(
     grid = create_grid(origins, grid_size=None)
 
     # Perform spatial joins to assign data points to grid cells
-    # Implements spatial aggregation theory for converting point data to areal units
-    # "within" predicate ensures points are assigned to containing grid cells
-    logger.info("Performing spatial joins to assign data to grid cells...")
-    logger.info("Spatial join diagnostic:")
-    logger.info(f"  Origins bounds: {origins.total_bounds}")
-    logger.info(f"  Grid bounds: {grid.total_bounds}")
-    logger.info(f"  Destinations bounds: {destinations.total_bounds}")
+    origins = origins.to_crs(grid.crs)
+    origins.geometry = origins.geometry.centroid
 
-    # Check if bounds overlap
-    o_minx, o_miny, o_maxx, o_maxy = origins.total_bounds
-    g_minx, g_miny, g_maxx, g_maxy = grid.total_bounds
-
-    overlap_x = max(0, min(o_maxx, g_maxx) - max(o_minx, g_minx))
-    overlap_y = max(0, min(o_maxy, g_maxy) - max(o_miny, g_miny))
-
-    logger.info(f"  Bounds overlap: {overlap_x:.6f} x {overlap_y:.6f} degrees")
-
-    if overlap_x <= 0 or overlap_y <= 0:
-        logger.error("  NO SPATIAL OVERLAP between origins and grid!")
-
-    # Sample a few points to check spatial join manually
-    logger.info("Sample spatial join check:")
-    for i in range(min(3, len(origins))):
-        point = origins.iloc[i].geometry
-        logger.info(f"  Origin {i}: {point}")
-
-        # Check which grid cell this point should be in
-        grid_matches = grid[grid.contains(point)]
-        logger.info(f"    Matches {len(grid_matches)} grid cells")
-
-    # ===== INSERT ENHANCED SPATIAL JOIN DEBUGGING HERE =====
-    logger.info("=== SPATIAL JOIN DEBUG ===")
-    logger.info(f"Origins bounds: {origins.total_bounds}")
-    logger.info(f"Grid bounds: {grid.total_bounds}")
-
-    # Check grid cell sizes
-    first_grid_cell = grid.iloc[0].geometry
-    grid_width = first_grid_cell.bounds[2] - first_grid_cell.bounds[0]
-    grid_height = first_grid_cell.bounds[3] - first_grid_cell.bounds[1]
-    logger.info(f"Grid cell size: {grid_width:.6f} x {grid_height:.6f} degrees")
-
-    # Check population polygon sizes
-    for i in range(min(5, len(origins))):
-        pop_geom = origins.iloc[i].geometry
-        pop_bounds = pop_geom.bounds
-        pop_width = pop_bounds[2] - pop_bounds[0]
-        pop_height = pop_bounds[3] - pop_bounds[1]
-        logger.info(
-            f"Population polygon {i} size: {pop_width:.6f} x {pop_height:.6f} degrees"
-        )
-        logger.info(
-            f"  Bounds: [{pop_bounds[0]:.6f}, {pop_bounds[1]:.6f}, {pop_bounds[2]:.6f}, {pop_bounds[3]:.6f}]"
-        )
-
-        # Check which grid cells this polygon overlaps with
-        overlapping_grids = grid[grid.geometry.intersects(pop_geom)]
-        containing_grids = grid[grid.geometry.contains(pop_geom)]
-        logger.info(f"  Overlaps with {len(overlapping_grids)} grid cells")
-        logger.info(f"  Contained within {len(containing_grids)} grid cells")
-
-        # Check centroid containment
-        centroid = pop_geom.centroid
-        centroid_containing_grids = grid[grid.geometry.contains(centroid)]
-        logger.info(
-            f"  Centroid contained in {len(centroid_containing_grids)} grid cells"
-        )
-        logger.info(f"  Centroid: {centroid}")
-
-    # Test different spatial predicates
-    logger.info("Testing different spatial predicates:")
-    test_origins = origins.head(10)  # Test first 10
-
-    within_join = gpd.sjoin(test_origins, grid, how="left", predicate="within")
-    intersects_join = gpd.sjoin(
-        test_origins, grid, how="left", predicate="intersects"
-    )
-
-    within_success = len(within_join[within_join["index_right"].notna()])
-    intersects_success = len(
-        intersects_join[intersects_join["index_right"].notna()]
-    )
-
-    logger.info(f"  'within' predicate: {within_success}/10 successful joins")
-    logger.info(
-        f"  'intersects' predicate: {intersects_success}/10 successful joins"
-    )
-    logger.info("=== END SPATIAL JOIN DEBUG ===")
-    # ===== END ENHANCED SPATIAL JOIN DEBUGGING =====
-
-    poulation_grid = gpd.sjoin(origins, grid, how="left", predicate="within")
+    poulation_grid = gpd.sjoin(origins, grid, how="left", predicate="intersects")
     places_grid = gpd.sjoin(destinations, grid, how="left", predicate="within")
 
-    logger.info("Spatial joins completed:")
-    logger.info(
-        f"  Population centers assigned to grid: {len(poulation_grid[poulation_grid['index_right'].notna()])}/{len(origins)}"
-    )
-    logger.info(
-        f"  Places assigned to grid: {len(places_grid[places_grid['index_right'].notna()])}/{len(destinations)}"
-    )
-    # Detailed post-join analysis
-    logger.info("Post spatial join analysis:")
-    logger.info(f"  Population grid shape: {poulation_grid.shape}")
-    logger.info(f"  Places grid shape: {places_grid.shape}")
-
-    # Check which population centers failed to join
-    failed_pop = poulation_grid[poulation_grid["index_right"].isna()]
-    logger.info(f"  Failed population joins: {len(failed_pop)}")
-    if len(failed_pop) > 0:
-        logger.info(
-            f"    Sample failed points: {failed_pop.geometry.iloc[:3].tolist()}"
-        )
-
-    # Check the actual aggregation data
-    pop_aggregation = poulation_grid.groupby("index_right")[
-        "population_purchasing_power"
-    ].sum()
-    places_aggregation = places_grid.groupby("index_right")["market"].sum()
-
-    logger.info(f"  Population aggregation: {len(pop_aggregation)} grid cells")
-    logger.info(f"  Places aggregation: {len(places_aggregation)} grid cells")
-    logger.info(f"  Places aggregation sample: {places_aggregation.head()}")
-
-    # Aggregate spatial data at grid cell level using groupby operations
-    # Implements spatial data aggregation and statistical summarization
-    # Combines multiple datasets into unified grid-based representation
+    # Aggregate spatial data at grid cell level
     data = pd.concat(
         [
-            grid,  # Base grid geometries as spatial framework
-            # Population aggregation: sum raw population counts per grid cell
-            # Provides demographic density distribution across space
-            # Example: Grid cell might contain 12,500 people from 3 population centers
+            grid,
             poulation_grid.groupby("index_right")["population"]
             .sum()
             .rename("number_of_persons"),
-            # population effective purchasing power aggregation: sum accessibility-weighted population
-            # Accounts for service availability and economic factors
-            # Example: Same grid cell has 8,200 population effective purchasing power (lower due to good service access)
             poulation_grid.groupby("index_right")["population_purchasing_power"]
             .sum()
             .rename("population_purchasing_power"),
-            # Facility count: number of destinations/places per grid cell
-            # Measures service/facility density distribution
-            # Example: Commercial grid cell might have 4 supermarkets, residential cell has 0-1
-            places_grid.groupby("index_right")["geometry"]
-            .count()
-            .rename("number_of_supermarkets"),
-            # Market potential aggregation: sum customer base for all facilities in grid cell
-            # Represents total economic opportunity/demand within each spatial unit
-            # Example: Commercial district grid cell has 89,500 potential customers across all its stores
-            places_grid.groupby("index_right")["market"]
-            .sum()
-            .rename("population_purchasing_potential"),
+            places_grid.groupby("index_right")["geometry"].count().rename("number_of_supermarkets"),
+            
+            #! Total market potential from all population centers that can reach facilities in this grid
+            places_grid.groupby("index_right")["market"].sum().rename("population_purchasing_potential"),
         ],
-        axis=1,  # Concatenate along columns (join datasets horizontally)
-    )    # Data cleaning: remove empty grid cells with no associated data
-    # Creates boolean mask to identify cells with at least one non-null value
-    # Improves computational efficiency by eliminating sparse spatial units
-    mask = (
-        ~data.iloc[:, 1:].isna().all(axis=1)
-    )  # Check all columns except geometry
+        axis=1,
+    )
     
-    data = (
-        data.loc[mask].fillna(0.0).reset_index(drop=True)
-    )  # Filter and clean data
+    # Data cleaning: remove empty grid cells
+    mask = ~data.iloc[:, 1:].isna().all(axis=1)
+    data = data.loc[mask].fillna(0.0).reset_index(drop=True)
 
-    logger.info("Grid aggregation completed:")
-    logger.info(f"  Total grid cells created: {len(grid)}")
-    logger.info(
-        f"  Grid cells with data: {len(data)} ({100*len(data)/len(grid):.1f}%)"
-    )
-    logger.info(
-        f"  Grid cells with potential customers purchasing power: {sum(data['population_purchasing_potential'] > 0)}"
-    )
+    logger.info(f"Created {len(data)} grid cells with data")
 
     return data
 
@@ -884,7 +739,6 @@ def create_territory_boundaries(
 ) -> Tuple[gpd.GeoDataFrame, dict]:
     """
     Create territory boundaries from clustered grid data using convex hull method
-    Based on the provided old code pattern
     
     Args:
         masked_grided_data: The clustered grid data
@@ -896,26 +750,26 @@ def create_territory_boundaries(
     """
     logger.info("Creating territory boundaries using convex hull method...")
     
-    # Aggregate data by group (like the old code)
+    # Aggregate data by group
     aggregated_output = masked_grided_data.groupby("group", observed=False).agg({
         "number_of_persons": "sum",
         "population_purchasing_power": "sum", 
         "number_of_supermarkets": "sum",
         "population_purchasing_potential": "sum"
     })
-    
+
     logger.info(f"Aggregated data for {len(aggregated_output)} groups")
     
-    # Create boundaries list similar to old code
+    # Create boundaries list
     boundaries = []
     for group in masked_grided_data.group.unique():
-        if pd.isna(group):  # Skip NaN groups
+        if pd.isna(group):
             continue
             
         # Get territory data for this group
         territory_data = masked_grided_data.loc[masked_grided_data.group == group]
         
-        # Create convex hull boundary (like old code)
+        # Create convex hull boundary
         geometry = territory_data.geometry.union_all().convex_hull
         
         boundaries.append({
@@ -930,7 +784,7 @@ def create_territory_boundaries(
     
     logger.info(f"Created {len(boundaries_gdf)} territory boundaries")
     
-    # Handle overlapping geometries (like the old code did with .difference())
+    # Handle overlapping geometries
     # This prevents overlapping territory boundaries
     for i in range(len(boundaries_gdf)):
         current_geom = boundaries_gdf.iloc[i].geometry
@@ -1129,7 +983,7 @@ def plot_results(
 
         # Save the plot
         plt.savefig(filepath, dpi=300, bbox_inches="tight", facecolor="white")
-        plt.close(fig)  # Important: close to free memory
+        plt.close(fig)
 
         # Return URL path that FastAPI can serve
         return f"/static/plots/{full_filename}"
@@ -1137,7 +991,58 @@ def plot_results(
         plt.show()
         plt.close(fig)
         return None
+    
 
+def plot_facilities_with_territories(places, boundaries_gdf, request_id):
+    """Show actual facility locations with territory assignments"""
+    
+    fig, ax = plt.subplots(figsize=(12, 10))
+    
+    # Background: Territory boundaries
+    boundaries_gdf.plot(
+        column="group",
+        cmap='Pastel1',
+        alpha=0.4,
+        edgecolor='black',
+        linewidth=1,
+        ax=ax,
+        legend=False
+    )
+    
+    # Foreground: Facility points (no legend to avoid conflicts)
+    places.plot(
+        column="group",
+        cmap='tab10',
+        marker='o',
+        markersize=60,
+        edgecolor='black',
+        linewidth=1,
+        alpha=0.9,
+        ax=ax,
+        legend=False  # Set to False to avoid the error
+    )
+    
+    # Add title with facility count info
+    ax.set_title(
+        f"Supermarket Locations by Sales Territory\n"
+        f"",
+        fontsize=14, 
+        fontweight='bold'
+    )
+    ax.axis('off')
+    
+    # Save the plot
+    if request_id:
+        os.makedirs("static/plots", exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{timestamp}_{request_id}_facilities_with_territories.png"
+        filepath = os.path.join("static/plots", filename)
+        plt.savefig(filepath, dpi=300, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
+        return f"/static/plots/{filename}"
+    
+    return None
+    
 
 def generate_all_plots(
     masked_grided_data: gpd.GeoDataFrame,
@@ -1169,9 +1074,8 @@ def generate_all_plots(
         filename=f"{request_id}_cluster_markets",
     )
 
-    # Territory boundaries plot (new plot based on old code)
+    # Territory boundaries plot
     if boundaries_gdf is not None and len(boundaries_gdf) > 0:
-        # Create colormap with the right number of colors for territories
         import matplotlib.pyplot as plt
         n_territories = len(boundaries_gdf)
         plots["territory_boundaries"] = plot_results(
@@ -1187,6 +1091,10 @@ def generate_all_plots(
             title=["Territory Boundaries"],
             save_to_file=True,
             filename=f"{request_id}_territory_boundaries",
+        )
+    if boundaries_gdf is not None and len(boundaries_gdf) > 0:
+        plots["facilities_with_territories"] = plot_facilities_with_territories(
+            places, boundaries_gdf, request_id
         )
 
     # Individual metric plots
@@ -1301,7 +1209,7 @@ async def get_clusters_for_sales_man(
     logger.info("Loading business/facility data...")
     page_token = ""
     data_load_req = ReqFetchDataset(
-        boolean_query=req.boolean_query,  # Search criteria by types
+        boolean_query=req.boolean_query,
         action="full data",
         page_token=page_token,
         city_name=req.city_name,
@@ -1328,27 +1236,15 @@ async def get_clusters_for_sales_man(
     logger.info("Generating grid-based spatial aggregation...")
     grided_data = get_grids_of_data(
         population_gdf, places, income_gdf, req.distance_limit
-    )    # Filter to grid cells with actual market potential
-    # Removes empty/irrelevant spatial units to focus clustering on viable areas
-    mask = grided_data.population_purchasing_potential > 0
+    )
+    
+    # Filter to grid cells with actual market potential
+    mask = (grided_data["number_of_persons"] > 0) | (grided_data["population_purchasing_potential"] > 0)
     masked_grided_data = grided_data[mask].reset_index(drop=True)
+    
     if len(masked_grided_data) == 0:
         logger.error("No grid cells with market potential found!")
-        logger.error("This usually means:")
-        logger.error("  1. Income data contains only NaN values")
-        logger.error(
-            "  2. Spatial join failed to assign population to grid cells"
-        )
-        logger.error("  3. Distance limit is too restrictive")
-        
-    logger.info("Grid filtering results:")
-    logger.info(f"  Total grid cells: {len(grided_data)}")
-    logger.info(
-        f"  Cells with market potential: {len(masked_grided_data)} ({100*len(masked_grided_data)/len(grided_data):.1f}%)"
-    )
-    logger.info(
-        f"  Removed {len(grided_data) - len(masked_grided_data)} empty cells"
-    )
+        raise ValueError("No viable grid cells for territory division")
 
     # Calculate geometric centroids for distance calculations
     # Converts polygon grid cells to representative point locations
@@ -1400,9 +1296,8 @@ async def get_clusters_for_sales_man(
 
     logger.info("Starting greedy spatial clustering algorithm...")
 
-    # Greedy spatial clustering algorithm with load balancing
-    # Implements modified k-means with spatial contiguity constraints
-    j = 0  # Current cluster index
+    # Greedy spatial clustering algorithm
+    j = 0
     clusters_created = 0
 
     for i in range(masked_grided_data.shape[0]):
@@ -1532,13 +1427,13 @@ async def get_clusters_for_sales_man(
         "Sales territory clustering and plot generation completed successfully"
     )
 
-    # Generate territory-level analytics (currently only logged)
+    # Generate territory-level analytics
     territory_analytics = []
     territory_boundaries = []
 
     for group_id in range(req.num_sales_man):
         if group_id in groups:
-            # Extract territory data that's currently only logged
+            # Extract territory data
             territory_data = masked_grided_data[
                 masked_grided_data["group"] == group_id
             ]
@@ -1706,13 +1601,15 @@ async def get_clusters_for_sales_man(
             "workload_balance": calculate_workload_balance(territory_analytics),
         },
     }
-    # Return comprehensive analysis data
+    original_population = population_gdf["Population_Count"].sum()
+    grid_population = masked_grided_data["number_of_persons"].sum()
+    territory_population = sum(territory["total_population"] for territory in territory_analytics)
 
-    # you now have two dataframes:
-    # 1 is the masked_grided_data containing the clusters for the population in the form of grids
-    # 2 is the places containing the points for each destination clustered using the group column
-    # So its up to you which one you ant to return or if you want to return
-    # Return both data and plot URLs
+    print(f"Population tracking:")
+    print(f"  Original: {original_population:,}")
+    print(f"  Grid total: {grid_population:,}")  
+    print(f"  Territory total: {territory_population:,}")
+    print(f"  Discrepancy: {abs(original_population - territory_population):,}")
 
     # Core response data
     response_data = {
@@ -1732,13 +1629,13 @@ async def get_clusters_for_sales_man(
             "business_type": req.boolean_query,
         },
         "territory_analytics": territory_analytics,
-        
         "territory_boundaries": territory_boundaries,
-        "territory_boundaries_geojson": boundaries_geojson,  # Add the GeoJSON boundaries
+        "territory_boundaries_geojson": boundaries_geojson,
         "business_insights": business_insights,
         "performance_metrics": performance_metrics,
     }
 
+    
     # Geographic summary calculations
     geographic_summary = {
         "total_area_km2": round(
@@ -1753,8 +1650,7 @@ async def get_clusters_for_sales_man(
             3,
         ),
     }
-    
-    # print(masked_grided_data.columns, places.columns)
+
     # Raw data (conditional)
     if req.include_raw_data:
         raw_cluster_data = {
@@ -1768,6 +1664,9 @@ async def get_clusters_for_sales_man(
     response_data["geographic_summary"] = geographic_summary
     response_data["raw_cluster_data"] = raw_cluster_data
 
+    logger.info("Sales territory analysis completed successfully")
+
+    
     return response_data
 
 
@@ -1829,4 +1728,5 @@ def calculate_workload_balance(territory_analytics):
             territory_analytics,
             key=lambda t: t["population_purchasing_power"]
             / max(t["facility_count"], 1),
-        )["territory_id"],    }
+        )["territory_id"],
+    }

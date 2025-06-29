@@ -51,7 +51,7 @@ class ApiConfig(CommonApiConfig):
     )
     ggl_nearby_enterprise_sku_fields: str = (
         ggl_nearby_pro_sku_fields
-        + "places.currentOpeningHours,places.currentSecondaryOpeningHours,places.internationalPhoneNumber,places.nationalPhoneNumber,places.priceLevel,places.priceRange,places.rating,places.regularOpeningHours,places.regularSecondaryOpeningHours,places.userRatingCount,places.websiteUri"
+        + ",places.currentOpeningHours,places.currentSecondaryOpeningHours,places.internationalPhoneNumber,places.nationalPhoneNumber,places.priceLevel,places.priceRange,places.rating,places.regularOpeningHours,places.regularSecondaryOpeningHours,places.userRatingCount,places.websiteUri"
     )
     ggl_text_pro_sku_fields: str = (
         "places.accessibilityOptions,places.addressComponents,places.addressDescriptor*,places.adrFormatAddress,places.businessStatus,places.containingPlaces,places.displayName,places.formattedAddress,places.googleMapsLinks**,places.googleMapsUri,places.iconBackgroundColor,places.iconMaskBaseUri,places.location,places.photos,places.plusCode,places.postalAddress,places.primaryType,places.primaryTypeDisplayName,places.pureServiceAreaBusiness,places.shortFormattedAddress,places.subDestinations,places.types,places.utcOffsetMinutes,places.viewport"
@@ -65,9 +65,7 @@ class ApiConfig(CommonApiConfig):
     ggl_details_fields: str = "id,name,photos,location,types"
     save_draft_catalog: str = backend_base_uri + "save_draft_catalog"
     fetch_gradient_colors: str = backend_base_uri + "fetch_gradient_colors"
-    recolor_based: str = (
-        backend_base_uri + "recolor_based"
-    )
+    recolor_based: str = backend_base_uri + "recolor_based"
     filter_based_on: str = backend_base_uri + "filter_based_on"
 
     gcloud_slocator_bucket_name: str = "dev-s-locator"
@@ -102,14 +100,18 @@ class ApiConfig(CommonApiConfig):
         try:
             if os.path.exists(f"{conf.secrets_dir}/secrets_gmap.json"):
                 with open(
-                    f"{conf.secrets_dir}/secrets_gmap.json", "r", encoding="utf-8"
+                    f"{conf.secrets_dir}/secrets_gmap.json",
+                    "r",
+                    encoding="utf-8",
                 ) as config_file:
                     data = json.load(config_file)
                     conf.api_key = data.get("gmaps_api", "")
 
             if os.path.exists(f"{conf.secrets_dir}/secrets_llm.json"):
                 with open(
-                    f"{conf.secrets_dir}/secrets_llm.json", "r", encoding="utf-8"
+                    f"{conf.secrets_dir}/secrets_llm.json",
+                    "r",
+                    encoding="utf-8",
                 ) as config_file:
                     data = json.load(config_file)
                     conf.openai_api_key = data.get("openai_api_key", "")

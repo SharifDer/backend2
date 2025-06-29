@@ -3,8 +3,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+# Install uv
+RUN pip install uv
+
+# Copy uv configuration files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies with uv
+RUN uv sync --frozen
 
 # Update package lists and install git
 RUN apt-get update && \

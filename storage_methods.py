@@ -497,9 +497,9 @@ async def load_dataset(dataset_id: str, fetch_full_plan_datasets=False) -> Dict:
     #TODO temporary soultion this shouldn't be needed if we were removing the properties from the dataset before saving
     def select_sub_properties(dataset):
         fields = [
-            "displayName", "rating", "formattedAddress", "internationalPhoneNumber",
+            "displayName", "rating", "user_ratings_total","formattedAddress", "internationalPhoneNumber",
             "types", "priceLevel", "primaryType", "userRatingCount", "location",
-            "name", "id","popularity_score"
+            "name", "id","popularity_score", "photos","types","googleMapsUri","phone"
         ]
     
         filtered_features = []
