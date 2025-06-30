@@ -16,7 +16,8 @@ RUN uv sync --frozen
 RUN apt-get update && \
     apt-get install -y git
 
-
 COPY . /app
 EXPOSE 8000
-CMD ["uvicorn", "run_apps:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Use uv run to execute uvicorn within the virtual environment
+CMD ["uv", "run", "uvicorn", "run_apps:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
