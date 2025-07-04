@@ -108,9 +108,64 @@ class SessionManager:
             shutil.rmtree(session_path)
             logger.info("Cleaned up expired session: %s", session_id)
 
+    # async def get_current_session(self) -> Optional[SessionInfo]:
+    #     """Get current session"""
+    #     return self.current_session
+
+
+    # In mcp_server.py - SessionManager
     async def get_current_session(self) -> Optional[SessionInfo]:
-        """Get current session"""
-        return self.current_session
+        """Get current session, loading from disk if needed"""
+        
+        # If we have session in memory, return it
+        if self.current_session:
+            return self.current_session
+        
+        # 🔧 NEW: If no session in memory, try to load from disk
+        logger.info("No session in memory, scanning disk for valid sessions...")
+        
+        try:
+            if not self.base_path.exists():
+                return None
+                
+            # Find most recent valid session
+            valid_sessions = []
+            
+            for session_dir in self.base_path.iterdir():
+                if not session_dir.is_dir():
+                    continue
+                    
+                metadata_path = session_dir / "session_metadata.json"
+                if metadata_path.exists():
+                    try:
+                        metadata = await use_json(str(metadata_path), "r")
+                        if metadata:
+                            session_info = SessionInfo(**metadata)
+                            # Check if session is still valid
+                            if datetime.now() < session_info.expires_at:
+                                valid_sessions.append((session_info, session_info.created_at))
+                    except Exception as e:
+                        logger.warning(f"Failed to load session {session_dir.name}: {e}")
+            
+            if valid_sessions:
+                # Load most recent valid session
+                valid_sessions.sort(key=lambda x: x[1], reverse=True)
+                session_info = valid_sessions[0][0]
+                
+                # Restore session to memory
+                self.current_session = session_info
+                setup_session_logging(session_info.session_id, 
+                                    self.base_path / session_info.session_id)
+                
+                logger.info(f"Loaded session from disk: {session_info.session_id}")
+                return session_info
+            else:
+                logger.info("No valid sessions found on disk")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Failed to load session from disk: {e}")
+            return None
 
     async def load_session(self, session_id: str) -> Optional[SessionInfo]:
         """Load existing session from metadata file"""

@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{TITLE}}</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']], 
+                processEscapes: true, 
+                tags: 'ams', 
+                processEnvironments: true,
+                packages: ['base', 'ams', 'noerrors', 'noundefined'],
+                macros: {
+                    'ef': 'ef',
+                    'ms': 'ms'
+                }
+            },
+            options: {
+                ignoreHtmlClass: 'custom-equation|no-mathjax|mathjax-ignore',
+                processHtmlClass: '',
+                renderActions: {
+                    display: [210, function (doc) {
+                        for (const math of doc.getAllJax()) {
+                            if (math.display) {
+                                math.typesetRoot.classList.add('display-math');
+                            }
+                        }
+                    }, '', false],
+                    addMenu: [0, '', '']
+                }
+            },
+            startup: {
+                pageReady: function() {
+                    return MathJax.startup.defaultPageReady().then(function() {
+                        console.log('MathJax mathematical equations rendered');
+                        
+                        setTimeout(function() {
+                            var displayContainers = document.querySelectorAll('mjx-container[display="true"]');
+                            displayContainers.forEach(function(container) {
+                                container.style.textAlign = 'center';
+                                container.style.margin = '15px auto';
+                                container.style.fontSize = '16pt';
+                                container.style.lineHeight = '1.5';
+                            });
+                        }, 100);
+                    });
+                }
+            }
+        };
+    </script>
+    
+    <style>
+        /* Professional Black & White Theme with Sans-Serif Font */
+        :root {
+            --primary-color: #000000;
+            --secondary-color: #333333;
+            --accent-color: #666666;
+            --light-gray: #f5f5f5;
+            --border-color: #cccccc;
+            --hover-color: #f0f0f0;
+            --text-color: #000000;
+            --light-text: #666666;
+            --shadow-light: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+            color: var(--text-color);
+            background-color: white;
+            font-size: 12pt;
+        }
+        
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 0;
+        }
+        
+        .header {
+            background-color: white;
+            color: var(--text-color);
+            padding: 30px 0;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 14pt;
+            color: var(--secondary-color);
+            font-family: Arial, sans-serif;
+        }
+        
+        .content {
+            padding: 0;
+        }
+        
+        /* Professional Typography */
+        h1 {
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin: 40px 0 20px 0;
+            font-size: 18pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: Arial, sans-serif;
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            margin: 30px 0 15px 0;
+            font-size: 16pt;
+            font-weight: bold;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            font-family: Arial, sans-serif;
+        }
+        
+        h3 {
+            color: var(--secondary-color);
+            margin: 25px 0 12px 0;
+            font-size: 14pt;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+        }
+        
+        h4 {
+            color: var(--accent-color);
+            margin: 20px 0 10px 0;
+            font-size: 12pt;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+        }
+        
+        p {
+            font-family: Arial, sans-serif;
+            margin: 15px 0;
+        }
+        
+        /* Professional Table Styling */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 20px 0;
+            background: white;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            font-size: 10pt;
+            font-family: Arial, sans-serif;
+        }
+        
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            vertical-align: top;
+            font-family: Arial, sans-serif;
+        }
+        
+        th {
+            background-color: var(--light-gray);
+            color: var(--primary-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 9pt;
+            letter-spacing: 0.5px;
+            font-family: Arial, sans-serif;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        tr:hover {
+            background-color: var(--hover-color);
+        }
+        
+        /* Professional Code Blocks */
+        pre {
+            background-color: var(--light-gray);
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            line-height: 1.4;
+            position: relative;
+        }
+        
+        code {
+            background-color: var(--light-gray);
+            padding: 2px 4px;
+            border: 1px solid var(--border-color);
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            color: var(--primary-color);
+        }
+        
+        /* Mathematical Equations Styling */
+        .MathJax_Display {
+            margin: 1em 0;
+            padding: 10px 15px;
+            background-color: var(--light-gray);
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-light);
+            text-align: center;
+        }
+
+        .mjx-labels {
+            text-align: right;
+            padding-left: 20px;
+        }
+        
+        mjx-container[display="true"] {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        mjx-container {
+            background-color: transparent !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+        
+        mjx-container, mjx-math, mjx-mtext, mjx-mn, mjx-mi, mjx-mo {
+            color: var(--text-color) !important;
+        }
+        
+        mjx-mi {
+            font-style: italic !important;
+        }
+        
+        /* Mathematical Formulation Section */
+        .math-formulation, .methodology-section {
+            margin: 30px 0;
+        }
+        
+        .math-formulation h3, .math-formulation h4, .methodology-section h2, .methodology-section h3 {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .methodology-section {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .methodology-section h2 {
+            color: var(--primary-color);
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 30px 0 15px 0;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .methodology-section h3 {
+            color: var(--secondary-color);
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 25px 0 12px 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .methodology-section p {
+            margin: 15px 0;
+            text-align: justify;
+            font-family: Arial, sans-serif;
+        }
+        
+        .methodology-section ul, .methodology-section ol {
+            margin: 15px 0;
+            padding-left: 25px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .methodology-section li {
+            margin: 6px 0;
+            line-height: 1.5;
+            font-family: Arial, sans-serif;
+        }
+        
+        .methodology-section .formula {
+            font-size: 1.3em;
+            margin: 1.5em 0;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-style: italic;
+            background: linear-gradient(135deg, #f5f5f5, #e9ecef);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        .methodology-section .fraction {
+            display: inline-block;
+            vertical-align: middle;
+            text-align: center;
+        }
+        
+        .methodology-section .fraction > span {
+            display: block;
+            padding: 0 0.2em;
+        }
+        
+        .methodology-section .numerator {
+            border-bottom: 1px solid #000;
+        }
+        
+        .methodology-section .denominator {
+            margin-top: 0.1em;
+        }
+        
+        .methodology-section .math {
+            font-family: Arial, sans-serif;
+            font-style: italic;
+        }
+        
+        .methodology-section strong {
+            font-weight: bold;
+        }
+        
+        .methodology-section em {
+            font-style: italic;
+        }
+        
+        .methodology-section sub {
+            font-size: 0.8em;
+            vertical-align: sub;
+        }
+        
+        /* Equation container */
+        .equation-block {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px 0;
+        }
+        
+        /* Where clause styling */
+        .where-clause {
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 12pt;
+            font-family: Arial, sans-serif;
+        }
+        
+        /* Mathematical variable definitions */
+        .math-definitions {
+            margin: 15px 0;
+        }
+        
+        .math-definitions ul {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin: 10px 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .math-definitions li {
+            margin: 8px 0;
+            line-height: 1.6;
+            font-family: Arial, sans-serif;
+        }
+        
+        /* Variables in definitions should be italic */
+        .math-var {
+            font-style: italic;
+            font-weight: normal;
+            color: var(--text-color);
+        }
+        
+        /* Mathematical context paragraphs */
+        .math-context {
+            margin: 15px 0;
+            line-height: 1.6;
+            text-align: left;
+            font-family: Arial, sans-serif;
+        }
+        
+        /* Assumptions section */
+        .assumptions-section {
+            margin: 25px 0;
+        }
+        
+        .assumptions-section h3, .assumptions-section h4 {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-family: Arial, sans-serif;
+        }
+        
+        /* Professional Lists */
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+            font-family: Arial, sans-serif;
+        }
+        
+        li {
+            margin: 6px 0;
+            line-height: 1.5;
+            font-family: Arial, sans-serif;
+        }
+        
+        ul li {
+            list-style-type: square;
+        }
+        
+        /* Professional Images - Smaller Size */
+        img {
+            max-width: 60%;
+            height: auto;
+            border: 1px solid var(--border-color);
+            margin: 15px auto;
+            display: block;
+            cursor: pointer;
+        }
+        
+        img:hover {
+            border-color: var(--primary-color);
+        }
+        
+        /* Image enlargement overlay */
+        .img-enlarged {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: white;
+            padding: 20px;
+            border: 2px solid var(--primary-color);
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+        }
+        
+        /* Professional Metadata Box */
+        .metadata {
+            background-color: var(--light-gray);
+            color: var(--primary-color);
+            padding: 20px;
+            margin-bottom: 30px;
+            font-size: 11pt;
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--primary-color);
+            font-family: Arial, sans-serif;
+        }
+        
+        .metadata-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .metadata strong {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        /* Professional Blockquotes */
+        blockquote {
+            border-left: 3px solid var(--primary-color);
+            margin: 20px 0;
+            padding: 15px 20px;
+            background-color: var(--light-gray);
+            font-style: italic;
+            color: var(--secondary-color);
+            font-family: Arial, sans-serif;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--light-gray);
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+        
+        /* Copy button */
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 9pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: Arial, sans-serif;
+        }
+        
+        .copy-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        /* ===== CUSTOM EQUATION OVERRIDES ===== */
+        /* These styles override MathJax and other template conflicts */
+
+        /* Disable MathJax processing for custom equations */
+        .custom-equation,
+        .no-mathjax {
+            font-family: 'Times New Roman', Times, serif !important;
+            color: #000000 !important;
+            background: #ffffff !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 20px 0 !important;
+            margin: 25px 0 !important;
+            text-align: center !important;
+            display: block !important;
+        }
+
+        .custom-equation *,
+        .no-mathjax * {
+            font-family: inherit !important;
+            color: inherit !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Override any MathJax container styles */
+        .custom-equation mjx-container,
+        .no-mathjax mjx-container {
+            display: none !important;
+        }
+
+        /* Equation content styling */
+        .equation-content {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 18pt !important;
+        }
+
+        /* Variable styling */
+        .custom-equation .variable,
+        .no-mathjax .variable {
+            font-style: italic !important;
+            font-size: 18pt !important;
+            margin: 0 3px !important;
+            display: inline !important;
+        }
+
+        /* Subscript styling */
+        .custom-equation .subscript,
+        .no-mathjax .subscript {
+            font-size: 14pt !important;
+            vertical-align: sub !important;
+            font-style: italic !important;
+            margin-left: 1px !important;
+        }
+
+        /* Equals sign */
+        .custom-equation .equals,
+        .no-mathjax .equals {
+            font-size: 20pt !important;
+            margin: 0 15px !important;
+            font-weight: normal !important;
+            font-style: normal !important;
+        }
+
+        /* Fraction container */
+        .custom-equation .fraction,
+        .no-mathjax .fraction {
+            display: inline-flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            margin: 0 5px !important;
+            vertical-align: middle !important;
+        }
+
+        /* Fraction numerator */
+        .custom-equation .numerator,
+        .no-mathjax .numerator {
+            border-bottom: 2px solid #000000 !important;
+            padding: 2px 10px 4px 10px !important;
+            margin-bottom: 2px !important;
+            font-size: 18pt !important;
+            font-style: italic !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        /* Fraction denominator */
+        .custom-equation .denominator,
+        .no-mathjax .denominator {
+            padding: 4px 10px 2px 10px !important;
+            font-size: 18pt !important;
+            font-style: italic !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Summation symbol */
+        .custom-equation .summation,
+        .no-mathjax .summation {
+            font-size: 24pt !important;
+            margin-right: 8px !important;
+            font-style: normal !important;
+        }
+
+        /* Description text */
+        .custom-equation .description,
+        .no-mathjax .description {
+            font-size: 12pt !important;
+            margin-left: 15px !important;
+            font-style: normal !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        /* Multiplication symbol */
+        .custom-equation .multiply,
+        .no-mathjax .multiply {
+            margin: 0 4px !important;
+            font-style: normal !important;
+            font-size: 16pt !important;
+        }
+
+        /* Override any conflicting MathJax styles */
+        mjx-container[display="true"] {
+            display: none !important;
+        }
+
+        .MathJax_Display {
+            display: none !important;
+        }
+
+        /* Ensure methodology section styles work */
+        .methodology-section .custom-equation,
+        .methodology-section .no-mathjax {
+            display: block !important;
+            text-align: center !important;
+        }
+
+        /* Variables in list definitions */
+        .methodology-section .math-var {
+            font-style: italic !important;
+            font-weight: normal !important;
+            color: #000000 !important;
+        }
+
+        /* Where clause styling */
+        .methodology-section .where-clause {
+            margin: 20px 0 10px 0 !important;
+            font-weight: bold !important;
+            color: #000000 !important;
+            font-size: 14pt !important;
+            font-family: Arial, sans-serif !important;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+                font-size: 11pt;
+            }
+            
+            .header h1 {
+                font-size: 20pt;
+            }
+            
+            h1 {
+                font-size: 16pt;
+            }
+            
+            h2 {
+                font-size: 14pt;
+            }
+            
+            table {
+                font-size: 9pt;
+            }
+            
+            img {
+                max-width: 80%;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                font-size: 10pt;
+            }
+            
+            .header {
+                background: white !important;
+                color: black !important;
+                border-bottom: 2px solid black;
+            }
+            
+            h1, h2, h3 {
+                color: black !important;
+            }
+            
+            table {
+                font-size: 9pt;
+            }
+            
+            img {
+                max-width: 50%;
+                border: 1px solid black;
+            }
+            
+            .no-print, .copy-btn, .progress-container {
+                display: none !important;
+            }
+            
+            .metadata {
+                background: #f5f5f5 !important;
+                color: black !important;
+                border: 1px solid black !important;
+            }
+            
+            .math-formulation {
+                page-break-inside: avoid;
+            }
+            
+            .MathJax_Display, mjx-container[display="true"] {
+                background: white !important;
+                border: none !important;
+                page-break-inside: avoid;
+                font-size: 14pt !important;
+            }
+            
+            .where-clause {
+                color: black !important;
+                font-weight: bold !important;
+            }
+            
+            .math-var {
+                color: black !important;
+                font-style: italic !important;
+            }
+            
+            .assumptions-section {
+                page-break-inside: avoid;
+                border: none !important;
+                background: white !important;
+            }
+
+            /* Custom equations in print */
+            .custom-equation, .no-mathjax {
+                background: white !important;
+                color: black !important;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container no-print">
+        <div class="progress-bar" id="reading-progress"></div>
+    </div>
+    
+    <div class="container">
+        <div class="content">
+            {{CONTENT}}
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Loading Professional Territory Report...');
+            
+            // Set generation time
+            var timeElement = document.getElementById('generation-time');
+            if (timeElement) {
+                var now = new Date();
+                timeElement.textContent = now.toLocaleString();
+            }
+            
+            // Image click-to-enlarge functionality
+            var images = document.querySelectorAll('img');
+            var overlay = null;
+            
+            images.forEach(function(img) {
+                img.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.className = 'overlay';
+                        document.body.appendChild(overlay);
+                        
+                        overlay.addEventListener('click', function() {
+                            closeEnlargedImage();
+                        });
+                    }
+                    
+                    var enlargedImg = this.cloneNode(true);
+                    enlargedImg.className = 'img-enlarged';
+                    enlargedImg.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        closeEnlargedImage();
+                    });
+                    
+                    document.body.appendChild(enlargedImg);
+                    overlay.classList.add('active');
+                    
+                    var handleEscape = function(e) {
+                        if (e.key === 'Escape') {
+                            closeEnlargedImage();
+                            document.removeEventListener('keydown', handleEscape);
+                        }
+                    };
+                    document.addEventListener('keydown', handleEscape);
+                });
+            });
+            
+            function closeEnlargedImage() {
+                var enlargedImg = document.querySelector('.img-enlarged');
+                if (enlargedImg) {
+                    enlargedImg.remove();
+                }
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+            }
+            
+            // Add table responsiveness
+            var tables = document.querySelectorAll('table');
+            tables.forEach(function(table) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'table-wrapper';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            });
+            
+            // Format mathematical content
+            formatMathematicalContent();
+            
+            // Add copy-to-clipboard for code blocks
+            var codeBlocks = document.querySelectorAll('pre');
+            codeBlocks.forEach(function(block) {
+                block.style.position = 'relative';
+                
+                var copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = 'Copy';
+                
+                block.appendChild(copyBtn);
+                
+                copyBtn.addEventListener('click', function() {
+                    var text = block.textContent.replace('Copy', '').trim();
+                    
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(text).then(function() {
+                            copyBtn.textContent = 'Copied';
+                            setTimeout(function() {
+                                copyBtn.textContent = 'Copy';
+                            }, 2000);
+                        });
+                    } else {
+                        var textArea = document.createElement('textarea');
+                        textArea.value = text;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                            document.execCommand('copy');
+                            copyBtn.textContent = 'Copied';
+                            setTimeout(function() {
+                                copyBtn.textContent = 'Copy';
+                            }, 2000);
+                        } catch (err) {
+                            console.error('Copy failed:', err);
+                        }
+                        document.body.removeChild(textArea);
+                    }
+                });
+            });
+            
+            // Reading progress indicator
+            var progressBar = document.getElementById('reading-progress');
+            if (progressBar) {
+                window.addEventListener('scroll', function() {
+                    var scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+                    progressBar.style.width = Math.min(100, Math.max(0, scrolled)) + '%';
+                });
+            }
+            
+            console.log('Professional Territory Report loaded successfully');
+        });
+        
+        // Format mathematical content according to academic standards
+        function formatMathematicalContent() {
+            // Find and format "Mathematical Formulation" sections
+            var headings = document.querySelectorAll('h2, h3, h4');
+            headings.forEach(function(heading) {
+                var text = heading.textContent.toLowerCase();
+                if (text.includes('mathematical') && text.includes('formulation')) {
+                    var section = document.createElement('div');
+                    section.className = 'math-formulation';
+                    
+                    var parent = heading.parentNode;
+                    parent.insertBefore(section, heading);
+                    section.appendChild(heading);
+                    
+                    var nextElement = section.nextElementSibling;
+                    while (nextElement && !isMainHeading(nextElement)) {
+                        var current = nextElement;
+                        nextElement = nextElement.nextElementSibling;
+                        section.appendChild(current);
+                    }
+                }
+            });
+            
+            // Format "Where:" clauses
+            var allElements = document.querySelectorAll('*');
+            allElements.forEach(function(element) {
+                if (element.textContent && element.textContent.trim() === 'Where:') {
+                    element.className = 'where-clause';
+                    element.innerHTML = '<strong>Where:</strong>';
+                }
+            });
+            
+            // Format mathematical variables in list items
+            var listItems = document.querySelectorAll('li');
+            listItems.forEach(function(li) {
+                var text = li.innerHTML;
+                
+                var mathVarPattern = /^([a-zA-Z]+)_?([a-zA-Z0-9,]*)\s*=/;
+                var match = text.match(mathVarPattern);
+                
+                if (match) {
+                    var variable = match[1];
+                    var subscript = match[2];
+                    var restOfText = text.substring(match[0].length);
+                    
+                    var formattedVar = '<span class="math-var">' + variable;
+                    if (subscript) {
+                        formattedVar += '<sub>' + subscript + '</sub>';
+                    }
+                    formattedVar += '</span> =';
+                    
+                    li.innerHTML = formattedVar + restOfText;
+                }
+            });
+            
+            // Format mathematical context paragraphs
+            var paragraphs = document.querySelectorAll('p');
+            paragraphs.forEach(function(p) {
+                var text = p.textContent;
+                if (text.includes('population center') && text.includes('i')) {
+                    p.className = 'math-context';
+                    p.innerHTML = p.innerHTML.replace(/\b([a-zA-Z])\b/g, '<em>$1</em>');
+                }
+                if (text.includes('destination') && text.includes('j')) {
+                    p.className = 'math-context';
+                    p.innerHTML = p.innerHTML.replace(/\b([a-zA-Z])\b/g, '<em>$1</em>');
+                }
+            });
+            
+            // Format assumptions sections
+            var assumptionHeadings = document.querySelectorAll('h2, h3, h4');
+            assumptionHeadings.forEach(function(heading) {
+                if (heading.textContent.toLowerCase().includes('assumption')) {
+                    var section = document.createElement('div');
+                    section.className = 'assumptions-section';
+                    
+                    var parent = heading.parentNode;
+                    parent.insertBefore(section, heading);
+                    section.appendChild(heading);
+                    
+                    var nextElement = section.nextElementSibling;
+                    while (nextElement && !isMainHeading(nextElement)) {
+                        var current = nextElement;
+                        nextElement = nextElement.nextElementSibling;
+                        section.appendChild(current);
+                    }
+                }
+            });
+            
+            // Wrap mathematical definitions lists
+            var lists = document.querySelectorAll('ul');
+            lists.forEach(function(list) {
+                var hasMatVars = false;
+                var listItems = list.querySelectorAll('li');
+                listItems.forEach(function(li) {
+                    if (li.querySelector('.math-var')) {
+                        hasMatVars = true;
+                    }
+                });
+                
+                if (hasMatVars) {
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'math-definitions';
+                    list.parentNode.insertBefore(wrapper, list);
+                    wrapper.appendChild(list);
+                }
+            });
+        }
+        
+        // Helper function to check if element is a main heading
+        function isMainHeading(element) {
+            if (!element || !element.tagName) return false;
+            var tag = element.tagName.toLowerCase();
+            if (tag === 'h1' || tag === 'h2') return true;
+            if (tag === 'h3' || tag === 'h4') {
+                var text = element.textContent.toLowerCase();
+                return text.includes('mathematical') || text.includes('methodology') || 
+                       text.includes('results') || text.includes('conclusion') ||
+                       text.includes('assumption');
+            }
+            return false;
+        }
+    </script>
+
+    <!-- Custom Equation Processing Script -->
+    <script>
+        // Disable MathJax for custom equations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent MathJax from processing custom equations
+            const customEquations = document.querySelectorAll('.custom-equation, .no-mathjax');
+            customEquations.forEach(function(equation) {
+                // Mark as already processed to prevent MathJax interference
+                equation.setAttribute('data-mjx-processed', 'true');
+                equation.classList.add('mathjax-ignore');
+                
+                // Force display styles
+                equation.style.display = 'block';
+                equation.style.textAlign = 'center';
+                equation.style.fontFamily = 'Times New Roman, Times, serif';
+                
+                // Ensure equation content is visible
+                const content = equation.querySelector('.equation-content');
+                if (content) {
+                    content.style.display = 'inline-flex';
+                    content.style.alignItems = 'center';
+                    content.style.justifyContent = 'center';
+                }
+            });
+            
+            // Hide any MathJax containers that might interfere
+            const mathJaxContainers = document.querySelectorAll('mjx-container');
+            mathJaxContainers.forEach(function(container) {
+                if (container.closest('.custom-equation') || container.closest('.no-mathjax')) {
+                    container.style.display = 'none';
+                }
+            });
+        });
+
+        // Override MathJax configuration if it exists
+        if (window.MathJax) {
+            // Update MathJax config to ignore our custom equations
+            if (MathJax.startup) {
+                MathJax.startup.ready = (function (originalReady) {
+                    return function () {
+                        originalReady();
+                        // Mark custom equations as processed
+                        const equations = document.querySelectorAll('.custom-equation, .no-mathjax');
+                        equations.forEach(eq => {
+                            eq.setAttribute('data-mjx-processed', 'true');
+                        });
+                    };
+                })(MathJax.startup.ready);
+            }
+            
+            // Add ignore class to MathJax configuration
+            if (MathJax.tex) {
+                MathJax.tex.processEnvironments = false;
+            }
+        }
+    </script>
+</body>
+</html>
