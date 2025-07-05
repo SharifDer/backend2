@@ -24,14 +24,14 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     handlers=[
         logging.FileHandler(log_file, mode='w', encoding='utf-8'),
-        logging.StreamHandler(sys.stdout)
+        logging.StreamHandler(sys.stderr)
     ],
     force=True  # This clears any existing handlers
 )
 
 # Configure console handler for UTF-8 (mainly for Windows)
 for handler in logging.getLogger().handlers:
-    if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
+    if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stderr:
         try:
             if hasattr(handler.stream, 'reconfigure'):
                 handler.stream.reconfigure(encoding='utf-8', errors='replace')
