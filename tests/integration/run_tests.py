@@ -8,6 +8,7 @@ import logging
 import time
 import json
 import psycopg2
+import argparse
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from urllib.parse import urlparse
 from contextlib import contextmanager
@@ -299,50 +300,128 @@ class TestServerManager:
         os.environ.pop("DATABASE_URL", None)
         logger.info("✅ Test environment cleaned up")
 
+def parse_arguments():
+    """Parse command line arguments for test runner"""
+    parser = argparse.ArgumentParser(
+        description="Integration Test Runner - Run tests with server management",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python run_tests.py                                    # Run all tests
+  python run_tests.py -t test_fetch_dataset_llm.py      # Run specific test file
+  python run_tests.py -k test_valid_query               # Run tests matching pattern
+  python run_tests.py -t test_fetch_dataset_llm.py -k valid_query  # Combine filters
+  python run_tests.py --no-coverage                     # Run without coverage
+        """
+    )
+    
+    parser.add_argument(
+        "-t", "--test", 
+        help="Specific test file to run (e.g., test_fetch_dataset_llm.py)"
+    )
+    
+    parser.add_argument(
+        "-k", "--keyword",
+        help="Run tests matching this keyword/expression (pytest -k option)"
+    )
+    
+    parser.add_argument(
+        "--no-coverage",
+        action="store_true",
+        help="Skip coverage reporting"
+    )
+    
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8080,
+        help="Port for test server (default: 8080)"
+    )
+    
+    parser.add_argument(
+        "--maxfail",
+        type=int,
+        default=3,
+        help="Stop after N failures (default: 3, 0 = no limit)"
+    )
+    
+    return parser.parse_args()
+
 def main():
     """Main entry point with enhanced pytest integration"""
+    args = parse_arguments()
+    
     print("\n" + "="*80)
     print("🧪 INTEGRATION TEST RUNNER")
     print("="*80)
     logger.info("🚀 Starting Integration Test Runner...")
     logger.info("📋 This will start the server in TEST_MODE and run integration tests")
     
+    if args.test:
+        logger.info(f"🎯 Running specific test: {args.test}")
+    if args.keyword:
+        logger.info(f"🔍 Filtering tests with keyword: {args.keyword}")
+    
     # Start server and run pytest
-    manager = TestServerManager(test_port=8080)
+    manager = TestServerManager(test_port=args.port)
     
     with manager.server_context() as server_info:
         logger.info(f"🌐 Server running at: {server_info['base_url']}")
         
-        # Run pytest with simple, working options (removed --dist=no)
-        pytest_args = [
-            "tests/integration/",
+        # Build pytest arguments based on user input
+        if args.test:
+            # If specific test file provided, run just that file
+            test_path = args.test
+            if not test_path.startswith("tests/integration/"):
+                test_path = f"tests/integration/{test_path}"
+            pytest_args = [test_path]
+        else:
+            # Run all integration tests
+            pytest_args = ["tests/integration/"]
+        
+        # Add common pytest options
+        pytest_args.extend([
             "-v",                           # Verbose output
             "-s",                           # Don't capture output  
             "--tb=short",                   # Short traceback format
-            "--maxfail=3",                  # Stop after 3 failures
             "--color=yes",                  # Force colored output
             "--show-capture=no",            # Don't show captured output
             "--durations=10",               # Show 10 slowest tests
             "-r", "A",                      # Show all test outcomes (passed, failed, skipped, etc.)
-        ]
+        ])
         
-        # Add coverage if available
-        try:
-            import importlib.util
-            if importlib.util.find_spec("pytest_cov"):
-                pytest_args.extend([
-                    "--cov=backend_common", 
-                    "--cov-report=term-missing:skip-covered",
-                    "--cov-report=html:htmlcov"
-                ])
-                logger.info("📊 Coverage reporting enabled")
-            else:
+        # Add maxfail option
+        if args.maxfail > 0:
+            pytest_args.extend(["--maxfail", str(args.maxfail)])
+        
+        # Add keyword filter if provided
+        if args.keyword:
+            pytest_args.extend(["-k", args.keyword])
+        
+        # Add coverage if available and not disabled
+        if not args.no_coverage:
+            try:
+                import importlib.util
+                if importlib.util.find_spec("pytest_cov"):
+                    pytest_args.extend([
+                        "--cov=backend_common", 
+                        "--cov-report=term-missing:skip-covered",
+                        "--cov-report=html:htmlcov"
+                    ])
+                    logger.info("📊 Coverage reporting enabled")
+                else:
+                    logger.info("📊 Coverage not available (install pytest-cov for coverage)")
+            except ImportError:
                 logger.info("📊 Coverage not available (install pytest-cov for coverage)")
-        except ImportError:
-            logger.info("📊 Coverage not available (install pytest-cov for coverage)")
+        else:
+            logger.info("📊 Coverage reporting disabled")
         
         print("\n" + "="*80)
         print("🔬 RUNNING TESTS")
+        if args.test:
+            print(f"🎯 Target: {args.test}")
+        if args.keyword:
+            print(f"🔍 Filter: {args.keyword}")
         print("="*80)
         
         # Run the tests

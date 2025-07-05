@@ -34,19 +34,19 @@ async def process_llm_query(req:ReqLLMFetchDataset):
 
     system_message = f"""You are an intelligent assistant that extracts structured data for a location-based search API. 
     Your primary function is to process location-based search queries and format them appropriately.
-    
+
     IMPORTANT: You MUST ALWAYS respond with valid JSON format as specified in the schema, regardless of the query content.
-    
+
     # CRITICAL REQUIREMENTS
     - MUST HAVE: Exactly one approved city name in the query from Approved Cities: {Approved_Cities}
     - MUST NOT HAVE: Multiple city names in the same query
     - These requirements are non-negotiable - immediately reject any query that violates them
-    
+
     # QUERY PROCESSING RULES
     - Only process queries that explicitly request information about places within a single approved city.
     - Automatically add the corresponding country name to maintain consistency.
     - Ensure consistent results for identical queries by following a deterministic analysis process.
-    
+
     # REJECTION CRITERIA
     Reject queries that:
     1. Do not contain an approved city name
@@ -56,7 +56,7 @@ async def process_llm_query(req:ReqLLMFetchDataset):
     5. Contain inappropriate, offensive, illegal, or nonsensical content
     6. Reference place categories not in the approved list: {Approved_Categories}
     7. Mention countries not in the approved list: {Approved_Countries}
-    
+
     # Boolean Query Construction
     - The boolean query must only contain approved category terms connected by 'AND' and 'OR' operators
     - Analyze the semantic relationship between place categories in the query:
@@ -66,9 +66,15 @@ async def process_llm_query(req:ReqLLMFetchDataset):
     - Group related terms with parentheses
     - Example: "ATMs and supermarkets with ATMs" → "ATM OR (SUPERMARKET AND ATM)"
     - Always use the standardized category names from the approved list
-    
+
+    # REASONING MESSAGE RULES
+    For valid queries, provide appropriate reasoning messages:
+    - If boolean_query contains "AND": "Query is valid. I've provided you places that are [category1] and [category2] at the same time. If what you were looking for was [category1] or [category2] separately, please start another chat and ask for [category1] or [category2]."
+    - If boolean_query contains only "OR": "Query is valid. The request contains an approved city ([city_name]) and categories ([boolean_query])."
+    - For single categories: "Query is valid. The request contains an approved city ([city_name]) and category ([boolean_query])."
+
     For invalid queries, politely explain why the query cannot be processed, specifically mentioning the requirement for exactly one approved city name.
-    
+
     REMEMBER: Always respond with the exact JSON format specified in the schema. Never provide explanations outside the JSON structure."""
     model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.0, google_api_key=CONF.gemini_api_key)
 
@@ -94,7 +100,12 @@ async def process_llm_query(req:ReqLLMFetchDataset):
         
         # Fix boolean_query case
         if outputResponse.body.boolean_query:
-            outputResponse.body.boolean_query = outputResponse.body.boolean_query.lower()
+            # Convert to lowercase first for consistency
+            boolean_query = outputResponse.body.boolean_query.lower()
+            # Convert operators back to uppercase
+            boolean_query = boolean_query.replace(' and ', ' AND ')
+            boolean_query = boolean_query.replace(' or ', ' OR ')
+            outputResponse.body.boolean_query = boolean_query
         
         # Add missing fields with proper names (without underscore prefix)
         # For tests, bounding_box should be empty array, not populated coordinates
