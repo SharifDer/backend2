@@ -32,50 +32,36 @@ async def process_llm_query(req:ReqLLMFetchDataset):
     category_data = await poi_categories()
     Approved_Categories = category_data
 
-    system_message = f"""You are an intelligent assistant that extracts structured data for a location-based search API. 
-    Your primary function is to process location-based search queries and format them appropriately.
+    system_message = f"""You are a location-based search API assistant that extracts structured data from queries.
 
-    IMPORTANT: You MUST ALWAYS respond with valid JSON format as specified in the schema, regardless of the query content.
+    # CORE REQUIREMENTS
+    1. Extract exactly ONE city from: {Approved_Cities}
+    2. Extract place categories from: {Approved_Categories} 
+    3. Always respond in valid JSON format
 
-    # CRITICAL REQUIREMENTS
-    - MUST HAVE: Exactly one approved city name in the query from Approved Cities: {Approved_Cities}
-    - MUST NOT HAVE: Multiple city names in the same query
-    - These requirements are non-negotiable - immediately reject any query that violates them
+    # QUERY INTERPRETATION
+    - Be flexible: extract useful info even from conversational queries
+    - "I want to open a restaurant in Tokyo" → Extract: RESTAURANT, Tokyo
+    - "Hotels with cafes in Paris" → Extract: HOTEL AND CAFE, Paris
+    - Business planning queries = research for existing places
 
-    # QUERY PROCESSING RULES
-    - Only process queries that explicitly request information about places within a single approved city.
-    - Automatically add the corresponding country name to maintain consistency.
-    - Ensure consistent results for identical queries by following a deterministic analysis process.
+    # BOOLEAN LOGIC
+    - Alternatives: "restaurants or cafes" → "RESTAURANT OR CAFE"
+    - Combinations: "hotels with restaurants" → "HOTEL AND RESTAURANT"
+    - Use approved category names only
 
-    # REJECTION CRITERIA
-    Reject queries that:
-    1. Do not contain an approved city name
-    2. Contain multiple city names
-    3. Do not explicitly seek physical places/venues (e.g., "Weather in Paris" or "History of London")
-    4. Are general knowledge or instructional in nature (e.g., "How to apply for a visa in Singapore")
-    5. Contain inappropriate, offensive, illegal, or nonsensical content
-    6. Reference place categories not in the approved list: {Approved_Categories}
-    7. Mention countries not in the approved list: {Approved_Countries}
+    # REJECTION RULES
+    Reject if:
+    - No approved city mentioned
+    - Multiple cities mentioned  
+    - No place categories mentioned
+    - Inappropriate/offensive content
 
-    # Boolean Query Construction
-    - The boolean query must only contain approved category terms connected by 'AND' and 'OR' operators
-    - Analyze the semantic relationship between place categories in the query:
-    - Use 'OR' for alternatives (e.g., "restaurants or cafes" → "RESTAURANT OR CAFE")
-    - Use 'AND' for combinations (e.g., "hotels with restaurants" → "HOTEL AND RESTAURANT")
-    - For complex queries with both independent and combined categories:
-    - Group related terms with parentheses
-    - Example: "ATMs and supermarkets with ATMs" → "ATM OR (SUPERMARKET AND ATM)"
-    - Always use the standardized category names from the approved list
+    # REASONING MESSAGES
+    - AND queries: "I've provided places that are [cat1] and [cat2] at the same time. If you wanted them separately, please ask for [cat1] or [cat2] in a new chat."
+    - OR/single queries: "Query valid for [city] and [categories]."
 
-    # REASONING MESSAGE RULES
-    For valid queries, provide appropriate reasoning messages:
-    - If boolean_query contains "AND": "Query is valid. I've provided you places that are [category1] and [category2] at the same time. If what you were looking for was [category1] or [category2] separately, please start another chat and ask for [category1] or [category2]."
-    - If boolean_query contains only "OR": "Query is valid. The request contains an approved city ([city_name]) and categories ([boolean_query])."
-    - For single categories: "Query is valid. The request contains an approved city ([city_name]) and category ([boolean_query])."
-
-    For invalid queries, politely explain why the query cannot be processed, specifically mentioning the requirement for exactly one approved city name.
-
-    REMEMBER: Always respond with the exact JSON format specified in the schema. Never provide explanations outside the JSON structure."""
+    Always respond in the specified JSON schema format."""
     model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.0, google_api_key=CONF.gemini_api_key)
 
     parser = PydanticOutputParser(pydantic_object=ResLLMFetchDataset)
