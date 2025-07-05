@@ -28,3 +28,6 @@ docker-compose.yml
 static/*
 tool_bridge_mcp_server/sessions/*
 tool_bridge_mcp_server/logs/*
+
+# ignore log files of integration tests
+tests/integration/test_logs/*

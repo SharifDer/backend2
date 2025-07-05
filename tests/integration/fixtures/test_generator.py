@@ -65,7 +65,6 @@ class ConfigDrivenTest:
     expected_output: Dict[str, Any] = None  # ✅ Make this optional
     pydantic_model: Optional[str] = None
     timeout: int = 30
-    print_response_on_failure: bool = True
     # ✅ New fields for JSON-based expected output
     expected_output_file: Optional[str] = (
         None  # e.g., "test_fetch_dataset.json"
@@ -341,7 +340,7 @@ class ConfigTestGenerator:
         safe_test_name = re.sub(
             r'[<>:"/\\|?*]', "_", test_name
         )  # Replace invalid filename chars
-        return f"{safe_test_name}_{timestamp}.log"
+        return f"{timestamp}_{safe_test_name}.log"
 
     def _write_detailed_comparison_to_file(
         self,
@@ -350,6 +349,7 @@ class ConfigTestGenerator:
         expected_body: Dict,
         actual_status: int,
         expected_status: int,
+        test_passed: bool = False,
     ) -> str:
         """Write detailed comparison to a log file and return the filename"""
         # Create main logs directory if it doesn't exist
@@ -371,6 +371,7 @@ class ConfigTestGenerator:
                 f.write(f"DETAILED TEST COMPARISON LOG\n")
                 f.write(f"Test Name: {test_name}\n")
                 f.write(f"Timestamp: {datetime.now().isoformat()}\n")
+                f.write(f"Test Result: {'✅ PASSED' if test_passed else '❌ FAILED'}\n")
                 f.write("=" * 100 + "\n\n")
 
                 # Status Code Comparison
@@ -394,12 +395,13 @@ class ConfigTestGenerator:
                 f.write(json.dumps(expected_body, indent=2, ensure_ascii=False))
                 f.write("\n\n")
 
-                # Differences Analysis
-                f.write("🔍 DETAILED ANALYSIS:\n")
-                f.write("-" * 50 + "\n")
-                self._write_comparison_analysis(
-                    f, actual_body, expected_body, "root"
-                )
+                # Only write detailed analysis if test failed
+                if not test_passed:
+                    f.write("🔍 DETAILED ANALYSIS:\n")
+                    f.write("-" * 50 + "\n")
+                    self._write_comparison_analysis(
+                        f, actual_body, expected_body, "root"
+                    )
 
                 f.write("\n" + "=" * 100 + "\n")
                 f.write("END OF COMPARISON LOG\n")
@@ -657,29 +659,35 @@ class ConfigTestGenerator:
                     actual_body, expected_body
                 )
 
-            # If either status or body doesn't match, write detailed log
-            if not status_match or not body_match:
-                if config.print_response_on_failure:
-                    log_file_path = self._write_detailed_comparison_to_file(
-                        config.name,
-                        actual_body,
-                        expected.get("response_body", {}),
-                        actual_status,
-                        expected_status,
+            # Determine overall test result
+            test_passed = status_match and body_match
+
+            # Always write detailed log file
+            log_file_path = self._write_detailed_comparison_to_file(
+                config.name,
+                actual_body,
+                expected.get("response_body", {}),
+                actual_status,
+                expected_status,
+                test_passed,
+            )
+
+            if log_file_path:
+                if test_passed:
+                    logger.info(
+                        f"✅ Test passed. Log written to: {log_file_path}"
                     )
+                else:
+                    logger.error(
+                        f"❌ Test failed. Detailed comparison written to: {log_file_path}"
+                    )
+            else:
+                logger.error(
+                    f"❌ Could not write comparison log to file."
+                )
 
-                    if log_file_path:
-                        logger.error(
-                            f"❌ Test failed. Detailed comparison written to: {log_file_path}"
-                        )
-                    else:
-                        logger.error(
-                            f"❌ Test failed. Could not write detailed comparison to file."
-                        )
-                        # Fallback to console output
-                        logger.error(f"📄 Response: {response.text}")
-
-                # Still log the basic failure info to console
+            # If test failed, also log the basic failure info to console
+            if not test_passed:
                 if not status_match:
                     logger.error(
                         f"❌ Status code mismatch: expected {expected_status}, got {actual_status}"

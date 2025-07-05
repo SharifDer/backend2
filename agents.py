@@ -2,8 +2,7 @@ from all_types.request_dtypes import (ReqRecolorBasedon,ValidationResult)
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-from langchain_openai import ChatOpenAI
-import os 
+from langchain_google_genai import ChatGoogleGenerativeAI
 from config_factory import CONF
 
 class ExplanationAgent:
@@ -16,11 +15,9 @@ class ExplanationAgent:
         self.chain=self.template|self.model
 
     def __getmodel(self):
-      base_url="https://generativelanguage.googleapis.com/v1beta"
-      client=ChatOpenAI(
-          base_url=base_url,
-          api_key=CONF.gemini_api_key,
-          model="gemini-2.0-flash-exp"
+      client=ChatGoogleGenerativeAI(
+          google_api_key=CONF.gemini_api_key,
+          model="gemini-2.5-flash"
       )
       return client
 
@@ -48,11 +45,9 @@ class ReqGradientColorBasedOnZoneAgent:
     self.chain=self.template|self.model
 
   def __getmodel(self):
-    base_url="https://generativelanguage.googleapis.com/v1beta"
-    client=ChatOpenAI(
-        base_url=base_url,
-        api_key=CONF.gemini_api_key,
-        model="gemini-2.0-flash-exp"
+    client=ChatGoogleGenerativeAI(
+        google_api_key=CONF.gemini_api_key,
+        model="gemini-2.5-flash"
     )
     return client
   
@@ -159,7 +154,7 @@ class ReqGradientColorBasedOnZoneAgent:
     try:
       
       return self.parser.invoke(output)
-    except Exception as e:
+    except Exception:
       raise Exception(str(output.content))
     
 
@@ -177,11 +172,9 @@ class PromptValidationAgent:
         self.chain = self.template | self.model | self.parser
     
     def __getmodel(self):
-        base_url = "https://generativelanguage.googleapis.com/v1beta"
-        client = ChatOpenAI(
-            base_url=base_url,
-            api_key=CONF.gemini_api_key,
-            model="gemini-2.0-flash-exp"
+        client = ChatGoogleGenerativeAI(
+            google_api_key=CONF.gemini_api_key,
+            model="gemini-2.5-flash"
         )
         return client
     
@@ -298,11 +291,9 @@ class OutputValidationAgent:
         self.chain = self.template | self.model | self.parser
     
     def __getmodel(self):
-        base_url = "https://generativelanguage.googleapis.com/v1beta"
-        client = ChatOpenAI(
-            base_url=base_url,
-            api_key=CONF.gemini_api_key,
-            model="gemini-2.0-flash-exp"
+        client = ChatGoogleGenerativeAI(
+            google_api_key=CONF.gemini_api_key,
+            model="gemini-2.5-flash"
         )
         return client
     

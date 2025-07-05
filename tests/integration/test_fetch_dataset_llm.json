@@ -1,0 +1,140 @@
+{
+    "valid_supermarket_query": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "query": "Find supermarkets in Riyadh",
+                "is_valid": "Valid",
+                "reason": "Query is valid. The request contains an approved city (Riyadh) and category (supermarket).",
+                "endpoint": "/fastapi/fetch_dataset",
+                "suggestions": [],
+                "body": {
+                    "user_id": "regex:^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+                    "lat": "type:float",
+                    "lng": "type:float",
+                    "radius": "type:float",
+                    "boolean_query": "supermarket",
+                    "page_token": "",
+                    "action": "sample",
+                    "search_type": "category_search",
+                    "country_name": "Saudi Arabia",
+                    "city_name": "Riyadh",
+                    "prdcer_lyr_id": "",
+                    "text_search": "",
+                    "zoom_level": 0,
+                    "bounding_box": [],
+                    "included_types": [],
+                    "excluded_types": [],
+                    "ids_and_location_only": false,
+                    "include_rating_info": false,
+                    "include_only_sub_properties": true,
+                    "full_load": false
+                },
+                "cost": "type:string"
+            }
+        }
+    },
+    "invalid_query_no_city": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "query": "Find supermarkets",
+                "is_valid": "Invalid",
+                "reason": "regex:.*approved city.*",
+                "endpoint": "/fastapi/fetch_dataset",
+                "suggestions": "type:list",
+                "body": null,
+                "cost": ""
+            }
+        }
+    },
+    "invalid_query_multiple_cities": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "query": "Find restaurants in Riyadh and Jeddah",
+                "is_valid": "Invalid",
+                "reason": "regex:.*multiple city.*",
+                "endpoint": "/fastapi/fetch_dataset",
+                "suggestions": "type:list",
+                "body": null,
+                "cost": ""
+            }
+        }
+    },
+    "complex_boolean_query": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "query": "Find restaurants or cafes in Riyadh",
+                "is_valid": "Valid",
+                "reason": "Query is valid. The request contains an approved city (Riyadh) and category (restaurant or cafe).",
+                "endpoint": "/fastapi/fetch_dataset",
+                "suggestions": [],
+                "body": {
+                    "user_id": "regex:^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+                    "lat": "type:float",
+                    "lng": "type:float",
+                    "radius": "type:float",
+                    "boolean_query": "restaurant or cafe",
+                    "page_token": "",
+                    "action": "sample",
+                    "search_type": "category_search",
+                    "country_name": "Saudi Arabia",
+                    "city_name": "Riyadh",
+                    "prdcer_lyr_id": "",
+                    "text_search": "",
+                    "zoom_level": 0,
+                    "bounding_box": [],
+                    "included_types": [],
+                    "excluded_types": [],
+                    "ids_and_location_only": false,
+                    "include_rating_info": false,
+                    "include_only_sub_properties": true,
+                    "full_load": false
+                },
+                "cost": "type:string"
+            }
+        }
+    },
+    "invalid_category_query": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "query": "Find alien spaceship landing sites in Riyadh",
+                "is_valid": "Invalid",
+                "reason": "regex:.*physical places.*nonsensical.*",
+                "endpoint": "/fastapi/fetch_dataset",
+                "suggestions": [],
+                "body": null,
+                "cost": ""
+            }
+        }
+    },
+    "non_location_query": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "query": "What is the weather like in Riyadh?",
+                "is_valid": "Invalid",
+                "reason": "regex:.*physical places.*",
+                "endpoint": "/fastapi/fetch_dataset",
+                "suggestions": "type:list",
+                "body": null,
+                "cost": ""
+            }
+        }
+    }
+}

@@ -129,7 +129,7 @@ class Database:
             str: Command completion tag
         """
         formatted_query = cls.generate_sql_script(query, *args)
-        max_chars = 400  # Roughly equivalent to 100 words
+        max_chars = 600  # Roughly equivalent to 100 words
         truncated_query = formatted_query[:max_chars] + "..." if len(formatted_query) > max_chars else formatted_query
         logger.info(f"Executing query: {truncated_query}")
         async with cls.connection() as conn:

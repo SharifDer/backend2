@@ -700,7 +700,7 @@ async def get_census_dataset_from_storage(
     #     query = SqlObject.economic_w_bounding_box
 
     city_data = await Database.fetch(
-        query, *request_location._bounding_box, request_location.zoom_level
+        query, *request_location.bounding_box, request_location.zoom_level
     )
     city_df = pd.DataFrame([dict(record) for record in city_data], dtype=object)
     # city_df = pd.DataFrame(city_data, dtype=object)
@@ -763,7 +763,7 @@ async def get_commercial_properties_dataset_from_storage(
     city_data = await Database.fetch(
         query,
         data_type.replace("_", " "),
-        *request_location._bounding_box,
+        *request_location.bounding_box,
         DEFAULT_LIMIT,
         offset,
     )
@@ -812,7 +812,7 @@ async def get_real_estate_dataset_from_storage(
     """
     Retrieves data from storage based on the location request.
     """
-    data_type = req._included_types
+    data_type = req.included_types
     # TODO at moment the user will only give one category, in the future we should see how to implement this with more
     # realEstateData=(await load_real_estate_categories())
     # filtered_categories = [item for item in realEstateData if item in req.included_types]
@@ -823,12 +823,12 @@ async def get_real_estate_dataset_from_storage(
         offset = page_number * DEFAULT_LIMIT
         query = SqlObject.saudi_real_estate_w_bounding_box_and_category
         city_data = await Database.fetch(
-            query, data_type, *req._bounding_box, DEFAULT_LIMIT, offset
+            query, data_type, *req.bounding_box, DEFAULT_LIMIT, offset
         )
     if req.action == "full data":
         query = SqlObject.real_estate_full_data
         city_data = await Database.fetch(
-            query, data_type, *req._bounding_box
+            query, data_type, *req.bounding_box
         )
     city_df = pd.DataFrame([dict(record) for record in city_data])
     # Convert to GeoJSON format
@@ -851,7 +851,7 @@ async def get_real_estate_dataset_from_storage(
     geojson_data = {"type": "FeatureCollection", "features": features}
     
     # Format bounding box as min_lng,min_lat,max_lng,max_lat
-    bbox_str = f"{req._bounding_box[0]},{req._bounding_box[1]},{req._bounding_box[2]},{req._bounding_box[3]}"
+    bbox_str = f"{req.bounding_box[0]},{req.bounding_box[1]},{req.bounding_box[2]},{req.bounding_box[3]}"
     
     # Format data type - handle both single string and list formats
     if isinstance(data_type, list):

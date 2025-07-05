@@ -2,10 +2,20 @@ import logging
 import os
 import sys
 
-# Clean up: remove existing log file
+# Close all existing handlers for the log file
+logger = logging.getLogger()
+for handler in logger.handlers[:]:
+    if isinstance(handler, logging.FileHandler) and handler.baseFilename.endswith('app.log'):
+        handler.close()
+        logger.removeHandler(handler)
+
+# Now try to remove the file
 log_file = 'app.log'
 if os.path.exists(log_file):
-    os.remove(log_file)
+    try:
+        os.remove(log_file)
+    except PermissionError:
+        print("Warning: Could not remove log file - file is in use")
 
 # Configure logging with proper encoding handling
 logging.basicConfig(

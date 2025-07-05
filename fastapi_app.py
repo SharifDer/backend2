@@ -300,6 +300,30 @@ async def shutdown_event():
     # Wait a moment to ensure threads are cleaned up
     await asyncio.sleep(1)
 
+    # Properly close all logging handlers
+    root_logger = logging.getLogger()
+    handlers = root_logger.handlers[:]  # Make a copy of the list
+    
+    for handler in handlers:
+        try:
+            handler.close()
+            root_logger.removeHandler(handler)
+        except Exception as e:
+            # Log to stderr since our file handler might be closing
+            print(f"Error closing logging handler: {e}", file=sys.stderr)
+    
+    # Also close handlers for your specific logger
+    app_logger = logging.getLogger(__name__)
+    app_handlers = app_logger.handlers[:]
+    
+    for handler in app_handlers:
+        try:
+            handler.close()
+            app_logger.removeHandler(handler)
+        except Exception as e:
+            print(f"Error closing app logging handler: {e}", file=sys.stderr)
+    
+
 
 @app.get(CONF.fetch_acknowlg_id, response_model=ResModel[str])
 async def fetch_acknowlg_id():

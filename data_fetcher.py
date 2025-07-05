@@ -86,7 +86,7 @@ async def fetch_census_realestate(
     bknd_dataset_id = ""
     dataset = None
 
-    req._included_types, req._excluded_types = reduce_to_single_query(
+    req.included_types, req.excluded_types = reduce_to_single_query(
         req.boolean_query
     )
 
@@ -493,7 +493,7 @@ async def fetch_dataset(req: ReqFetchDataset):
         # Default to Google Maps API
         req.lat = city_data.lat
         req.lng = city_data.lng
-        req._bounding_box = city_data._bounding_box
+        req.bounding_box = city_data.bounding_box
         (
             geojson_dataset,
             bknd_dataset_id,

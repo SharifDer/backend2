@@ -74,7 +74,6 @@ class ApiConfig(CommonApiConfig):
     )
     gcloud_bucket_credentials_json_path: str = "/ggl_bucket_sa.json"
     process_llm_query: str = backend_base_uri + "process_llm_query"
-    openai_api_key: str = ""
     gemini_api_key: str = ""
     distance_drive_time_polygon = (
         backend_base_uri + "distance_drive_time_polygon"
@@ -114,7 +113,6 @@ class ApiConfig(CommonApiConfig):
                     encoding="utf-8",
                 ) as config_file:
                     data = json.load(config_file)
-                    conf.openai_api_key = data.get("openai_api_key", "")
                     conf.gemini_api_key = data.get("gemini_api_key", "")
 
             return conf

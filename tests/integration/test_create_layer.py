@@ -1,49 +1,46 @@
-# # tests/integration/test_user.py
-# import pytest
-# from .fixtures.test_utils import create_parametrized_test
+# tests/integration/test_user.py
+import pytest
+from .fixtures.test_utils import create_parametrized_test
 
-# # tests/integration/test_configs/user_configs.py
-# from .fixtures.test_generator import ConfigDrivenTest, Prerequisites, Endpoint
-
-
-# # You can add more test configurations here
-# LAYER_MANAGEMENT_TESTS = [
-#     ConfigDrivenTest(
-#         name="test_create_layer_with_auth",
-#         description="Test creating a layer with authenticated user",
-#         prerequisites=Prerequisites(
-#             requires_user=True, requires_auth=True, user_type="admin"
-#         ),
-#         endpoint=Endpoint(method="POST", path="/save_layer"),
-#         input_data={
-#             "message": "Create layer",
-#             "request_info": {"request_id": "test-layer-001"},
-#             "request_body": {
-#                 "user_id": "${user.user_id}",
-#                 "prdcer_layer_name": "Test Layer",
-#                 "bknd_dataset_id": "test-dataset-123",
-#                 "points_color": "#FF0000",
-#                 "layer_legend": "Test Legend",
-#                 "layer_description": "Test layer description",
-#                 "city_name": "Test City",
-#             },
-#         },
-#         expected_output={
-#             "status_code": 200,
-#             "response_body": {
-#                 "data": {
-#                     "layer_name": "Test Layer",
-#                     "user_id": "${user.user_id}",
-#                 }
-#             },
-#         },
-#     )
-# ]
+# tests/integration/test_configs/user_configs.py
+from .fixtures.test_generator import ConfigDrivenTest, Prerequisites, Endpoint
 
 
-# pytestmark = [pytest.mark.integration, pytest.mark.user]
+# You can add more test configurations here
+LAYER_MANAGEMENT_TESTS = [
+    ConfigDrivenTest(
+        name="test_create_layer_with_auth",
+        description="Test creating a layer with authenticated user",
+        prerequisites=Prerequisites(
+            requires_user=True, requires_auth=True, user_type="admin"
+        ),
+        endpoint=Endpoint(method="POST", path="/save_layer"),
+        input_data={
+            "message": "Create layer",
+            "request_info": {"request_id": "test-layer-001"},
+            "request_body": {
+                "user_id": "${user.user_id}",
+                "prdcer_layer_name": "Test Layer",
+                "bknd_dataset_id": "test-dataset-123",
+                "points_color": "#FF0000",
+                "layer_legend": "Test Legend",
+                "layer_description": "Test layer description",
+                "city_name": "Test City",
+            },
+        },
+        expected_output={
+            "status_code": 200,
+            "response_body": {
+                "data": {
+                    "layer_name": "Test Layer",
+                    "user_id": "${user.user_id}",
+                }
+            },
+        },
+    )
+]
 
-# # Two one-liners - that's it!
-# test_user_profile_endpoints = create_parametrized_test(
-#     LAYER_MANAGEMENT_TESTS, pytest_marks=[pytest.mark.user_profiles]
-# )
+
+test_user_profile_endpoints = create_parametrized_test(
+    LAYER_MANAGEMENT_TESTS
+)

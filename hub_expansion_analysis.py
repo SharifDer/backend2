@@ -90,7 +90,7 @@ async def fetch_population_centers(req: ReqHubExpansion) -> List[Dict[str, Any]]
             user_id=req.user_id
         )
         temp_req = fetch_lat_lng_bounding_box(temp_req)
-        bbox_coords = temp_req._bounding_box
+        bbox_coords = temp_req.bounding_box
         min_lng = bbox_coords[0]
         min_lat = bbox_coords[1] 
         max_lng = bbox_coords[2]

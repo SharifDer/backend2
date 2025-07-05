@@ -1,5 +1,4 @@
 # tests/integration/test_fetch_dataset.py
-import pytest
 from .fixtures.test_utils import create_parametrized_test
 from .fixtures.test_generator import ConfigDrivenTest, Prerequisites, Endpoint
 
@@ -44,8 +43,7 @@ FETCH_DATASET_TESTS = [
         },
         # ✅ Remove expected_output and use JSON instead
         expected_output_file="test_fetch_dataset.json",
-        expected_output_key="supermarket_cat_response",
-        print_response_on_failure=True
+        expected_output_key="supermarket_cat_response"
     )
 ]
 

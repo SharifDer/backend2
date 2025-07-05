@@ -82,9 +82,9 @@ class ReqFetchDataset(ReqCityCountry, ReqPrdcerLyrMapData, Coordinate):
     text_search: Optional[str] = ""
     zoom_level: Optional[int] = 0
     radius: Optional[float] = 30000.0
-    _bounding_box: Optional[list[float]] = []
-    _included_types: Optional[list[str]] = []
-    _excluded_types: Optional[list[str]] = []
+    bounding_box: Optional[list[float]] = []
+    included_types: Optional[list[str]] = []
+    excluded_types: Optional[list[str]] = []
     ids_and_location_only: Optional[bool] = False
     include_rating_info: Optional[bool] = False
     include_only_sub_properties: Optional[bool] = True

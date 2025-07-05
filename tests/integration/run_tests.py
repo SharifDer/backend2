@@ -7,6 +7,9 @@ import subprocess
 import logging
 import time
 import json
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from urllib.parse import urlparse
 from contextlib import contextmanager
 
 # Set up logging with better formatting
@@ -50,7 +53,14 @@ class TestServerManager:
             with open("secrets_test/postgres_db.json", "r") as file:
                 config = json.load(file)
                 db_url = config["DATABASE_URL"]
+                logger.info("📊 Database configuration loaded from secrets_test/postgres_db.json")
+                
+                # Check if database exists and create it if needed
+                self.check_and_create_database(db_url)
+                
+                # Set environment variable after successful database check/creation
                 os.environ["DATABASE_URL"] = db_url
+                
                 logger.info("📊 Database configuration loaded from secrets_test/postgres_db.json")
         except FileNotFoundError:
             logger.error("❌ secrets_test/postgres_db.json not found!")
@@ -61,8 +71,128 @@ class TestServerManager:
         except json.JSONDecodeError:
             logger.error("❌ Invalid JSON in postgres_db.json!")
             raise
-            
+
         logger.info("✅ Test environment set up successfully")
+
+    def check_and_create_database(self, db_url: str):
+        """Check if database exists and create it if it doesn't"""
+        logger.info("🔍 Checking database existence...")
+        
+        # Parse the database URL
+        parsed = urlparse(db_url)
+        db_name = parsed.path.lstrip('/')
+        
+        # Create connection URL without database name for initial connection
+        admin_url = f"{parsed.scheme}://{parsed.netloc}/postgres"
+        
+        try:
+            # Try to connect to the target database first
+            logger.info(f"🔗 Attempting to connect to database: {db_name}")
+            test_conn = psycopg2.connect(db_url)
+            test_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            
+            # Database exists, always recreate schema and table for clean state
+            logger.info(f"✅ Database '{db_name}' exists and is accessible")
+            logger.info("� Recreating schema and table for clean test state...")
+            
+            # Always recreate schema and table
+            self._create_schema_and_table(test_conn)
+            test_conn.close()
+            return True
+            
+        except psycopg2.OperationalError as e:
+            if "does not exist" in str(e):
+                logger.info(f"📝 Database '{db_name}' does not exist, creating it...")
+                return self._create_database(admin_url, db_name)
+            else:
+                logger.error(f"❌ Database connection error: {e}")
+                raise
+        except Exception as e:
+            logger.error(f"💥 Unexpected error checking database: {e}")
+            raise
+    
+    def _create_database(self, admin_url: str, db_name: str):
+        """Create the database if it doesn't exist"""
+        try:
+            # Connect to postgres database to create new database
+            logger.info(f"🔗 Connecting to PostgreSQL server to create database '{db_name}'...")
+            admin_conn = psycopg2.connect(admin_url)
+            admin_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            
+            cursor = admin_conn.cursor()
+            
+            # Check if database already exists (race condition protection)
+            cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db_name,))
+            if cursor.fetchone():
+                logger.info(f"✅ Database '{db_name}' already exists (created by another process)")
+                cursor.close()
+                admin_conn.close()
+                return True
+            
+            # Create the database
+            cursor.execute(f'CREATE DATABASE "{db_name}"')
+            logger.info(f"✅ Successfully created database: {db_name}")
+            
+            cursor.close()
+            admin_conn.close()
+            
+            # Verify the database was created by connecting to it and create schema/table
+            db_conn = psycopg2.connect(admin_url.replace("/postgres", f"/{db_name}"))
+            db_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            logger.info(f"✅ Verified database '{db_name}' is accessible")
+            
+            # Create schema and table
+            self._create_schema_and_table(db_conn)
+            
+            db_conn.close()
+            
+            return True
+            
+        except psycopg2.Error as e:
+            logger.error(f"❌ Failed to create database '{db_name}': {e}")
+            raise
+        except Exception as e:
+            logger.error(f"💥 Unexpected error creating database: {e}")
+            raise
+
+    def _create_schema_and_table(self, db_conn):
+        """Drop and recreate the schema_marketplace schema and datasets table"""
+        try:
+            cursor = db_conn.cursor()
+            
+            # Drop table if it exists (this will also drop any indexes)
+            logger.info("🗑️ Dropping table 'datasets' if it exists...")
+            cursor.execute("DROP TABLE IF EXISTS schema_marketplace.datasets CASCADE")
+            logger.info("✅ Table dropped successfully")
+            
+            # Create schema if it doesn't exist
+            logger.info("📋 Creating schema 'schema_marketplace'...")
+            cursor.execute("CREATE SCHEMA IF NOT EXISTS schema_marketplace")
+            logger.info("✅ Schema 'schema_marketplace' created successfully")
+            
+            # Create table (clean slate)
+            logger.info("📋 Creating table 'datasets' in schema_marketplace...")
+            create_table_sql = """
+                CREATE TABLE IF NOT EXISTS schema_marketplace.datasets
+                (
+                    filename text COLLATE pg_catalog."default" NOT NULL,
+                    request_data jsonb,
+                    response_data jsonb,
+                    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT datasets_pkey PRIMARY KEY (filename)
+                )
+            """
+            cursor.execute(create_table_sql)
+            logger.info("✅ Table 'schema_marketplace.datasets' created successfully")
+            
+            cursor.close()
+            
+        except psycopg2.Error as e:
+            logger.error(f"❌ Failed to create schema and table: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"💥 Unexpected error creating schema and table: {e}")
+            raise
 
     def start_server(self, timeout=120):
         """Start the FastAPI server in test mode with proper environment"""
@@ -110,7 +240,7 @@ class TestServerManager:
     def _wait_for_server(self, timeout):
         """Wait for server to be ready to accept connections"""
         start_time = time.time()
-        check_interval = 10
+        check_interval = 20
         last_check_time = 0
 
         while time.time() - start_time < timeout:
@@ -193,17 +323,21 @@ def main():
             "--color=yes",                  # Force colored output
             "--show-capture=no",            # Don't show captured output
             "--durations=10",               # Show 10 slowest tests
+            "-r", "A",                      # Show all test outcomes (passed, failed, skipped, etc.)
         ]
         
         # Add coverage if available
         try:
-            import pytest_cov
-            pytest_args.extend([
-                "--cov=backend_common", 
-                "--cov-report=term-missing:skip-covered",
-                "--cov-report=html:htmlcov"
-            ])
-            logger.info("📊 Coverage reporting enabled")
+            import importlib.util
+            if importlib.util.find_spec("pytest_cov"):
+                pytest_args.extend([
+                    "--cov=backend_common", 
+                    "--cov-report=term-missing:skip-covered",
+                    "--cov-report=html:htmlcov"
+                ])
+                logger.info("📊 Coverage reporting enabled")
+            else:
+                logger.info("📊 Coverage not available (install pytest-cov for coverage)")
         except ImportError:
             logger.info("📊 Coverage not available (install pytest-cov for coverage)")
         

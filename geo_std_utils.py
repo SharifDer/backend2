@@ -114,7 +114,7 @@ def get_req_geodata(city_name: str, country_name: str) -> Optional[ReqGeodata]:
 def fetch_lat_lng_bounding_box(req: ReqFetchDataset) -> ReqFetchDataset:
     # If lat and lng are provided directly, use them
     if req.lat and req.lng:
-        req._bounding_box = expand_bounding_box(req.lat, req.lng)
+        req.bounding_box = expand_bounding_box(req.lat, req.lng)
         return req
 
     # Load country/city data
@@ -139,7 +139,7 @@ def fetch_lat_lng_bounding_box(req: ReqFetchDataset) -> ReqFetchDataset:
                     raise ValueError(
                         f"Invalid city data for {req.city_name} in {req.country_name}"
                     )
-                req._bounding_box = expand_bounding_box(
+                req.bounding_box = expand_bounding_box(
                     city.get("lat"), city.get("lng")
                 )
                 req.lat = city.get("lat")
@@ -147,7 +147,7 @@ def fetch_lat_lng_bounding_box(req: ReqFetchDataset) -> ReqFetchDataset:
     else:
         # if city not found in country_city_data, use geocoding to get city_data
         city_data = get_req_geodata(req.city_name, req.country_name)
-        req._bounding_box = city_data.bounding_box
+        req.bounding_box = city_data.bounding_box
         req.lat = city_data.lat
         req.lng = city_data.lng
 
