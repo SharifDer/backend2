@@ -1,0 +1,471 @@
+{
+ "analysis_summary": {
+   "scope": "342 warehouses analyzed across 23 districts",
+   "methodology": "Multi-criteria weighted scoring with density-adjusted coverage zones",
+   "qualification_criteria": "≤8min الحلقه + ≤15min population centers + within budget range",
+   "target_type": "الحلقه (Grocery Supermarkets)",
+   "competitor_analyzed": "Ninja Delivery",
+   "total_qualified_locations": 67,
+   "analysis_date": "2025-06-12",
+   "client_project": "RUH-LOG-2025-001"
+ },
+ 
+ "scoring_methodology": {
+   "weights_applied": {
+     "target_proximity": 0.30,
+     "population_access": 0.25, 
+     "rent_efficiency": 0.20,
+     "competitive_advantage": 0.15,
+     "population_coverage": 0.10
+   },
+   "normalization_method": "Min-max scaling to 0-10 range",
+   "distance_calculations": "Haversine formula with traffic pattern adjustments",
+   "coverage_zones": "Density-adjusted radii: High density=2km, Medium=3.5km, Low=5km",
+   "target_analysis": {
+     "target_type": "الحلقه (Grocery Supermarkets)",
+     "proximity_criteria": "≤8 minutes travel time",
+     "weight_justification": "High weight (30%) due to supply chain dependency"
+   },
+   "competitor_analysis": {
+     "competitor_name": "Ninja Delivery",
+     "analysis_method": "2km radius coverage zones",
+     "weight_justification": "Moderate weight (15%) for market differentiation"
+   }
+ },
+ 
+ "primary_recommendation": {
+   "hub_details": {
+     "id": "RUH-W-147",
+     "rank": 1,
+     "location": {
+       "district": "Al-Olaya",
+       "address": "King Fahd Road, Al-Olaya District", 
+       "coordinates": {"lat": 24.6877, "lng": 46.7219},
+       "zone_classification": "Commercial-Residential Mixed"
+     },
+     "specifications": {
+       "size_m2": 3200,
+       "monthly_rent_sar": 912000,
+       "rent_per_m2": 285,
+       "facility_grade": "Grade A",
+       "parking_spaces": 45,
+       "loading_docks": 8
+     },
+     "performance_metrics": {
+       "total_score": 94.2,
+       "component_scores": {
+         "target_proximity_score": 9.8,
+         "population_access_score": 9.1,
+         "rent_efficiency_score": 8.7,
+         "competitive_advantage_score": 9.5,
+         "population_coverage_score": 9.2
+       },
+       "target_access": {
+         "nearest_target": "Danube Al-Olaya",
+         "target_type": "الحلقه",
+         "time_minutes": 4.1,
+         "distance_km": 2.3,
+         "secondary_options": [
+           {"name": "Al-Othaim Mall", "time_minutes": 6.2, "distance_km": 3.8},
+           {"name": "Carrefour Centria", "time_minutes": 7.8, "distance_km": 4.9}
+           // Plus other target options...
+         ]
+       },
+       "population_center_access": {
+         "avg_time_to_centers": 8.7,
+         "center_details": [
+           {"center": "Al-Olaya Core", "time_minutes": 5.2, "population": 890000},
+           {"center": "King Fahd District", "time_minutes": 9.8, "population": 650000},
+           {"center": "Al-Nakheel", "time_minutes": 12.1, "population": 420000}
+           // Plus other centers...
+         ]
+       },
+       "competitive_positioning": {
+         "nearest_competitor_location": "Ninja Hub 7",
+         "competitor_name": "Ninja Delivery",
+         "distance_to_competitor_km": 3.8,
+         "competitive_advantage": "23% faster delivery to Eastern Compounds",
+         "market_gap_coverage": "Serves 246,400 underserved residents"
+       }
+     },
+     
+     "delivery_optimization": {
+       "coverage_analysis": {
+         "primary_zone_15min": {
+           "population": 890000,
+           "households": 178000,
+           "area_km2": 85.3,
+           "avg_income_sar": 156000,
+           "demographic_profile": "Working professionals, high disposable income"
+         },
+         "secondary_zone_25min": {
+           "population": 1650000,
+           "households": 330000,
+           "area_km2": 165.7,
+           "coverage_expansion": "85% additional market reach"
+         },
+         "route_optimization": [
+           {
+             "route_id": "Route_A_Eastern_Compounds",
+             "target_area": "Eastern Residential Compounds",
+             "avg_delivery_time": 14.2,
+             "capacity_stops": 15,
+             "population_served": 320000,
+             "route_efficiency": "92%",
+             "peak_hour_adjustment": "+18%"
+           },
+           {
+             "route_id": "Route_B_Central_Districts", 
+             "target_area": "Central Business & Residential",
+             "avg_delivery_time": 11.8,
+             "capacity_stops": 22,
+             "population_served": 570000,
+             "route_efficiency": "88%",
+             "peak_hour_adjustment": "+12%"
+           }
+           // Plus other routes...
+         ]
+       },
+       
+       "performance_projections": {
+         "current_market_baseline": {
+           "avg_delivery_time": "32.5 minutes",
+           "peak_hour_penalty": "+8.3 minutes",
+           "weekend_performance": "15% slower"
+         },
+         "projected_performance": {
+           "avg_delivery_time": "19.8 minutes",
+           "improvement_percentage": "39% faster than market average",
+           "peak_hour_penalty": "+4.2 minutes",
+           "weekend_performance": "8% slower (improved traffic management)"
+         },
+         "capacity_utilization": {
+           "daily_delivery_capacity": 450,
+           "projected_daily_volume": 280,
+           "utilization_rate": "62%",
+           "scale_up_potential": "161% before additional hub needed"
+         }
+       }
+     },
+     
+     "success_metrics": [
+       {
+         "metric": "Average delivery time", 
+         "target": "≤20 minutes", 
+         "projected_performance": "19.8 minutes",
+         "score": 9.1,
+         "benchmark_comparison": "39% better than market average"
+       },
+       {
+         "metric": "On-time delivery rate", 
+         "target": "≥95%", 
+         "projected_performance": "96.3%",
+         "score": 8.9,
+         "benchmark_comparison": "4% above industry standard"
+       },
+       {
+         "metric": "Customer satisfaction", 
+         "target": "≥4.6/5.0", 
+         "projected_performance": "4.7/5.0",
+         "score": 9.2,
+         "benchmark_comparison": "Top quartile performance"
+       },
+       {
+         "metric": "Fleet utilization", 
+         "target": "≥78%", 
+         "projected_performance": "82%",
+         "score": 8.6,
+         "benchmark_comparison": "5% above target efficiency"
+       },
+       {
+         "metric": "Cost per delivery", 
+         "target": "≤15 SAR", 
+         "projected_performance": "12.8 SAR",
+         "score": 8.9,
+         "benchmark_comparison": "15% below target cost"
+       }
+     ]
+   }
+ },
+ 
+ "alternative_locations": [
+   {
+     "hub_details": {
+       "id": "RUH-W-089",
+       "rank": 2,
+       "location": {
+         "district": "King Fahd",
+         "address": "Prince Mohammed Bin Abdulaziz Road",
+         "coordinates": {"lat": 24.7125, "lng": 46.6753}
+       },
+       "specifications": {
+         "size_m2": 2850,
+         "monthly_rent_sar": 912000,
+         "rent_per_m2": 320,
+         "facility_grade": "Grade A"
+       },
+       "performance_metrics": {
+         "total_score": 91.8,
+         "component_scores": {
+           "target_proximity_score": 9.6,
+           "population_access_score": 8.9,
+           "rent_efficiency_score": 7.8,
+           "competitive_advantage_score": 9.3,
+           "population_coverage_score": 8.7
+         },
+         "target_access": {
+           "nearest_target": "Lulu Hypermarket",
+           "target_type": "الحلقه",
+           "time_minutes": 3.8,
+           "distance_km": 2.1
+         },
+         "competitive_positioning": {
+           "nearest_competitor_location": "Ninja Hub 3",
+           "competitor_name": "Ninja Delivery",
+           "distance_to_competitor_km": 4.2,
+           "competitive_advantage": "Direct access to compound areas"
+         }
+       },
+       "delivery_optimization": {
+         "coverage_analysis": {
+           "primary_zone_15min": {
+             "population": 720000,
+             "households": 144000,
+             "area_km2": 78.5
+           }
+         },
+         "performance_projections": {
+           "projected_performance": {
+             "avg_delivery_time": "21.3 minutes",
+             "improvement_percentage": "34% faster than market average"
+           }
+         }
+       },
+       "success_metrics": [
+         {
+           "metric": "Average delivery time", 
+           "target": "≤20 minutes", 
+           "projected_performance": "21.3 minutes",
+           "score": 8.4,
+           "benchmark_comparison": "34% better than market average"
+         }
+         // Plus other success metrics...
+       ]
+     }
+   }
+   // Plus other alternatives...
+ ],
+ 
+ "market_competitive_analysis": {
+   "coverage_methodology": {
+     "definition": "Geographic area within optimal delivery time from service point, scaled by population density",
+     "principle": "High density areas (>8k/km²) = smaller coverage (2km) assuming limited car access. Low density areas (<2k/km²) = larger coverage (5km) assuming car access.",
+     "target_integration": {
+       "target_type": "الحلقه (Grocery Supermarkets)",
+       "target_weight_in_analysis": "30%",
+       "target_proximity_impact": "Locations closer to الحلقه receive higher accessibility scores"
+     },
+     "competitor_integration": {
+       "competitor_name": "Ninja Delivery",
+       "analysis_method": "2km radius coverage zones around competitor locations",
+       "competitive_advantage_calculation": "Distance-based scoring with market gap identification"
+     },
+     "population_center_selection": {
+       "total_centers_identified": 8,
+       "minimum_population_threshold": 50000,
+       "selection_criteria": "Top population clusters by density and total population",
+       "dynamic_scaling": "Coverage radius inversely proportional to population density"
+     },
+     "delivery_time_matrix": {
+       "very_high_density": {"threshold": ">8000/km²", "radius_km": 2.0, "max_delivery_minutes": 20},
+       "high_density": {"threshold": "4000-8000/km²", "radius_km": 3.5, "max_delivery_minutes": 25},
+       "medium_density": {"threshold": "2000-4000/km²", "radius_km": 5.0, "max_delivery_minutes": 30},
+       "low_density": {"threshold": "<2000/km²", "radius_km": 8.0, "max_delivery_minutes": 40}
+     }
+   },
+   
+   "population_centers_analysis": [
+     {
+       "id": "center_a",
+       "name": "Al-Olaya/King Fahd Corridor",
+       "coordinates": {"lat": 24.6877, "lng": 46.7219},
+       "demographics": {
+         "population": 890000,
+         "density_per_km2": 8430,
+         "avg_income_sar": 156000,
+         "household_profile": "Working professionals, high income",
+         "age_distribution": {"median_age": 34, "working_age_percentage": 78}
+       },
+       "coverage_parameters": {
+         "assigned_radius_km": 2.0,
+         "max_delivery_time_minutes": 20,
+         "coverage_rationale": "Very high density (8430/km²) suggests limited car access, requires smaller coverage area",
+         "total_coverage_area_km2": 12.6
+       },
+       "target_accessibility": {
+         "target_type": "الحلقه",
+         "nearest_target": "Danube Al-Olaya",
+         "avg_time_to_targets": 6.2,
+         "target_density_score": 9.1,
+         "target_variety_score": 8.8
+       },
+       "market_metrics": {
+         "addressable_population": 890000,
+         "target_proximity_score": 9.2,
+         "current_competitor_coverage": "78%",
+         "competitor_name": "Ninja Delivery",
+         "market_gap_percentage": 22,
+         "uncovered_population": 195800,
+         "delivery_potential": "High - premium demographics with service gaps",
+         "estimated_daily_orders": 2400
+       }
+     },
+     {
+       "id": "center_b",
+       "name": "Eastern Compounds",
+       "coordinates": {"lat": 24.7136, "lng": 46.6753},
+       "demographics": {
+         "population": 320000,
+         "density_per_km2": 2100,
+         "avg_income_sar": 187000,
+         "household_profile": "Expatriate families, very high income"
+       },
+       "coverage_parameters": {
+         "assigned_radius_km": 5.0,
+         "max_delivery_time_minutes": 30,
+         "coverage_rationale": "Medium density (2100/km²) suggests car access, allows larger coverage area",
+         "total_coverage_area_km2": 78.5
+       },
+       "target_accessibility": {
+         "target_type": "الحلقه",
+         "nearest_target": "Lulu Hypermarket",
+         "avg_time_to_targets": 8.4,
+         "target_density_score": 8.7,
+         "target_variety_score": 9.2
+       },
+       "market_metrics": {
+         "addressable_population": 320000,
+         "target_proximity_score": 8.7,
+         "current_competitor_coverage": "23%",
+         "competitor_name": "Ninja Delivery",
+         "market_gap_percentage": 77,
+         "uncovered_population": 246400,
+         "delivery_potential": "Very High - underserved premium market",
+         "estimated_daily_orders": 1850
+       }
+     }
+     // Plus other centers...
+   ],
+   
+   "competitive_landscape": {
+     "competitor_analysis": {
+       "competitor_name": "Ninja Delivery",
+       "total_locations": 12,
+       "hub_distribution": {
+         "central_riyadh": 5,
+         "northern_districts": 3,
+         "southern_areas": 2,
+         "eastern_zones": 2
+       },
+       "coverage_methodology_impact": {
+         "weighted_city_coverage": "54%",
+         "population_weighted_coverage": "61%",
+         "explanation": "Coverage calculated using density-adjusted delivery zones rather than uniform radius"
+       },
+       "service_gaps_by_density": [
+         {
+           "area_type": "High Density Centers",
+           "gap_percentage": 35,
+           "affected_population": 425000,
+           "opportunity_reason": "Competitor locations positioned for car access, missing walkable high-density areas",
+           "strategic_value": "High - frequent order potential"
+         },
+         {
+           "area_type": "Medium Density Suburbs",
+           "gap_percentage": 18,
+           "affected_population": 180000,
+           "opportunity_reason": "Adequate coverage for car-accessible areas",
+           "strategic_value": "Medium - steady order volume"
+         },
+         {
+           "area_type": "Low Density Compounds",
+           "gap_percentage": 67,
+           "affected_population": 340000,
+           "opportunity_reason": "Large coverage areas needed but competitor has limited compound penetration",
+           "strategic_value": "Very High - premium customers, high order values"
+         }
+       ],
+       "competitor_locations": [
+         {
+           "id": "competitor_hub_1",
+           "district": "Olaya",
+           "coordinates": {"lat": 24.6945, "lng": 46.6834},
+           "estimated_capacity": "800 daily deliveries",
+           "coverage_radius_km": 4.5
+         },
+         {
+           "id": "competitor_hub_7", 
+           "district": "King Fahd",
+           "coordinates": {"lat": 24.7234, "lng": 46.6543},
+           "estimated_capacity": "650 daily deliveries",
+           "coverage_radius_km": 3.8
+         }
+         // Plus other competitor locations...
+       ]
+     },
+     
+     "market_gap_calculation": {
+       "methodology": "Population-weighted coverage gaps using density-adjusted delivery zones",
+       "total_addressable_market": 2400000,
+       "currently_served_population": 1464000,
+       "market_gap_population": 936000,
+       "gap_percentage": 39,
+       "gap_breakdown": {
+         "high_density_gaps": 425000,
+         "medium_density_gaps": 180000,
+         "low_density_gaps": 331000
+       },
+       "revenue_opportunity": {
+         "estimated_daily_orders_in_gaps": 3200,
+         "avg_order_value_sar": 85,
+         "monthly_revenue_potential": "8.16M SAR"
+       },
+       "target_accessibility_gaps": {
+         "target_type": "الحلقه",
+         "underserved_areas_near_targets": 285000,
+         "strategic_insight": "Significant opportunity near الحلقه locations where competitors have limited coverage"
+       },
+       "strategic_insight": "Largest opportunities in underserved compound areas (67% gap) and high-density urban cores (35% gap)"
+     }
+   },
+   
+   "coverage_optimization_insights": {
+     "optimal_hub_impact": {
+       "new_coverage_with_recommended_location": "78%",
+       "additional_population_served": 336000,
+       "coverage_efficiency": "Strategic location covers 3 major density zones with appropriate delivery times",
+       "market_share_potential": "28% in immediate coverage area",
+       "target_accessibility_improvement": "47% improvement in average time to الحلقه"
+     },
+     "delivery_time_improvements": [
+       {
+         "population_center": "Al-Olaya",
+         "current_avg_delivery": "35 minutes",
+         "optimized_delivery": "18 minutes",
+         "improvement": "48% faster",
+         "competitive_advantage": "17 minutes faster than Ninja Delivery"
+       },
+       {
+         "population_center": "Eastern Compounds",
+         "current_avg_delivery": "42 minutes",
+         "optimized_delivery": "24 minutes",
+         "improvement": "43% faster",
+         "competitive_advantage": "19 minutes faster than Ninja Delivery"
+       }
+       // Plus other improvements...
+     ]
+   }
+ }
+
+ 
+}
