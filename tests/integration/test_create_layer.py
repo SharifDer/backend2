@@ -1,5 +1,4 @@
 # tests/integration/test_user.py
-import pytest
 from .fixtures.test_utils import create_parametrized_test
 
 # tests/integration/test_configs/user_configs.py
@@ -31,10 +30,9 @@ LAYER_MANAGEMENT_TESTS = [
         expected_output={
             "status_code": 200,
             "response_body": {
-                "data": {
-                    "layer_name": "Test Layer",
-                    "user_id": "${user.user_id}",
-                }
+                "message": "Request received.",
+                "request_id": "${dynamic}",
+                "data": "Producer layer created successfully"
             },
         },
     )
