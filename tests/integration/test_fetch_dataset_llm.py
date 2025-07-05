@@ -117,6 +117,25 @@ FETCH_DATASET_LLM_TESTS = [
         },
         expected_output_file="test_fetch_dataset_llm.json",
         expected_output_key="non_location_query"
+    ),
+    ConfigDrivenTest(
+        name="test_fetch_dataset_llm_conversational_query",
+        description="Test LLM processing of conversational sentence to extract restaurant search in Jeddah",
+        prerequisites=Prerequisites(
+            requires_user=True,
+            requires_auth=True,
+            requires_database_seed=False,
+        ),
+        endpoint=Endpoint(method="POST", path="/process_llm_query"),
+        input_data={
+            "message": "Process conversational LLM query to extract location and business type",
+            "request_info": {"request_id": "test-llm-conversational-001"},
+            "request_body": {
+                "query": "I have an idea to open a fancy restaurant with my sister with my sister and where do you think I should open it in the city of Jeddah where people love dogs"
+            }
+        },
+        expected_output_file="test_fetch_dataset_llm.json",
+        expected_output_key="conversational_restaurant_query"
     )
 
 ]

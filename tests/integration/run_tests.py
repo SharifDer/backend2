@@ -12,6 +12,7 @@ import argparse
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from urllib.parse import urlparse
 from contextlib import contextmanager
+from port_killer import PortKiller
 
 # Set up logging with better formatting
 logging.basicConfig(
@@ -27,11 +28,23 @@ class TestServerManager:
     def __init__(self, test_port=8080):
         self.test_port = test_port
         self.server_process = None
+        self.port_killer = PortKiller()
+
+    def kill_processes_on_port(self, port):
+        """Forcibly kill any processes running on the specified port"""
+        self.port_killer.kill_processes_on_port(port)
 
     @contextmanager
     def server_context(self):
         """Context manager for server lifecycle"""
         try:
+            # First, forcibly kill any processes on the test port
+            self.kill_processes_on_port(self.test_port)
+            
+            # Wait a moment for the OS to fully clean up the port
+            logger.info("⏳ Waiting 3 seconds for port cleanup...")
+            time.sleep(3)
+            
             self.setup_test_environment()
             if not self.start_server():
                 raise RuntimeError("Failed to start test server")
@@ -296,6 +309,10 @@ class TestServerManager:
         time.sleep(5)
         
         self.stop_server()
+        
+        # Force kill any remaining processes on the port
+        self.kill_processes_on_port(self.test_port)
+        
         os.environ.pop("TEST_MODE", None)
         os.environ.pop("DATABASE_URL", None)
         logger.info("✅ Test environment cleaned up")
@@ -356,6 +373,7 @@ def main():
     print("="*80)
     logger.info("🚀 Starting Integration Test Runner...")
     logger.info("📋 This will start the server in TEST_MODE and run integration tests")
+    logger.info(f"🚪 Using port: {args.port}")
     
     if args.test:
         logger.info(f"🎯 Running specific test: {args.test}")

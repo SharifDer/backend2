@@ -7,6 +7,7 @@ from cost_calculator import calculate_cost
 from config_factory import CONF
 from data_fetcher import fetch_country_city_data, poi_categories
 from geo_std_utils import fetch_lat_lng_bounding_box
+import time 
 import uuid
 
 def extract_countries_and_cities(data):
@@ -61,7 +62,10 @@ async def process_llm_query(req:ReqLLMFetchDataset):
     - AND queries: "I've provided places that are [cat1] and [cat2] at the same time. If you wanted them separately, please ask for [cat1] or [cat2] in a new chat."
     - OR/single queries: "Query valid for [city] and [categories]."
 
-    Always respond in the specified JSON schema format."""
+    Always respond in the specified JSON schema format.
+    Request ID: {uuid.uuid4()}
+    Timestamp: {int(time.time())}
+    """
     model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.0, google_api_key=CONF.gemini_api_key)
 
     parser = PydanticOutputParser(pydantic_object=ResLLMFetchDataset)
