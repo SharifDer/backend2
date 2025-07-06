@@ -6,7 +6,7 @@ from dataclasses import dataclass, field, is_dataclass
 @dataclass
 class CommonApiConfig:
     test_mode: bool = False
-    test_mode_port: int = 8080
+    test_mode_port: int = 8080  # Default port, can be overridden
     api_key: str = ""
     secrets_dir:str=""
     backend_base_uri: str = "/fastapi/"
@@ -90,6 +90,19 @@ class CommonApiConfig:
         # Check if we're in test mode
         if os.getenv("TEST_MODE", "false").lower() == "true":
             conf.test_mode = True
+            # Use dynamic port from environment if available
+            # TEST_SERVER_PORT is set by the test runner after port selection
+            # PORT is a fallback for uvicorn and other servers
+            # If neither is set, use the default 8080
+            test_port = os.getenv("TEST_SERVER_PORT") or os.getenv("PORT")
+            if test_port:
+                try:
+                    conf.test_mode_port = int(test_port)
+                except (ValueError, TypeError):
+                    # If port is not a valid integer, keep default
+                    conf.test_mode_port = 8080
+            else:
+                conf.test_mode_port = 8080
 
         if conf.test_mode:
             conf.secrets_dir = "secrets_test"
@@ -111,7 +124,7 @@ class CommonApiConfig:
                     conf.stripe_api_key = data.get("stripe_api_key", "")
 
             return conf
-        except Exception as e:
+        except Exception as _:
             return conf
 
 

@@ -70,5 +70,77 @@
       ],
       "properties": ["id", "displayName", "rating", "formattedAddress"]
     }
+  },
+  "cafe_restaurant_dataset": {
+    "filename_template": "21.5433_39.1728_30000.0_cafe_restaurant_token_{test_run_id}=",
+    "request_data": {
+      "lat": 21.5433,
+      "lng": 39.1728,
+      "radius": 30000.0,
+      "boolean_query": "cafe OR restaurant",
+      "user_id": "{user_id}"
+    },
+    "response_data": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [39.1750, 21.5450]
+          },
+          "properties": {
+            "id": "ChIJtest_cafe_jeddah_001_{test_run_id}",
+            "displayName": "Artisan Coffee Jeddah",
+            "rating": 4.6,
+            "formattedAddress": "Tahlia Street, Jeddah, Saudi Arabia",
+            "primaryType": "cafe"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [39.1700, 21.5400]
+          },
+          "properties": {
+            "id": "ChIJtest_restaurant_jeddah_001_{test_run_id}",
+            "displayName": "Seafront Restaurant Jeddah",
+            "rating": 4.4,
+            "formattedAddress": "Corniche Road, Jeddah, Saudi Arabia",
+            "primaryType": "restaurant"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [39.1780, 21.5480]
+          },
+          "properties": {
+            "id": "ChIJtest_cafe_jeddah_002_{test_run_id}",
+            "displayName": "Modern Cafe Jeddah",
+            "rating": 4.2,
+            "formattedAddress": "Prince Sultan Street, Jeddah, Saudi Arabia",
+            "primaryType": "cafe"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [39.1720, 21.5420]
+          },
+          "properties": {
+            "id": "ChIJtest_restaurant_jeddah_002_{test_run_id}",
+            "displayName": "Traditional Saudi Restaurant",
+            "rating": 4.7,
+            "formattedAddress": "Al-Balad, Jeddah, Saudi Arabia",
+            "primaryType": "restaurant"
+          }
+        }
+      ],
+      "properties": ["id", "displayName", "rating", "formattedAddress", "primaryType"]
+    }
   }
 }

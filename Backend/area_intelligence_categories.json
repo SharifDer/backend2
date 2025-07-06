@@ -26,15 +26,5 @@
         "WorkCamps",
         "CommercialDwellings",
         "OtherDwellings"
-    ],
-    "Weather Area Intelligence": [
-        "temperature",
-        "precipitation",
-        "humidity",
-        "wind_speed",
-        "cloud_cover",
-        "uv_index",
-        "air_quality",
-        "pollution"
     ]
 }

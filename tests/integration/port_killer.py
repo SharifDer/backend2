@@ -114,37 +114,7 @@ class PortKiller:
                 logger.info(f"💀 Method 2 - Killed process PID: {pid}")
                 return
             
-            # Method 3: Try WMIC (Windows Management Instrumentation)
-            logger.warning(f"⚠️ Method 2 failed for PID {pid}, trying method 3...")
-            result3 = subprocess.run(
-                ["wmic", "process", "where", f"ProcessId={pid}", "delete"], 
-                capture_output=True, 
-                text=True,
-                timeout=10
-            )
-            
-            if result3.returncode == 0:
-                logger.info(f"💀 Method 3 - Killed process PID: {pid}")
-                return
-            
-            # Method 4: Try PowerShell Stop-Process
-            logger.warning(f"⚠️ Method 3 failed for PID {pid}, trying method 4...")
-            result4 = subprocess.run(
-                ["powershell", "-Command", f"Stop-Process -Id {pid} -Force"], 
-                capture_output=True, 
-                text=True,
-                timeout=10
-            )
-            
-            if result4.returncode == 0:
-                logger.info(f"💀 Method 4 - Killed process PID: {pid}")
-                return
-            
             logger.error(f"❌ All methods failed to kill PID {pid}")
-            logger.error(f"   Method 1 output: {result1.stderr}")
-            logger.error(f"   Method 2 output: {result2.stderr}")
-            logger.error(f"   Method 3 output: {result3.stderr}")
-            logger.error(f"   Method 4 output: {result4.stderr}")
             
         except subprocess.TimeoutExpired:
             logger.warning(f"⚠️ Timeout killing PID: {pid}")
@@ -175,8 +145,7 @@ class PortKiller:
         except subprocess.TimeoutExpired:
             logger.warning("⚠️ Timeout running lsof command")
         except FileNotFoundError:
-            logger.warning("⚠️ lsof command not available, trying alternative method")
-            self._kill_unix_processes_fallback(port)
+            logger.warning("⚠️ lsof command not available")
         except Exception as e:
             logger.warning(f"⚠️ Error finding processes on Unix: {e}")
 
@@ -201,24 +170,6 @@ class PortKiller:
             logger.warning(f"⚠️ Timeout killing PID: {pid}")
         except Exception as e:
             logger.warning(f"⚠️ Failed to kill PID {pid}: {e}")
-
-    def _kill_unix_processes_fallback(self, port):
-        """Fallback method using ss command for Unix systems"""
-        try:
-            result = subprocess.run(
-                ["ss", "-tulpn", f"sport = :{port}"], 
-                capture_output=True, 
-                text=True, 
-                timeout=10
-            )
-            # Parse ss output for PIDs and kill them
-            # This is more complex parsing, could be implemented if needed
-            if result.stdout.strip():
-                logger.info("🔍 Found processes with ss command (parsing not implemented)")
-            else:
-                logger.info("🔍 Used ss command as fallback - no processes found")
-        except Exception as e:
-            logger.warning(f"⚠️ Fallback method also failed: {e}")
 
     def _wait_for_cleanup(self):
         """Wait for the OS to clean up processes"""
@@ -292,21 +243,7 @@ class PortKiller:
                         remaining_processes.append(f"PID {pid.strip()}")
                         
         except FileNotFoundError:
-            # Fallback to ss command
-            try:
-                result = subprocess.run(
-                    ["ss", "-tulpn", f"sport = :{port}"], 
-                    capture_output=True, 
-                    text=True, 
-                    timeout=15
-                )
-                
-                lines = [line for line in result.stdout.split('\n') if line.strip() and f":{port}" in line]
-                for line in lines:
-                    remaining_processes.append(f"Process: {line.strip()}")
-                    
-            except Exception:
-                pass  # Will fall through to socket test
+            pass  # lsof not available
         
         return remaining_processes
 
@@ -315,7 +252,7 @@ class PortKiller:
         try:
             test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            test_socket.settimeout(5)  # 5 second timeout for socket operations
+            test_socket.settimeout(5)
             test_socket.bind(('localhost', port))
             test_socket.close()
             # Socket binding succeeded, port is free
@@ -323,6 +260,59 @@ class PortKiller:
         except socket.error as e:
             # Socket binding failed, something is using the port
             return [f"Unknown process (socket error: {e})"]
+
+
+def find_available_port(start_port=8080, max_attempts=30):
+    """
+    Find an available port starting from start_port.
+    
+    Args:
+        start_port (int): Port to start searching from
+        max_attempts (int): Maximum number of ports to check
+        
+    Returns:
+        int: Available port number
+        
+    Raises:
+        RuntimeError: If no available port is found
+    """
+    for attempt in range(max_attempts):
+        test_port = start_port + attempt
+        
+        try:
+            # Test TCP port
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            test_socket.settimeout(2)
+            test_socket.bind(('localhost', test_port))
+            test_socket.close()
+            return test_port
+        except socket.error:
+            continue
+    
+    raise RuntimeError(f"Could not find available port after {max_attempts} attempts starting from {start_port}")
+
+
+def is_port_available(port):
+    """
+    Check if a specific port is available.
+    
+    Args:
+        port (int): Port number to check
+        
+    Returns:
+        bool: True if port is available, False otherwise
+    """
+    try:
+        # Test TCP port
+        test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        test_socket.settimeout(2)
+        test_socket.bind(('localhost', port))
+        test_socket.close()
+        return True
+    except socket.error:
+        return False
 
 
 # Convenience function for backward compatibility

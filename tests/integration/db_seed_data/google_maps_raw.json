@@ -7801,5 +7801,234 @@
         }
       ]
     }
+  },
+  "cafe_restaurant_cat_response": {
+    "filename_template": "test_category_search_21.5433_39.1728_30000.0_inc_cafe_restaurant_exc_{test_run_id}",
+    "request_data": {
+      "lat": 21.5433,
+      "lng": 39.1728,
+      "radius": 30000.0,
+      "includedTypes": [
+        "cafe",
+        "restaurant"
+      ],
+      "excludedTypes": []
+    },
+    "response_data": {
+      "places": [
+        {
+          "id": "ChIJtest_cafe_jeddah_001_{test_run_id}",
+          "name": "places/ChIJtest_cafe_jeddah_001_{test_run_id}",
+          "displayName": {
+            "text": "Artisan Coffee Jeddah",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Tahlia Street, Jeddah, Saudi Arabia",
+          "location": {
+            "latitude": 21.5450,
+            "longitude": 39.1750
+          },
+          "rating": 4.6,
+          "userRatingCount": 189,
+          "types": [
+            "cafe",
+            "coffee_shop",
+            "establishment"
+          ],
+          "primaryType": "cafe",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "id": "ChIJtest_restaurant_jeddah_001_{test_run_id}",
+          "name": "places/ChIJtest_restaurant_jeddah_001_{test_run_id}",
+          "displayName": {
+            "text": "Seafront Restaurant Jeddah",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Corniche Road, Jeddah, Saudi Arabia",
+          "location": {
+            "latitude": 21.5400,
+            "longitude": 39.1700
+          },
+          "rating": 4.4,
+          "userRatingCount": 312,
+          "types": [
+            "restaurant",
+            "food",
+            "establishment"
+          ],
+          "primaryType": "restaurant",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "id": "ChIJtest_cafe_jeddah_002_{test_run_id}",
+          "name": "places/ChIJtest_cafe_jeddah_002_{test_run_id}",
+          "displayName": {
+            "text": "Modern Cafe Jeddah",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Prince Sultan Street, Jeddah, Saudi Arabia",
+          "location": {
+            "latitude": 21.5480,
+            "longitude": 39.1780
+          },
+          "rating": 4.2,
+          "userRatingCount": 145,
+          "types": [
+            "cafe",
+            "coffee_shop",
+            "establishment"
+          ],
+          "primaryType": "cafe",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "id": "ChIJtest_restaurant_jeddah_002_{test_run_id}",
+          "name": "places/ChIJtest_restaurant_jeddah_002_{test_run_id}",
+          "displayName": {
+            "text": "Traditional Saudi Restaurant",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Al-Balad, Jeddah, Saudi Arabia",
+          "location": {
+            "latitude": 21.5420,
+            "longitude": 39.1720
+          },
+          "rating": 4.7,
+          "userRatingCount": 256,
+          "types": [
+            "restaurant",
+            "middle_eastern_restaurant",
+            "food",
+            "establishment"
+          ],
+          "primaryType": "restaurant",
+          "businessStatus": "OPERATIONAL"
+        }
+      ]
+    }
+  },
+  "restaurant_jeddah_cat_response": {
+    "filename_template": "test_category_search_21.5433_39.1728_30000.0_inc_restaurant_exc_{test_run_id}",
+    "request_data": {
+      "lat": 21.5433,
+      "lng": 39.1728,
+      "radius": 30000.0,
+      "includedTypes": [
+        "restaurant"
+      ],
+      "excludedTypes": []
+    },
+    "response_data": {
+      "places": [
+        {
+          "id": "ChIJtest_restaurant_jeddah_001_{test_run_id}",
+          "name": "places/ChIJtest_restaurant_jeddah_001_{test_run_id}",
+          "displayName": {
+            "text": "Seafront Restaurant Jeddah",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Corniche Road, Jeddah, Saudi Arabia",
+          "location": {
+            "latitude": 21.5400,
+            "longitude": 39.1700
+          },
+          "rating": 4.4,
+          "userRatingCount": 312,
+          "types": [
+            "restaurant",
+            "food",
+            "establishment"
+          ],
+          "primaryType": "restaurant",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "id": "ChIJtest_restaurant_jeddah_002_{test_run_id}",
+          "name": "places/ChIJtest_restaurant_jeddah_002_{test_run_id}",
+          "displayName": {
+            "text": "Traditional Saudi Restaurant",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Al-Balad, Jeddah, Saudi Arabia",
+          "location": {
+            "latitude": 21.5420,
+            "longitude": 39.1720
+          },
+          "rating": 4.7,
+          "userRatingCount": 256,
+          "types": [
+            "restaurant",
+            "middle_eastern_restaurant",
+            "food",
+            "establishment"
+          ],
+          "primaryType": "restaurant",
+          "businessStatus": "OPERATIONAL"
+        }
+      ]
+    }
+  },
+  "cafe_jeddah_cat_response": {
+    "filename_template": "test_category_search_21.5433_39.1728_30000.0_inc_cafe_exc_restaurant_{test_run_id}",
+    "request_data": {
+      "lat": 21.5433,
+      "lng": 39.1728,
+      "radius": 30000.0,
+      "includedTypes": [
+        "cafe"
+      ],
+      "excludedTypes": [
+        "restaurant"
+      ]
+    },
+    "response_data": {
+      "places": [
+        {
+          "id": "ChIJtest_cafe_jeddah_001_{test_run_id}",
+          "name": "places/ChIJtest_cafe_jeddah_001_{test_run_id}",
+          "displayName": {
+            "text": "Artisan Coffee Jeddah",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Tahlia Street, Jeddah, Saudi Arabia",
+          "location": {
+            "latitude": 21.5450,
+            "longitude": 39.1750
+          },
+          "rating": 4.6,
+          "userRatingCount": 189,
+          "types": [
+            "cafe",
+            "coffee_shop",
+            "establishment"
+          ],
+          "primaryType": "cafe",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "id": "ChIJtest_cafe_jeddah_002_{test_run_id}",
+          "name": "places/ChIJtest_cafe_jeddah_002_{test_run_id}",
+          "displayName": {
+            "text": "Modern Cafe Jeddah",
+            "languageCode": "en"
+          },
+          "formattedAddress": "Prince Sultan Street, Jeddah, Saudi Arabia",
+          "location": {
+            "latitude": 21.5480,
+            "longitude": 39.1780
+          },
+          "rating": 4.2,
+          "userRatingCount": 145,
+          "types": [
+            "cafe",
+            "coffee_shop",
+            "establishment"
+          ],
+          "primaryType": "cafe",
+          "businessStatus": "OPERATIONAL"
+        }
+      ]
+    }
   }
 }

@@ -9,6 +9,7 @@ import time
 import json
 import psycopg2
 import argparse
+import socket
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from urllib.parse import urlparse
 from contextlib import contextmanager
@@ -26,36 +27,122 @@ class TestServerManager:
     """Manages test server with proper database configuration"""
     
     def __init__(self, test_port=8080):
-        self.test_port = test_port
+        self.preferred_port = test_port
+        self.actual_port = None
         self.server_process = None
         self.port_killer = PortKiller()
 
+    def find_available_port(self, start_port=None, max_attempts=50):
+        """Find an available port starting from the specified port"""
+        if start_port is None:
+            start_port = self.preferred_port  # Start searching from preferred port itself
+            
+        logger.info(f"🔍 Looking for available port starting from {start_port}...")
+        
+        for attempt in range(max_attempts):
+            test_port = start_port + attempt
+                
+            if self._is_port_available(test_port):
+                logger.info(f"✅ Found available port: {test_port}")
+                # Double-check the port is really available by trying to bind again
+                if self._verify_port_really_available(test_port):
+                    return test_port
+                else:
+                    logger.debug(f"⚠️ Port {test_port} failed verification, continuing search...")
+                    continue
+            else:
+                logger.debug(f"❌ Port {test_port} is occupied, trying next...")
+        
+        raise RuntimeError(f"❌ Could not find available port after {max_attempts} attempts starting from {start_port}")
+
+    def _is_port_available(self, port):
+        """Check if a port is available using multiple methods"""
+        # Method 1: Try to bind to IPv4 localhost
+        try:
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            test_socket.settimeout(1)
+            test_socket.bind(('127.0.0.1', port))
+            test_socket.close()
+        except socket.error:
+            logger.debug(f"Port {port} is not available on IPv4 (127.0.0.1)")
+            return False
+        
+        # Method 2: Try to bind to all interfaces
+        try:
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            test_socket.settimeout(1)
+            test_socket.bind(('0.0.0.0', port))
+            test_socket.close()
+        except socket.error:
+            logger.debug(f"Port {port} is not available on IPv4 (0.0.0.0)")
+            return False
+        
+        # Method 3: Try to connect to the port (check if something is listening)
+        try:
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.settimeout(1)
+            result = test_socket.connect_ex(('127.0.0.1', port))
+            test_socket.close()
+            if result == 0:
+                logger.debug(f"Port {port} has a service listening")
+                return False
+        except socket.error:
+            pass  # Connection failed, which is good - means nothing is listening
+        
+        return True
+
     def kill_processes_on_port(self, port):
         """Forcibly kill any processes running on the specified port"""
-        self.port_killer.kill_processes_on_port(port)
+        logger.info(f"🔪 Attempting to kill processes on port {port}...")
+        try:
+            self.port_killer.kill_processes_on_port(port)
+            return True
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to kill processes on port {port}: {e}")
+            return False
 
     @contextmanager
     def server_context(self):
         """Context manager for server lifecycle"""
         try:
-            # First, forcibly kill any processes on the test port
-            self.kill_processes_on_port(self.test_port)
+            # Step 1: Try to use preferred port
+            self.actual_port = self._select_optimal_port()
             
-            # Wait a moment for the OS to fully clean up the port
-            logger.info("⏳ Waiting 3 seconds for port cleanup...")
-            time.sleep(3)
-            
+            # Step 2: Setup environment and start server
             self.setup_test_environment()
             if not self.start_server():
                 raise RuntimeError("Failed to start test server")
             
             yield {
-                "port": self.test_port,
-                "base_url": f"http://localhost:{self.test_port}",
-                "api_base": f"http://localhost:{self.test_port}/fastapi",
+                "port": self.actual_port,
+                "base_url": f"http://localhost:{self.actual_port}",
+                "api_base": f"http://localhost:{self.actual_port}/fastapi",
+                "preferred_port": self.preferred_port,
+                "port_changed": self.actual_port != self.preferred_port
             }
         finally:
             self.cleanup()
+
+    def _select_optimal_port(self):
+        """Select the optimal port with a focus on dynamic switching (skip unreliable port killing)"""
+        logger.info(f"🎯 Attempting to use preferred port {self.preferred_port}...")
+        
+        # Skip the individual port check - go straight to comprehensive search
+        # This ensures we get 8080 → 8081 → 8082 → 8083... sequence
+        logger.info(f"🔄 Starting comprehensive port search from {self.preferred_port}...")
+        logger.info("💡 Skipping port killing (unreliable on Windows) - using dynamic port selection")
+        
+        # Find available port starting from preferred port (8080, 8081, 8082...)
+        available_port = self.find_available_port(self.preferred_port)
+        
+        if available_port == self.preferred_port:
+            logger.info(f"✅ Using preferred port {available_port}")
+        else:
+            logger.info(f"🎯 Using alternative port: {available_port}")
+            
+        return available_port
 
     def setup_test_environment(self):
         """Set up test environment - sets TEST_MODE and loads database config"""
@@ -210,21 +297,22 @@ class TestServerManager:
 
     def start_server(self, timeout=120):
         """Start the FastAPI server in test mode with proper environment"""
-        logger.info(f"🚀 Starting test server on port {self.test_port}...")
+        logger.info(f"🚀 Starting test server on port {self.actual_port}...")
         
         cmd = [
             sys.executable,
             "-m", "uvicorn", "fastapi_app:app",
             "--reload",
-            "--host", "localhost", 
-            "--port", str(self.test_port),
+            "--host", "127.0.0.1",  # Bind specifically to IPv4 localhost
+            "--port", str(self.actual_port),
         ]
         
         # Prepare environment variables for the server process
         env = os.environ.copy()
         env.update({
             "TEST_MODE": "true",
-            "PORT": str(self.test_port),
+            "PORT": str(self.actual_port),
+            "TEST_SERVER_PORT": str(self.actual_port),  # For pytest fixtures
             "DATABASE_URL": os.environ["DATABASE_URL"]
         })
         
@@ -240,7 +328,7 @@ class TestServerManager:
             logger.info("⏳ Server process started, waiting for it to be ready...")
             
             if self._wait_for_server(timeout):
-                logger.info(f"✅ Test server started successfully on port {self.test_port}")
+                logger.info(f"✅ Test server started successfully on port {self.actual_port}")
                 return True
             else:
                 logger.error("❌ Server failed to start within timeout")
@@ -267,7 +355,7 @@ class TestServerManager:
             if current_time - last_check_time >= check_interval:
                 try:
                     from http.client import HTTPConnection
-                    conn = HTTPConnection(f"localhost:{self.test_port}")
+                    conn = HTTPConnection(f"localhost:{self.actual_port}")
                     conn.request("GET", "/fastapi/fetch_acknowlg_id")
                     response = conn.getresponse()
                     conn.close()
@@ -305,17 +393,41 @@ class TestServerManager:
         logger.info("🧹 Cleaning up test environment...")
         
         # Give background tasks time to complete
-        logger.info("⏳ Waiting 5 seconds for background tasks and cache updates...")
-        time.sleep(5)
+        logger.info("⏳ Waiting 3 seconds for background tasks and cache updates...")
+        time.sleep(3)
         
         self.stop_server()
         
-        # Force kill any remaining processes on the port
-        self.kill_processes_on_port(self.test_port)
+        # Don't rely on port killing - let the OS handle cleanup naturally
+        # The dynamic port system will handle conflicts on next run
         
         os.environ.pop("TEST_MODE", None)
         os.environ.pop("DATABASE_URL", None)
+        os.environ.pop("TEST_SERVER_PORT", None)
         logger.info("✅ Test environment cleaned up")
+
+    def _verify_port_really_available(self, port):
+        """Double verification that a port is really available"""
+        try:
+            # Create a test server socket and immediately close it
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            test_socket.settimeout(1)
+            test_socket.bind(('127.0.0.1', port))
+            test_socket.listen(1)
+            test_socket.close()
+            
+            # Also check if we can bind to all interfaces
+            test_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            test_socket2.settimeout(1)
+            test_socket2.bind(('0.0.0.0', port))
+            test_socket2.close()
+            
+            return True
+        except socket.error as e:
+            logger.debug(f"Port {port} verification failed: {e}")
+            return False
 
 def parse_arguments():
     """Parse command line arguments for test runner"""
@@ -355,13 +467,6 @@ Examples:
         help="Port for test server (default: 8080)"
     )
     
-    parser.add_argument(
-        "--maxfail",
-        type=int,
-        default=3,
-        help="Stop after N failures (default: 3, 0 = no limit)"
-    )
-    
     return parser.parse_args()
 
 def main():
@@ -384,7 +489,17 @@ def main():
     manager = TestServerManager(test_port=args.port)
     
     with manager.server_context() as server_info:
+        if server_info["port_changed"]:
+            print(f"⚠️ PORT CHANGED: Using port {server_info['port']} instead of preferred {server_info['preferred_port']}")
+            logger.warning(f"⚠️ Port killer was unable to free port {server_info['preferred_port']}, using alternative port {server_info['port']}")
+        else:
+            print(f"✅ Using preferred port {server_info['port']}")
+            logger.info(f"✅ Successfully using preferred port {server_info['port']}")
+        
         logger.info(f"🌐 Server running at: {server_info['base_url']}")
+        
+        # Set environment variable for pytest fixtures
+        os.environ["TEST_SERVER_PORT"] = str(server_info["port"])
         
         # Build pytest arguments based on user input
         if args.test:
@@ -407,10 +522,6 @@ def main():
             "--durations=10",               # Show 10 slowest tests
             "-r", "A",                      # Show all test outcomes (passed, failed, skipped, etc.)
         ])
-        
-        # Add maxfail option
-        if args.maxfail > 0:
-            pytest_args.extend(["--maxfail", str(args.maxfail)])
         
         # Add keyword filter if provided
         if args.keyword:

@@ -424,20 +424,11 @@ class ConfigTestGenerator:
         """Write detailed comparison analysis to file"""
         indent = "  " * level
 
-        # Type comparison
-        if type(actual) != type(expected):
-            file_handle.write(f"{indent}❌ Type mismatch at {path}:\n")
-            file_handle.write(
-                f"{indent}   Expected: {type(expected).__name__}\n"
-            )
-            file_handle.write(f"{indent}   Actual:   {type(actual).__name__}\n")
-            return
-
-        # Handle special validators (strings starting with special patterns)
+        # Handle special validators FIRST (before type comparison)
         if isinstance(expected, str):
             if expected in [
                 "non_empty_list",
-                "non_empty_dict",
+                "non_empty_dict", 
                 "exists",
                 "not_exists",
             ] or expected.startswith(
@@ -467,6 +458,15 @@ class ConfigTestGenerator:
                     )
                     file_handle.write(f"{indent}   Actual value: {actual}\n")
                 return
+
+        # Type comparison (only for non-validator cases)
+        if type(actual) != type(expected):
+            file_handle.write(f"{indent}❌ Type mismatch at {path}:\n")
+            file_handle.write(
+                f"{indent}   Expected: {type(expected).__name__}\n"
+            )
+            file_handle.write(f"{indent}   Actual:   {type(actual).__name__}\n")
+            return
 
         # Dictionary comparison
         if isinstance(expected, dict):
@@ -771,10 +771,8 @@ class ConfigTestGenerator:
                 except ValueError:
                     logger.error(f"❌ Invalid min_length validator: {expected}")
                     return False
-
-        if isinstance(expected, str):
             # Special validator: non_empty_list
-            if expected == "non_empty_list":
+            elif expected == "non_empty_list":
                 is_valid = isinstance(actual, list) and len(actual) > 0
                 if not is_valid:
                     logger.error(

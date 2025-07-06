@@ -3,6 +3,7 @@ import pytest
 import httpx
 import logging
 import time
+import os
 from datetime import datetime
 from typing import List, Dict, Any
 import firebase_admin
@@ -30,8 +31,12 @@ def test_run_id():
 
 @pytest.fixture(scope="session")
 def api_base_url():
-    """API base URL for tests"""
-    return "http://localhost:8080/fastapi"
+    """API base URL for tests - dynamically determined from environment"""
+    # Check if a custom port was set by the test runner
+    test_port = os.environ.get("TEST_SERVER_PORT", "8080")
+    base_url = f"http://localhost:{test_port}/fastapi"
+    logger.info(f"🌐 Using API base URL: {base_url}")
+    return base_url
 
 
 @pytest.fixture(scope="function")

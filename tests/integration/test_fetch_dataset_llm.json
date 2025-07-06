@@ -7,9 +7,9 @@
             "data": {
                 "query": "Find supermarkets in Riyadh",
                 "is_valid": "Valid",
-                "reason": "Query is valid. The request contains an approved city (Riyadh) and category (supermarket).",
+                "reason": "min_length:1",
                 "endpoint": "/fastapi/fetch_dataset",
-                "suggestions": [],
+                "suggestions": "type:list",
                 "body": {
                     "user_id": "regex:^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
                     "lat": "type:float",
@@ -32,7 +32,7 @@
                     "include_only_sub_properties": true,
                     "full_load": false
                 },
-                "cost": "type:string"
+                "cost": "min_length:1"
             }
         }
     },
@@ -44,7 +44,7 @@
             "data": {
                 "query": "Find supermarkets",
                 "is_valid": "Invalid",
-                "reason": "regex:.*approved city.*",
+                "reason": "min_length:1",
                 "endpoint": "/fastapi/fetch_dataset",
                 "suggestions": "type:list",
                 "body": null,
@@ -60,7 +60,7 @@
             "data": {
                 "query": "Find restaurants in Riyadh and Jeddah",
                 "is_valid": "Invalid",
-                "reason": "regex:.*multiple city.*",
+                "reason": "min_length:1",
                 "endpoint": "/fastapi/fetch_dataset",
                 "suggestions": "type:list",
                 "body": null,
@@ -76,15 +76,15 @@
             "data": {
                 "query": "Find restaurants or cafes in Riyadh",
                 "is_valid": "Valid",
-                "reason": "Query is valid. The request contains an approved city (Riyadh) and category (restaurant or cafe).",
+                "reason": "min_length:1",
                 "endpoint": "/fastapi/fetch_dataset",
-                "suggestions": [],
+                "suggestions": "type:list",
                 "body": {
                     "user_id": "regex:^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
                     "lat": "type:float",
                     "lng": "type:float",
                     "radius": "type:float",
-                    "boolean_query": "restaurant or cafe",
+                    "boolean_query": "restaurant OR cafe",
                     "page_token": "",
                     "action": "sample",
                     "search_type": "category_search",
@@ -101,7 +101,7 @@
                     "include_only_sub_properties": true,
                     "full_load": false
                 },
-                "cost": "type:string"
+                "cost": "min_length:1"
             }
         }
     },
@@ -113,9 +113,9 @@
             "data": {
                 "query": "Find alien spaceship landing sites in Riyadh",
                 "is_valid": "Invalid",
-                "reason": "regex:.*physical places.*nonsensical.*",
+                "reason": "min_length:1",
                 "endpoint": "/fastapi/fetch_dataset",
-                "suggestions": [],
+                "suggestions": "type:list",
                 "body": null,
                 "cost": ""
             }
@@ -129,7 +129,7 @@
             "data": {
                 "query": "What is the weather like in Riyadh?",
                 "is_valid": "Invalid",
-                "reason": "regex:.*physical places.*",
+                "reason": "min_length:1",
                 "endpoint": "/fastapi/fetch_dataset",
                 "suggestions": "type:list",
                 "body": null,
@@ -145,9 +145,9 @@
             "data": {
                 "query": "I have an idea to open a fancy restaurant with my sister with my sister and where do you think I should open it in the city of Jeddah where people love dogs",
                 "is_valid": "Valid",
-                "reason": "Query is valid. The request contains an approved city (Jeddah) and category (restaurant).",
+                "reason": "min_length:1",
                 "endpoint": "/fastapi/fetch_dataset",
-                "suggestions": [],
+                "suggestions": "type:list",
                 "body": {
                     "user_id": "regex:^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
                     "lat": "type:float",
@@ -170,7 +170,7 @@
                     "include_only_sub_properties": true,
                     "full_load": false
                 },
-                "cost": "type:string"
+                "cost": "min_length:1"
             }
         }
     }

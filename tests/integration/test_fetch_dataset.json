@@ -607,5 +607,112 @@
                 "next_page_token": ""
             }
         }
+    },
+    "cafe_restaurant_cat_response": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": 4.4,
+                            "types": [
+                                "restaurant",
+                                "food",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "restaurant",
+                            "name": "Seafront Restaurant Jeddah",
+                            "id": "contains:ChIJtest_restaurant_jeddah_001_"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                39.17,
+                                21.54
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": 4.7,
+                            "types": [
+                                "restaurant",
+                                "middle_eastern_restaurant",
+                                "food",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "restaurant",
+                            "name": "Traditional Saudi Restaurant",
+                            "id": "contains:ChIJtest_restaurant_jeddah_002_"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                39.172,
+                                21.542
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": 4.6,
+                            "types": [
+                                "cafe",
+                                "coffee_shop",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "cafe",
+                            "name": "Artisan Coffee Jeddah",
+                            "id": "contains:ChIJtest_cafe_jeddah_001_"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                39.175,
+                                21.545
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": 4.2,
+                            "types": [
+                                "cafe",
+                                "coffee_shop",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "cafe",
+                            "name": "Modern Cafe Jeddah",
+                            "id": "contains:ChIJtest_cafe_jeddah_002_"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                39.178,
+                                21.548
+                            ]
+                        }
+                    }
+                ],
+                "bknd_dataset_id": "contains:cafe_OR_restaurant",
+                "prdcer_lyr_id": "min_length:1", 
+                "records_count": "type:int",
+                "delay_before_next_call": 3,
+                "progress": 0,
+                "next_page_token": ""
+            }
+        }
     }
 }
