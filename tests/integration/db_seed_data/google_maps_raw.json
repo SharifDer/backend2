@@ -1,6 +1,6 @@
 {
   "supermarket_cat_response": {
-    "filename_template": "test_category_search_24.7136_46.6753_30000.0_inc_supermarket_exc_{test_run_id}",
+    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_supermarket_exc_{test_run_id}",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -7711,7 +7711,7 @@
   
 
   "coffee_shop_search": {
-    "filename_template": "test_text_search_24.7136_46.6753_30000.0_coffee_shop_{test_run_id}",
+    "filename_template": "test_text_search_46.6753_24.7136_30000.0_coffee_shop_{test_run_id}",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -7762,7 +7762,7 @@
     }
   },
   "restaurant_search": {
-    "filename_template": "test_category_search_24.7136_46.6753_30000.0_inc_restaurant_exc_{test_run_id}",
+    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_restaurant_exc_{test_run_id}",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -7803,7 +7803,7 @@
     }
   },
   "cafe_restaurant_cat_response": {
-    "filename_template": "test_category_search_21.5433_39.1728_30000.0_inc_cafe_restaurant_exc_{test_run_id}",
+    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_cafe_restaurant_exc_{test_run_id}",
     "request_data": {
       "lat": 21.5433,
       "lng": 39.1728,
@@ -7909,7 +7909,7 @@
     }
   },
   "restaurant_jeddah_cat_response": {
-    "filename_template": "test_category_search_21.5433_39.1728_30000.0_inc_restaurant_exc_{test_run_id}",
+    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_restaurant_exc_{test_run_id}",
     "request_data": {
       "lat": 21.5433,
       "lng": 39.1728,
@@ -7970,7 +7970,7 @@
     }
   },
   "cafe_jeddah_cat_response": {
-    "filename_template": "test_category_search_21.5433_39.1728_30000.0_inc_cafe_exc_restaurant_{test_run_id}",
+    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_cafe_exc_restaurant_{test_run_id}",
     "request_data": {
       "lat": 21.5433,
       "lng": 39.1728,
@@ -8032,7 +8032,7 @@
     }
   },
   "supermarket_full_data_riyadh_response": {
-    "filename_template": "test_category_search_24.7136_46.6753_30000.0_inc_supermarket_exc_full_data_{test_run_id}",
+    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_supermarket_exc_full_data_{test_run_id}",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -8550,7 +8550,7 @@
     }
   },
   "supermarket_full_data_riyadh_token_response": {
-    "filename_template": "test_category_search_24.7136_46.6753_15000.0_inc_supermarket_exc_token_{test_run_id}",
+    "filename_template": "test_category_search_46.6753_24.7136_15000.0_inc_supermarket_exc_token_{test_run_id}",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -9095,6 +9095,112 @@
           },
           "primaryType": "supermarket",
           "businessStatus": "OPERATIONAL"
+        }
+      ]
+    }
+  },
+  "arabic_keyword_al_halaqa_response": {
+    "filename_template": "test_text_search_46.6753_24.7136_44616.54000299383_@الحلقه@_{test_run_id}",
+    "request_data": {
+      "textQuery": "الحلقه",
+      "locationRestriction": {
+        "rectangle": {
+          "low": {
+            "latitude": 24.44332972972973,
+            "longitude": 46.37777952113983
+          },
+          "high": {
+            "latitude": 24.98387027027027,
+            "longitude": 46.97282047886017
+          }
+        }
+      }
+    },
+    "response_data": {
+      "places": [
+        {
+          "name": "places/Al_Halaqa_001",
+          "id": "ChIJtest_al_halaqa_001",
+          "types": [
+            "route"
+          ],
+          "formattedAddress": "Al Halaqa, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6321482,
+            "longitude": 46.6066584
+          },
+          "displayName": {
+            "text": "Al Halaqa",
+            "languageCode": "en"
+          },
+          "primaryType": "",
+          "businessStatus": "OPERATIONAL",
+          "rating": "",
+          "priceLevel": "",
+          "popularity_score": 1000
+        },
+        {
+          "name": "places/Al_Halaqa_002",
+          "id": "ChIJtest_al_halaqa_002",
+          "types": [
+            "route"
+          ],
+          "formattedAddress": "الحلقة، الرياض، المملكة العربية السعودية",
+          "location": {
+            "latitude": 24.7861301,
+            "longitude": 46.670111
+          },
+          "displayName": {
+            "text": "الحلقة",
+            "languageCode": "ar"
+          },
+          "primaryType": "",
+          "businessStatus": "OPERATIONAL",
+          "rating": "",
+          "priceLevel": "",
+          "popularity_score": 1000
+        },
+        {
+          "name": "places/Al_Halaqa_003",
+          "id": "ChIJtest_al_halaqa_003",
+          "types": [
+            "route"
+          ],
+          "formattedAddress": "Al Halaqa, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.5009785,
+            "longitude": 46.6230641
+          },
+          "displayName": {
+            "text": "Al Halaqa",
+            "languageCode": "en"
+          },
+          "primaryType": "",
+          "businessStatus": "OPERATIONAL",
+          "rating": "",
+          "priceLevel": "",
+          "popularity_score": 1000
+        },
+        {
+          "name": "places/Al_Halaqah_004",
+          "id": "ChIJtest_al_halaqa_004",
+          "types": [
+            "route"
+          ],
+          "formattedAddress": "Al Halaqah, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.5631647,
+            "longitude": 46.7707195
+          },
+          "displayName": {
+            "text": "Al Halaqah",
+            "languageCode": "en"
+          },
+          "primaryType": "",
+          "businessStatus": "OPERATIONAL",
+          "rating": "",
+          "priceLevel": "",
+          "popularity_score": 1000
         }
       ]
     }

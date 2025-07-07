@@ -79,13 +79,28 @@ async def _get_test_data_for_post_call(
     if "textQuery" in data:
         # Text search
         text_query = data.get("textQuery", "").replace(" ", "_")
-        location = data.get("locationRestriction", {}).get("circle", {}).get("center", {})
-        radius = data.get("locationRestriction", {}).get("circle", {}).get("radius", 1500)
-        lat = location.get("latitude", 0)
-        lng = location.get("longitude", 0)
+        
+        # Handle both circle and rectangle location restrictions
+        location_restriction = data.get("locationRestriction", {})
+        
+        # Rectangle-based location restriction - calculate center and radius
+        rectangle = location_restriction.get("rectangle", {})
+        low = rectangle.get("low", {})
+        high = rectangle.get("high", {})
+        
+        # Calculate center from rectangle bounds
+        lat = (low.get("latitude", 0) + high.get("latitude", 0)) / 2
+        lng = (low.get("longitude", 0) + high.get("longitude", 0)) / 2
+        
+        # Calculate approximate radius (distance from center to corner)
+        import math
+        lat_diff = high.get("latitude", 0) - low.get("latitude", 0)
+        lng_diff = high.get("longitude", 0) - low.get("longitude", 0)
+        radius = math.sqrt(lat_diff**2 + lng_diff**2) * 111000 / 2  # Rough conversion to meters
+
 
         # Generate filename pattern that matches test seeding
-        filename_pattern = f"test_text_search_{lat}_{lng}_{radius}_{text_query}"
+        filename_pattern = f"test_text_search_{lng}_{lat}_{radius}_@{text_query}@"
         logger.info(f"📋 Text search filename pattern: {filename_pattern}")
 
     elif "includedTypes" in data or "excludedTypes" in data:
@@ -101,7 +116,7 @@ async def _get_test_data_for_post_call(
         excluded_str = "_".join(sorted(excluded_types))
         
         # Generate filename pattern that matches test seeding format
-        filename_pattern = f"test_category_search_{lat}_{lng}_{radius}_inc_{included_str}_exc_{excluded_str}"
+        filename_pattern = f"test_category_search_{lng}_{lat}_{radius}_inc_{included_str}_exc_{excluded_str}"
         logger.info(f"📋 Category search filename pattern: {filename_pattern}")
         logger.info(f"🎯 Looking for files matching: {filename_pattern}*")
 

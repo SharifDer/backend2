@@ -20,8 +20,8 @@ FETCH_DATASET_TESTS = [
             "request_info": {"request_id": "test-fetch-sample-001"},
             "request_body": {
                 "user_id": "${user.user_id}",
-                "lat": 24.7136,
-                "lng": 46.6753,
+                "lat": 0,
+                "lng": 0,
                 "radius": 30000.0,
                 "boolean_query": "supermarket",
                 "page_token": "",
@@ -61,8 +61,8 @@ FETCH_DATASET_TESTS = [
             "request_info": {"request_id": "test-fetch-cafe-restaurant-001"},
             "request_body": {
                 "user_id": "${user.user_id}",
-                "lat": 21.5433,
-                "lng": 39.1728,
+                "lat": 0,
+                "lng": 0,
                 "radius": 30000.0,
                 "boolean_query": "cafe OR restaurant",
                 "page_token": "",
@@ -101,8 +101,8 @@ FETCH_DATASET_TESTS = [
             "request_info": {"request_id": "test-fetch-full-data-supermarket-riyadh-001"},
             "request_body": {
                 "user_id": "${user.user_id}",
-                "lat": 24.7136,
-                "lng": 46.6753,
+                "lat": 0,
+                "lng": 0,
                 "radius": 30000.0,
                 "boolean_query": "supermarket",
                 "page_token": "",
@@ -141,8 +141,8 @@ FETCH_DATASET_TESTS = [
             "request_info": {"request_id": "test-fetch-token-supermarket-riyadh-001"},
             "request_body": {
                 "user_id": "${user.user_id}",
-                "lat": 24.7136,
-                "lng": 46.6753,
+                "lat": 0,
+                "lng": 0,
                 "radius": 15000.0,
                 "boolean_query": "supermarket",
                 "page_token": "page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1",
@@ -164,6 +164,46 @@ FETCH_DATASET_TESTS = [
         },
         expected_output_file="test_fetch_dataset.json",
         expected_output_key="supermarket_full_data_riyadh_token_response"
+    ),
+    ConfigDrivenTest(
+        name="test_fetch_dataset_arabic_keyword_search",
+        description="Test fetching dataset sample for Arabic keyword search '@الحلقه@' in Riyadh",
+        prerequisites=Prerequisites(
+            requires_user=True,
+            requires_auth=True,
+            requires_database_seed=True,
+            ggl_raw_seeds=["arabic_keyword_al_halaqa_response"],
+            dataset_seeds=["arabic_keyword_al_halaqa_dataset"]
+        ),
+        endpoint=Endpoint(method="POST", path="/fetch_dataset"),
+        input_data={
+            "message": "Fetch dataset sample for Arabic keyword",
+            "request_info": {"request_id": "test-fetch-arabic-keyword-001"},
+            "request_body": {
+                "user_id": "${user.user_id}",
+                "lat": 0,
+                "lng": 0,
+                "radius": 30000.0,
+                "boolean_query": "@الحلقه@",
+                "page_token": "",
+                "action": "sample",
+                "search_type": "keyword_search",
+                "country_name": "Saudi Arabia",
+                "city_name": "Riyadh",
+                "prdcer_lyr_id": "",
+                "text_search": "",
+                "zoom_level": 0,
+                "bounding_box": [],
+                "included_types": [],
+                "excluded_types": [],
+                "ids_and_location_only": False,
+                "include_rating_info": False,
+                "include_only_sub_properties": True,
+                "full_load": False
+            }
+        },
+        expected_output_file="test_fetch_dataset.json",
+        expected_output_key="arabic_keyword_al_halaqa_response"
     )
 ]
 

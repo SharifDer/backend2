@@ -1,6 +1,6 @@
 {
   "supermarket_cat_response": {
-    "filename_template": "24.7136_46.6753_30000.0_supermarket_token_{test_run_id}=",
+    "filename_template": "46.6753_24.7136_30000.0_supermarket_token_{test_run_id}=",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -53,7 +53,7 @@
     }
   },
   "coffee_dataset": {
-    "filename_template": "24.7136_46.6753_30000.0_coffee_token_{test_run_id}=",
+    "filename_template": "46.6753_24.7136_30000.0_coffee_token_{test_run_id}=",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -1359,6 +1359,116 @@
         "types",
         "priceLevel",
         "primaryType"
+      ]
+    }
+  },
+  "arabic_keyword_al_halaqa_dataset": {
+    "filename_template": "46.6753_24.7136_30000.0_@الحلقه@_token_{test_run_id}=",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 30000.0,
+      "boolean_query": "@الحلقه@",
+      "action": "sample",
+      "search_type": "keyword_search",
+      "user_id": "{user_id}"
+    },
+    "response_data": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.6066584,
+              24.6321482
+            ]
+          },
+          "properties": {
+            "id": "ChIJtest_al_halaqa_001_{test_run_id}",
+            "name": "Al Halaqa",
+            "rating": "",
+            "types": [
+              "route"
+            ],
+            "priceLevel": "",
+            "primaryType": "",
+            "popularity_score": 1000
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.670111,
+              24.7861301
+            ]
+          },
+          "properties": {
+            "id": "ChIJtest_al_halaqa_002_{test_run_id}",
+            "name": "الحلقة",
+            "rating": "",
+            "types": [
+              "route"
+            ],
+            "priceLevel": "",
+            "primaryType": "",
+            "popularity_score": 1000
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.6230641,
+              24.5009785
+            ]
+          },
+          "properties": {
+            "id": "ChIJtest_al_halaqa_003_{test_run_id}",
+            "name": "Al Halaqa",
+            "rating": "",
+            "types": [
+              "route"
+            ],
+            "priceLevel": "",
+            "primaryType": "",
+            "popularity_score": 1000
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7707195,
+              24.5631647
+            ]
+          },
+          "properties": {
+            "id": "ChIJtest_al_halaqa_004_{test_run_id}",
+            "name": "Al Halaqah",
+            "rating": "",
+            "types": [
+              "route"
+            ],
+            "priceLevel": "",
+            "primaryType": "",
+            "popularity_score": 1000
+          }
+        }
+      ],
+      "properties": [
+        "id",
+        "name",
+        "rating",
+        "types",
+        "priceLevel",
+        "primaryType",
+        "popularity_score"
       ]
     }
   }

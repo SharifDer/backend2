@@ -2,6 +2,7 @@ import aiohttp
 import logging
 from typing import List, Dict, Any, Tuple, Optional
 import json
+import math
 import asyncio
 from fastapi import HTTPException
 import requests
@@ -357,15 +358,25 @@ async def build_text_search_payload(
         "X-Goog-Api-Key": CONF.api_key,
         "X-Goog-FieldMask": feilds + ",nextPageToken",
     }
+    
+    # Convert radius to latitude/longitude offsets
+    # 1 degree latitude ≈ 111,000 meters
+    lat_offset = req.radius / 111000
+    # 1 degree longitude ≈ 111,000 meters * cos(latitude)
+    lng_offset = req.radius / (111000 * math.cos(math.radians(req.lat)))
+    
     data = {
         "textQuery": textQuery,
         "locationRestriction": {
-            "circle": {
-                "center": {
-                    "latitude": req.lat,
-                    "longitude": req.lng,
+            "rectangle": {
+                "low": {
+                    "latitude": req.lat - lat_offset,   # Center - offset
+                    "longitude": req.lng - lng_offset,  # Center - offset
                 },
-                "radius": req.radius,
+                "high": {
+                    "latitude": req.lat + lat_offset,   # Center + offset
+                    "longitude": req.lng + lng_offset,  # Center + offset
+                }
             }
         },
     }
@@ -490,13 +501,14 @@ async def make_get_api_call(ggl_api_url, headers):
                         retry_delay = MIN_DELAY * (
                             2**retry_count
                         )  # Double the delay with each retry
+                        response_text = await response.text()
                         logger.warning(
-                            f"Rate limit exceeded ({response.status}). Retry {retry_count}/{max_retries} in {retry_delay} seconds."
+                            f"({response.status}):{response_text}. Retry {retry_count}/{max_retries} in {retry_delay} seconds."
                         )
                         await asyncio.sleep(retry_delay)
                     else:
                         logger.error(
-                            f"Rate limit exceeded ({response.status}) after {max_retries} retries."
+                            f"({response.status}):{response_text}. after {max_retries} retries."
                         )
                         return {}
                 else:
@@ -539,8 +551,9 @@ async def make_post_api_call(ggl_api_url, headers, data):
                         retry_delay = MIN_DELAY * (
                             2**retry_count
                         )  # Double the delay with each retry
+                        response_text = await response.text()
                         logger.warning(
-                            f"Rate limit exceeded ({response.status}). Retry {retry_count}/{max_retries} in {retry_delay} seconds."
+                            f"({response.status}):{response_text}. Retry {retry_count}/{max_retries} in {retry_delay} seconds."
                         )
                         await asyncio.sleep(retry_delay)
                     else:
@@ -554,7 +567,7 @@ async def make_post_api_call(ggl_api_url, headers, data):
                         
                         else:
                             logger.error(
-                                f"Rate limit exceeded ({response.status}) after {max_retries} retries."
+                                f"({response.status}):{response_text}. after {max_retries} retries."
                             )
                             return [
                                 {

@@ -1883,5 +1883,103 @@
                 "next_page_token": "page_token=plan_supermarket_Saudi Arabia_Riyadh@#$2"
             }
         }
+    },
+    "arabic_keyword_al_halaqa_response": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "route"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "",
+                            "name": "Al Halaqa",
+                            "popularity_score": 1000.0
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.6066584,
+                                24.6321482
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "route"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "",
+                            "name": "الحلقة",
+                            "popularity_score": 1000.0
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.670111,
+                                24.7861301
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "route"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "",
+                            "name": "Al Halaqa",
+                            "popularity_score": 1000.0
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.6230641,
+                                24.5009785
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "route"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "",
+                            "name": "Al Halaqah",
+                            "popularity_score": 1000.0
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7707195,
+                                24.5631647
+                            ]
+                        }
+                    }
+                ],
+                "bknd_dataset_id": "46.6753_24.7136_30000.0_@الحلقه@_token=",
+                "prdcer_lyr_id": "regex:^l[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                "records_count": 4,
+                "delay_before_next_call": 3,
+                "progress": 0,
+                "next_page_token": ""
+            }
+        }
     }
 }
