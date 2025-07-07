@@ -806,7 +806,7 @@ def select_sub_properties(dataset):
     fields = [
         "displayName", "rating", "formattedAddress", "internationalPhoneNumber",
         "types", "priceLevel", "primaryType", "userRatingCount", "location",
-        "name", "id"
+        "name", "id", "popularity_score"
     ]
    
     filtered_features = []

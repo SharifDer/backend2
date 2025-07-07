@@ -15,7 +15,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.6753, 24.7136]
+            "coordinates": [
+              46.6753,
+              24.7136
+            ]
           },
           "properties": {
             "id": "ChIJtest_supermarket_001_{test_run_id}",
@@ -28,7 +31,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.6800, 24.7200]
+            "coordinates": [
+              46.68,
+              24.72
+            ]
           },
           "properties": {
             "id": "ChIJtest_supermarket_002_{test_run_id}",
@@ -38,7 +44,12 @@
           }
         }
       ],
-      "properties": ["id", "displayName", "rating", "formattedAddress"]
+      "properties": [
+        "id",
+        "displayName",
+        "rating",
+        "formattedAddress"
+      ]
     }
   },
   "coffee_dataset": {
@@ -58,7 +69,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.6780, 24.7150]
+            "coordinates": [
+              46.678,
+              24.715
+            ]
           },
           "properties": {
             "id": "ChIJtest_coffee_001_{test_run_id}",
@@ -68,7 +82,12 @@
           }
         }
       ],
-      "properties": ["id", "displayName", "rating", "formattedAddress"]
+      "properties": [
+        "id",
+        "displayName",
+        "rating",
+        "formattedAddress"
+      ]
     }
   },
   "cafe_restaurant_dataset": {
@@ -87,7 +106,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [39.1750, 21.5450]
+            "coordinates": [
+              39.175,
+              21.545
+            ]
           },
           "properties": {
             "id": "ChIJtest_cafe_jeddah_001_{test_run_id}",
@@ -101,7 +123,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [39.1700, 21.5400]
+            "coordinates": [
+              39.17,
+              21.54
+            ]
           },
           "properties": {
             "id": "ChIJtest_restaurant_jeddah_001_{test_run_id}",
@@ -115,7 +140,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [39.1780, 21.5480]
+            "coordinates": [
+              39.178,
+              21.548
+            ]
           },
           "properties": {
             "id": "ChIJtest_cafe_jeddah_002_{test_run_id}",
@@ -129,7 +157,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [39.1720, 21.5420]
+            "coordinates": [
+              39.172,
+              21.542
+            ]
           },
           "properties": {
             "id": "ChIJtest_restaurant_jeddah_002_{test_run_id}",
@@ -140,7 +171,13 @@
           }
         }
       ],
-      "properties": ["id", "displayName", "rating", "formattedAddress", "primaryType"]
+      "properties": [
+        "id",
+        "displayName",
+        "rating",
+        "formattedAddress",
+        "primaryType"
+      ]
     }
   },
   "supermarket_full_data_riyadh_response": {
@@ -160,7 +197,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7036873, 24.6637609]
+            "coordinates": [
+              46.7036873,
+              24.6637609
+            ]
           },
           "properties": {
             "id": "ChIJfxBoD4cFLz4RJFypsWDRxVA",
@@ -189,7 +229,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7156861, 24.633700299999997]
+            "coordinates": [
+              46.7156861,
+              24.633700299999997
+            ]
           },
           "properties": {
             "id": "ChIJceAdtaoFLz4Rg8h1oe-E1jQ",
@@ -218,7 +261,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.6650409, 24.8176751]
+            "coordinates": [
+              46.6650409,
+              24.8176751
+            ]
           },
           "properties": {
             "id": "ChIJo9bWVQHlLj4RTgkIH0t9OCo",
@@ -247,7 +293,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.814706799999996, 24.756598699999998]
+            "coordinates": [
+              46.814706799999996,
+              24.756598699999998
+            ]
           },
           "properties": {
             "id": "ChIJaYucAKcBLz4R2sSM6zEadb8",
@@ -271,7 +320,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7898449, 24.6597835]
+            "coordinates": [
+              46.7898449,
+              24.6597835
+            ]
           },
           "properties": {
             "id": "ChIJc2OcSh4HLz4RVzQWOC2CNE4",
@@ -296,7 +348,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7200000, 24.6800000]
+            "coordinates": [
+              46.72,
+              24.68
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101112",
@@ -319,7 +374,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7300000, 24.6900000]
+            "coordinates": [
+              46.73,
+              24.69
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101113",
@@ -342,7 +400,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7400000, 24.7000000]
+            "coordinates": [
+              46.74,
+              24.7
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101114",
@@ -365,7 +426,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7500000, 24.7100000]
+            "coordinates": [
+              46.75,
+              24.71
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101115",
@@ -388,7 +452,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7600000, 24.7200000]
+            "coordinates": [
+              46.76,
+              24.72
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101116",
@@ -411,7 +478,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7700000, 24.7300000]
+            "coordinates": [
+              46.77,
+              24.73
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101117",
@@ -434,7 +504,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7800000, 24.7400000]
+            "coordinates": [
+              46.78,
+              24.74
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101118",
@@ -457,7 +530,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.7900000, 24.7500000]
+            "coordinates": [
+              46.79,
+              24.75
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101119",
@@ -480,7 +556,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.8000000, 24.7600000]
+            "coordinates": [
+              46.8,
+              24.76
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101120",
@@ -503,7 +582,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.8100000, 24.7700000]
+            "coordinates": [
+              46.81,
+              24.77
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101121",
@@ -526,7 +608,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.8200000, 24.7800000]
+            "coordinates": [
+              46.82,
+              24.78
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101122",
@@ -549,7 +634,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.8300000, 24.7900000]
+            "coordinates": [
+              46.83,
+              24.79
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101123",
@@ -572,7 +660,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.8400000, 24.8000000]
+            "coordinates": [
+              46.84,
+              24.8
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101124",
@@ -595,7 +686,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.8500000, 24.8100000]
+            "coordinates": [
+              46.85,
+              24.81
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101125",
@@ -618,7 +712,10 @@
           "type": "Feature",
           "geometry": {
             "type": "Point",
-            "coordinates": [46.8600000, 24.8200000]
+            "coordinates": [
+              46.86,
+              24.82
+            ]
           },
           "properties": {
             "id": "ChIJ123456789101126",
@@ -638,7 +735,631 @@
           }
         }
       ],
-      "properties": ["id", "name", "rating", "types", "priceLevel", "primaryType"]
+      "properties": [
+        "id",
+        "name",
+        "rating",
+        "types",
+        "priceLevel",
+        "primaryType"
+      ]
+    }
+  },
+  "supermarket_full_data_riyadh_token_response": {
+    "filename_template": "46.6753_24.7136_15000.0_supermarket_token=page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 15000.0,
+      "boolean_query": "supermarket",
+      "action": "full data",
+      "page_token": "page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1",
+      "user_id": "{user_id}"
+    },
+    "response_data": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7036873,
+              24.6637609
+            ]
+          },
+          "properties": {
+            "id": "ChIJfxBoD4cFLz4RJFypsWDRxVA",
+            "name": "LuLu Hypermarket - Riyadh Avenue Mall - Murabba",
+            "rating": "",
+            "types": [
+              "cell_phone_store",
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7156861,
+              24.633700299999997
+            ]
+          },
+          "properties": {
+            "id": "ChIJceAdtaoFLz4Rg8h1oe-E1jQ",
+            "name": "LuLu Hypermarket - Al Batha",
+            "rating": "",
+            "types": [
+              "cell_phone_store",
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.6650409,
+              24.8176751
+            ]
+          },
+          "properties": {
+            "id": "ChIJo9bWVQHlLj4RTgkIH0t9OCo",
+            "name": "LuLu Hypermarket - Al Yasmin",
+            "rating": "",
+            "types": [
+              "cell_phone_store",
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7898449,
+              24.6597835
+            ]
+          },
+          "properties": {
+            "id": "ChIJc2OcSh4HLz4RVzQWOC2CNE4",
+            "name": "The Economic Hall",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "discount_store",
+              "convenience_store",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.814706799999996,
+              24.756598699999998
+            ]
+          },
+          "properties": {
+            "id": "ChIJaYucAKcBLz4R2sSM6zEadb8",
+            "name": "Family Discount",
+            "rating": "",
+            "types": [
+              "shopping_mall",
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "shopping_mall",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7151147,
+              24.750051499999998
+            ]
+          },
+          "properties": {
+            "id": "ChIJcViaCwADLz4RqVIKab_MdWM",
+            "name": "Spinneys La Strada Yard",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7188212,
+              24.635575499999998
+            ]
+          },
+          "properties": {
+            "id": "ChIJKXW0yroFLz4Rpqm8mgLXILA",
+            "name": "Nesto Hypermarket Batha",
+            "rating": "",
+            "types": [
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.747714599999995,
+              24.5986428
+            ]
+          },
+          "properties": {
+            "id": "ChIJm3qkr0oPLz4RLsP9-X2oS7E",
+            "name": "Nesto Hypermarket Azizia",
+            "rating": "",
+            "types": [
+              "department_store",
+              "supermarket",
+              "bakery",
+              "grocery_store",
+              "food_store",
+              "home_goods_store",
+              "wholesaler",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.6500537,
+              24.802481399999998
+            ]
+          },
+          "properties": {
+            "id": "ChIJm9DEovbjLj4RADnMySSMAmU",
+            "name": "Thimar Aloqailat Supermarket",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "bakery",
+              "market",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7842134,
+              24.727639099999998
+            ]
+          },
+          "properties": {
+            "id": "ChIJoeLn_j4BLz4RrKxSOArZRK4",
+            "name": "WEMART HYPERMARKET",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7512699,
+              24.6593904
+            ]
+          },
+          "properties": {
+            "id": "ChIJm7fUVcEHLz4R2Aeg1j2g3mw",
+            "name": "LuLu Hypermarket - Al Malaz",
+            "rating": "",
+            "types": [
+              "cell_phone_store",
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.767636599999996,
+              24.7929436
+            ]
+          },
+          "properties": {
+            "id": "ChIJd_H8lob_Lj4RauK4UQU5dxA",
+            "name": "Lulu Hypermarket atyaf mall",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.5713041,
+              24.6204543
+            ]
+          },
+          "properties": {
+            "id": "ChIJGacpfwAZLz4RHcJkFd0Ldow",
+            "name": "LuLu Hypermarket - Dhahrat Laban",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "department_store",
+              "asian_grocery_store",
+              "bakery",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.738404,
+              24.6699905
+            ]
+          },
+          "properties": {
+            "id": "ChIJQ5AB0iIELz4RFUyKQquAY2w",
+            "name": "Nesto Hypermarket Malaz",
+            "rating": "",
+            "types": [
+              "asian_grocery_store",
+              "supermarket",
+              "bakery",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7751184,
+              24.7237689
+            ]
+          },
+          "properties": {
+            "id": "ChIJx_cOX0ABLz4RjNc1s6hL41I",
+            "name": "Carrefour",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7316925,
+              24.605586799999998
+            ]
+          },
+          "properties": {
+            "id": "ChIJCRmmWlwPLz4R6DTZrMkyauk",
+            "name": "Al Madina Hypermarket",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.582757799999996,
+              24.6856425
+            ]
+          },
+          "properties": {
+            "id": "ChIJ3VACQ24eLz4Re0oyelpcVIk",
+            "name": "Carrefour",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.714089099999995,
+              24.769568699999997
+            ]
+          },
+          "properties": {
+            "id": "ChIJf36cSDX9Lj4RC7iODAOQNHQ",
+            "name": "Ice Sprinkles",
+            "rating": "",
+            "types": [
+              "candy_store",
+              "supermarket",
+              "confectionery",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "candy_store",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.801848500000006,
+              24.7386838
+            ]
+          },
+          "properties": {
+            "id": "ChIJTWIjD-wALz4RYmXgz6drOHM",
+            "name": "top center",
+            "rating": "",
+            "types": [
+              "shopping_mall",
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "shopping_mall",
+            "popularity_score": 150
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.681962999999996,
+              24.6909541
+            ]
+          },
+          "properties": {
+            "id": "ChIJS5Y3ZjgDLz4RqsqTHpLikMY",
+            "name": "Tamimi Markets",
+            "rating": "",
+            "types": [
+              "supermarket",
+              "convenience_store",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "popularity_score": 150
+          }
+        }
+      ],
+      "properties": [
+        "id",
+        "name",
+        "rating",
+        "types",
+        "priceLevel",
+        "primaryType"
+      ]
     }
   }
 }

@@ -8548,5 +8548,555 @@
         }
       ]
     }
+  },
+  "supermarket_full_data_riyadh_token_response": {
+    "filename_template": "test_category_search_24.7136_46.6753_15000.0_inc_supermarket_exc_token_{test_run_id}",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 15000.0,
+      "includedTypes": [
+        "supermarket"
+      ],
+      "excludedTypes": [],
+      "action": "full data",
+      "page_token": "page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1"
+    },
+    "response_data": {
+      "places": [
+        {
+          "name": "places/ChIJfxBoD4cFLz4RJFypsWDRxVA",
+          "id": "ChIJfxBoD4cFLz4RJFypsWDRxVA",
+          "types": [
+            "cell_phone_store",
+            "asian_grocery_store",
+            "supermarket",
+            "grocery_store",
+            "furniture_store",
+            "home_improvement_store",
+            "food_store",
+            "home_goods_store",
+            "food",
+            "clothing_store",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh Avenue Mall, Level 1, Prince Faisal Bin Turki Bin, طريق الملك عبدالعزيز، المربع، الرياض 12612, Saudi Arabia",
+          "location": {
+            "latitude": 24.6637609,
+            "longitude": 46.7036873
+          },
+          "displayName": {
+            "text": "LuLu Hypermarket - Riyadh Avenue Mall - Murabba",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJceAdtaoFLz4Rg8h1oe-E1jQ",
+          "id": "ChIJceAdtaoFLz4Rg8h1oe-E1jQ",
+          "types": [
+            "cell_phone_store",
+            "asian_grocery_store",
+            "supermarket",
+            "grocery_store",
+            "furniture_store",
+            "home_improvement_store",
+            "food_store",
+            "home_goods_store",
+            "food",
+            "clothing_store",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Ibn Sulaiman، Commercial Center، Al Batha St، Ad Dirah, Riyadh 12633, Saudi Arabia",
+          "location": {
+            "latitude": 24.633700299999997,
+            "longitude": 46.7156861
+          },
+          "displayName": {
+            "text": "LuLu Hypermarket - Al Batha",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJo9bWVQHlLj4RTgkIH0t9OCo",
+          "id": "ChIJo9bWVQHlLj4RTgkIH0t9OCo",
+          "types": [
+            "cell_phone_store",
+            "asian_grocery_store",
+            "supermarket",
+            "grocery_store",
+            "furniture_store",
+            "home_improvement_store",
+            "food_store",
+            "home_goods_store",
+            "food",
+            "clothing_store",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Al Yasmin, Riyadh 12345, Saudi Arabia",
+          "location": {
+            "latitude": 24.8176751,
+            "longitude": 46.6650409
+          },
+          "displayName": {
+            "text": "LuLu Hypermarket - Al Yasmin",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJc2OcSh4HLz4RVzQWOC2CNE4",
+          "id": "ChIJc2OcSh4HLz4RVzQWOC2CNE4",
+          "types": [
+            "supermarket",
+            "discount_store",
+            "convenience_store",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6597835,
+            "longitude": 46.7898449
+          },
+          "displayName": {
+            "text": "The Economic Hall",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJaYucAKcBLz4R2sSM6zEadb8",
+          "id": "ChIJaYucAKcBLz4R2sSM6zEadb8",
+          "types": [
+            "shopping_mall",
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.756598699999998,
+            "longitude": 46.814706799999996
+          },
+          "displayName": {
+            "text": "Family Discount",
+            "languageCode": "en"
+          },
+          "primaryType": "shopping_mall",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJcViaCwADLz4RqVIKab_MdWM",
+          "id": "ChIJcViaCwADLz4RqVIKab_MdWM",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.750051499999998,
+            "longitude": 46.7151147
+          },
+          "displayName": {
+            "text": "Spinneys La Strada Yard",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJKXW0yroFLz4Rpqm8mgLXILA",
+          "id": "ChIJKXW0yroFLz4Rpqm8mgLXILA",
+          "types": [
+            "asian_grocery_store",
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "home_goods_store",
+            "food",
+            "clothing_store",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.635575499999998,
+            "longitude": 46.7188212
+          },
+          "displayName": {
+            "text": "Nesto Hypermarket Batha",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJm3qkr0oPLz4RLsP9-X2oS7E",
+          "id": "ChIJm3qkr0oPLz4RLsP9-X2oS7E",
+          "types": [
+            "department_store",
+            "supermarket",
+            "bakery",
+            "grocery_store",
+            "food_store",
+            "home_goods_store",
+            "wholesaler",
+            "food",
+            "clothing_store",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.5986428,
+            "longitude": 46.747714599999995
+          },
+          "displayName": {
+            "text": "Nesto Hypermarket Azizia",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJm9DEovbjLj4RADnMySSMAmU",
+          "id": "ChIJm9DEovbjLj4RADnMySSMAmU",
+          "types": [
+            "supermarket",
+            "bakery",
+            "market",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.802481399999998,
+            "longitude": 46.6500537
+          },
+          "displayName": {
+            "text": "Thimar Aloqailat Supermarket",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJoeLn_j4BLz4RrKxSOArZRK4",
+          "id": "ChIJoeLn_j4BLz4RrKxSOArZRK4",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.727639099999998,
+            "longitude": 46.7842134
+          },
+          "displayName": {
+            "text": "WEMART HYPERMARKET",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJm7fUVcEHLz4R2Aeg1j2g3mw",
+          "id": "ChIJm7fUVcEHLz4R2Aeg1j2g3mw",
+          "types": [
+            "cell_phone_store",
+            "asian_grocery_store",
+            "supermarket",
+            "grocery_store",
+            "furniture_store",
+            "home_improvement_store",
+            "food_store",
+            "home_goods_store",
+            "food",
+            "clothing_store",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6593904,
+            "longitude": 46.7512699
+          },
+          "displayName": {
+            "text": "LuLu Hypermarket - Al Malaz",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJd_H8lob_Lj4RauK4UQU5dxA",
+          "id": "ChIJd_H8lob_Lj4RauK4UQU5dxA",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7929436,
+            "longitude": 46.767636599999996
+          },
+          "displayName": {
+            "text": "Lulu Hypermarket atyaf mall",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJGacpfwAZLz4RHcJkFd0Ldow",
+          "id": "ChIJGacpfwAZLz4RHcJkFd0Ldow",
+          "types": [
+            "supermarket",
+            "department_store",
+            "asian_grocery_store",
+            "bakery",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6204543,
+            "longitude": 46.5713041
+          },
+          "displayName": {
+            "text": "LuLu Hypermarket - Dhahrat Laban",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJQ5AB0iIELz4RFUyKQquAY2w",
+          "id": "ChIJQ5AB0iIELz4RFUyKQquAY2w",
+          "types": [
+            "asian_grocery_store",
+            "supermarket",
+            "bakery",
+            "grocery_store",
+            "furniture_store",
+            "home_improvement_store",
+            "food_store",
+            "home_goods_store",
+            "food",
+            "clothing_store",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6699905,
+            "longitude": 46.738404
+          },
+          "displayName": {
+            "text": "Nesto Hypermarket Malaz",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJx_cOX0ABLz4RjNc1s6hL41I",
+          "id": "ChIJx_cOX0ABLz4RjNc1s6hL41I",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7237689,
+            "longitude": 46.7751184
+          },
+          "displayName": {
+            "text": "Carrefour",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJCRmmWlwPLz4R6DTZrMkyauk",
+          "id": "ChIJCRmmWlwPLz4R6DTZrMkyauk",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.605586799999998,
+            "longitude": 46.7316925
+          },
+          "displayName": {
+            "text": "Al Madina Hypermarket",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ3VACQ24eLz4Re0oyelpcVIk",
+          "id": "ChIJ3VACQ24eLz4Re0oyelpcVIk",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "home_goods_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6856425,
+            "longitude": 46.582757799999996
+          },
+          "displayName": {
+            "text": "Carrefour",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJf36cSDX9Lj4RC7iODAOQNHQ",
+          "id": "ChIJf36cSDX9Lj4RC7iODAOQNHQ",
+          "types": [
+            "candy_store",
+            "supermarket",
+            "confectionery",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.769568699999997,
+            "longitude": 46.714089099999995
+          },
+          "displayName": {
+            "text": "Ice Sprinkles",
+            "languageCode": "en"
+          },
+          "primaryType": "candy_store",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJTWIjD-wALz4RYmXgz6drOHM",
+          "id": "ChIJTWIjD-wALz4RYmXgz6drOHM",
+          "types": [
+            "shopping_mall",
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "clothing_store",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7386838,
+            "longitude": 46.801848500000006
+          },
+          "displayName": {
+            "text": "top center",
+            "languageCode": "en"
+          },
+          "primaryType": "shopping_mall",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJS5Y3ZjgDLz4RqsqTHpLikMY",
+          "id": "ChIJS5Y3ZjgDLz4RqsqTHpLikMY",
+          "types": [
+            "supermarket",
+            "convenience_store",
+            "grocery_store",
+            "food_store",
+            "food",
+            "store",
+            "point_of_interest",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6909541,
+            "longitude": 46.681962999999996
+          },
+          "displayName": {
+            "text": "Tamimi Markets",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        }
+      ]
+    }
   }
 }
