@@ -336,6 +336,11 @@ def determine_data_type(
 
 
 async def check_purchase(req: ReqFetchDataset, plan_name: str):
+    # Skip payment check in test mode
+    if CONF.test_mode:
+        logger.info("TEST_MODE: Bypassing payment check for full data request")
+        return
+        
     if req.action == "full data":
         contains_text_search = False
         if "@" in req.boolean_query:

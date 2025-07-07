@@ -8030,5 +8030,523 @@
         }
       ]
     }
+  },
+  "supermarket_full_data_riyadh_response": {
+    "filename_template": "test_category_search_24.7136_46.6753_30000.0_inc_supermarket_exc_full_data_{test_run_id}",
+    "request_data": {
+      "lat": 24.7136,
+      "lng": 46.6753,
+      "radius": 30000.0,
+      "includedTypes": [
+        "supermarket"
+      ],
+      "excludedTypes": [],
+      "action": "full data"
+    },
+    "response_data": {
+      "places": [
+        {
+          "name": "places/ChIJfxBoD4cFLz4RJFypsWDRxVA",
+          "id": "ChIJfxBoD4cFLz4RJFypsWDRxVA",
+          "types": [
+            "cell_phone_store",
+            "asian_grocery_store",
+            "furniture_store",
+            "supermarket",
+            "clothing_store",
+            "home_improvement_store",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "home_goods_store",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Riyadh Avenue Mall, Level 1, Prince Faisal Bin Turki Bin, طريق الملك عبدالعزيز، المربع، الرياض 12612, Saudi Arabia",
+          "location": {
+            "latitude": 24.6637609,
+            "longitude": 46.7036873
+          },
+          "displayName": {
+            "text": "LuLu Hypermarket - Riyadh Avenue Mall - Murabba",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJceAdtaoFLz4Rg8h1oe-E1jQ",
+          "id": "ChIJceAdtaoFLz4Rg8h1oe-E1jQ",
+          "types": [
+            "cell_phone_store",
+            "asian_grocery_store",
+            "furniture_store",
+            "supermarket",
+            "clothing_store",
+            "home_improvement_store",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "home_goods_store",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Al Batha, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.633700299999997,
+            "longitude": 46.7156861
+          },
+          "displayName": {
+            "text": "LuLu Hypermarket - Al Batha",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJo9bWVQHlLj4RTgkIH0t9OCo",
+          "id": "ChIJo9bWVQHlLj4RTgkIH0t9OCo",
+          "types": [
+            "cell_phone_store",
+            "asian_grocery_store",
+            "furniture_store",
+            "supermarket",
+            "clothing_store",
+            "home_improvement_store",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "home_goods_store",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Al Yasmin, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.8176751,
+            "longitude": 46.6650409
+          },
+          "displayName": {
+            "text": "LuLu Hypermarket - Al Yasmin",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJaYucAKcBLz4R2sSM6zEadb8",
+          "id": "ChIJaYucAKcBLz4R2sSM6zEadb8",
+          "types": [
+            "shopping_mall",
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Family Discount, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.756598699999998,
+            "longitude": 46.814706799999996
+          },
+          "displayName": {
+            "text": "Family Discount",
+            "languageCode": "en"
+          },
+          "primaryType": "shopping_mall",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJc2OcSh4HLz4RVzQWOC2CNE4",
+          "id": "ChIJc2OcSh4HLz4RVzQWOC2CNE4",
+          "types": [
+            "supermarket",
+            "convenience_store",
+            "discount_store",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "The Economic Hall, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6597835,
+            "longitude": 46.7898449
+          },
+          "displayName": {
+            "text": "The Economic Hall",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101112",
+          "id": "ChIJ123456789101112",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 6, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6800000,
+            "longitude": 46.7200000
+          },
+          "displayName": {
+            "text": "Supermarket 6",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101113",
+          "id": "ChIJ123456789101113",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 7, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.6900000,
+            "longitude": 46.7300000
+          },
+          "displayName": {
+            "text": "Supermarket 7",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101114",
+          "id": "ChIJ123456789101114",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 8, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7000000,
+            "longitude": 46.7400000
+          },
+          "displayName": {
+            "text": "Supermarket 8",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101115",
+          "id": "ChIJ123456789101115",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 9, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7100000,
+            "longitude": 46.7500000
+          },
+          "displayName": {
+            "text": "Supermarket 9",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101116",
+          "id": "ChIJ123456789101116",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 10, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7200000,
+            "longitude": 46.7600000
+          },
+          "displayName": {
+            "text": "Supermarket 10",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101117",
+          "id": "ChIJ123456789101117",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 11, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7300000,
+            "longitude": 46.7700000
+          },
+          "displayName": {
+            "text": "Supermarket 11",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101118",
+          "id": "ChIJ123456789101118",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 12, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7400000,
+            "longitude": 46.7800000
+          },
+          "displayName": {
+            "text": "Supermarket 12",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101119",
+          "id": "ChIJ123456789101119",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 13, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7500000,
+            "longitude": 46.7900000
+          },
+          "displayName": {
+            "text": "Supermarket 13",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101120",
+          "id": "ChIJ123456789101120",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 14, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7600000,
+            "longitude": 46.8000000
+          },
+          "displayName": {
+            "text": "Supermarket 14",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101121",
+          "id": "ChIJ123456789101121",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 15, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7700000,
+            "longitude": 46.8100000
+          },
+          "displayName": {
+            "text": "Supermarket 15",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101122",
+          "id": "ChIJ123456789101122",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 16, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7800000,
+            "longitude": 46.8200000
+          },
+          "displayName": {
+            "text": "Supermarket 16",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101123",
+          "id": "ChIJ123456789101123",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 17, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.7900000,
+            "longitude": 46.8300000
+          },
+          "displayName": {
+            "text": "Supermarket 17",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101124",
+          "id": "ChIJ123456789101124",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 18, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.8000000,
+            "longitude": 46.8400000
+          },
+          "displayName": {
+            "text": "Supermarket 18",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101125",
+          "id": "ChIJ123456789101125",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 19, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.8100000,
+            "longitude": 46.8500000
+          },
+          "displayName": {
+            "text": "Supermarket 19",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        },
+        {
+          "name": "places/ChIJ123456789101126",
+          "id": "ChIJ123456789101126",
+          "types": [
+            "supermarket",
+            "grocery_store",
+            "food_store",
+            "food",
+            "point_of_interest",
+            "store",
+            "establishment"
+          ],
+          "formattedAddress": "Supermarket 20, Riyadh, Saudi Arabia",
+          "location": {
+            "latitude": 24.8200000,
+            "longitude": 46.8600000
+          },
+          "displayName": {
+            "text": "Supermarket 20",
+            "languageCode": "en"
+          },
+          "primaryType": "supermarket",
+          "businessStatus": "OPERATIONAL"
+        }
+      ]
+    }
   }
 }

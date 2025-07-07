@@ -714,5 +714,564 @@
                 "next_page_token": ""
             }
         }
+    },
+    "supermarket_full_data_riyadh_response": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "req-03d561dd-8dc3-4a3b-90b5-225ff472009d",
+            "data": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "cell_phone_store",
+                                "asian_grocery_store",
+                                "furniture_store",
+                                "supermarket",
+                                "clothing_store",
+                                "home_improvement_store",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "home_goods_store",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "LuLu Hypermarket - Riyadh Avenue Mall - Murabba",
+                            "id": "ChIJfxBoD4cFLz4RJFypsWDRxVA"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7036873,
+                                24.6637609
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "cell_phone_store",
+                                "asian_grocery_store",
+                                "furniture_store",
+                                "supermarket",
+                                "clothing_store",
+                                "home_improvement_store",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "home_goods_store",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "LuLu Hypermarket - Al Batha",
+                            "id": "ChIJceAdtaoFLz4Rg8h1oe-E1jQ"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7156861,
+                                24.633700299999997
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "cell_phone_store",
+                                "asian_grocery_store",
+                                "furniture_store",
+                                "supermarket",
+                                "clothing_store",
+                                "home_improvement_store",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "home_goods_store",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "LuLu Hypermarket - Al Yasmin",
+                            "id": "ChIJo9bWVQHlLj4RTgkIH0t9OCo"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.6650409,
+                                24.8176751
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "shopping_mall",
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "shopping_mall",
+                            "name": "Family Discount",
+                            "id": "ChIJaYucAKcBLz4R2sSM6zEadb8"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.814706799999996,
+                                24.756598699999998
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "convenience_store",
+                                "discount_store",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "The Economic Hall",
+                            "id": "ChIJc2OcSh4HLz4RVzQWOC2CNE4"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7898449,
+                                24.6597835
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 6",
+                            "id": "ChIJ123456789101112"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7200000,
+                                24.6800000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 7",
+                            "id": "ChIJ123456789101113"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7300000,
+                                24.6900000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 8",
+                            "id": "ChIJ123456789101114"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7400000,
+                                24.7000000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 9",
+                            "id": "ChIJ123456789101115"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7500000,
+                                24.7100000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 10",
+                            "id": "ChIJ123456789101116"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7600000,
+                                24.7200000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 11",
+                            "id": "ChIJ123456789101117"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7700000,
+                                24.7300000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 12",
+                            "id": "ChIJ123456789101118"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7800000,
+                                24.7400000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 13",
+                            "id": "ChIJ123456789101119"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.7900000,
+                                24.7500000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 14",
+                            "id": "ChIJ123456789101120"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.8000000,
+                                24.7600000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 15",
+                            "id": "ChIJ123456789101121"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.8100000,
+                                24.7700000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 16",
+                            "id": "ChIJ123456789101122"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.8200000,
+                                24.7800000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 17",
+                            "id": "ChIJ123456789101123"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.8300000,
+                                24.7900000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 18",
+                            "id": "ChIJ123456789101124"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.8400000,
+                                24.8000000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 19",
+                            "id": "ChIJ123456789101125"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.8500000,
+                                24.8100000
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "rating": "",
+                            "types": [
+                                "supermarket",
+                                "grocery_store",
+                                "food_store",
+                                "food",
+                                "point_of_interest",
+                                "store",
+                                "establishment"
+                            ],
+                            "priceLevel": "",
+                            "primaryType": "supermarket",
+                            "name": "Supermarket 20",
+                            "id": "ChIJ123456789101126"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                46.8600000,
+                                24.8200000
+                            ]
+                        }
+                    }
+                ],
+                "bknd_dataset_id": "46.6753_24.7136_30000.0_supermarket_token=",
+                "prdcer_lyr_id": "regex:^l[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                "records_count": 20,
+                "delay_before_next_call": 3,
+                "progress": 0,
+                "next_page_token": "page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1"
+            }
+        }
     }
 }

@@ -173,5 +173,46 @@
                 "cost": "min_length:1"
             }
         }
+    },
+    "supermarket_full_data_riyadh_query": {
+        "status_code": 200,
+        "response_body": {
+            "message": "Request received.",
+            "request_id": "min_length:1",
+            "data": {
+                "query": "Find all supermarkets in Riyadh with complete details",
+                "is_valid": "Valid",
+                "reason": "Query requests full dataset for supermarkets in Riyadh with comprehensive location data",
+                "endpoint": "/fastapi/fetch_dataset",
+                "suggestions": [
+                    "Consider limiting the radius if dataset is too large",
+                    "Use pagination with page_token for better performance",
+                    "Filter by specific supermarket chains if needed"
+                ],
+                "body": {
+                    "user_id": "JnaGDCKoSoWtj6NWEVW8MDMBCiA2",
+                    "lat": 24.7136,
+                    "lng": 46.6753,
+                    "radius": 30000.0,
+                    "boolean_query": "supermarket",
+                    "page_token": "",
+                    "action": "full data",
+                    "search_type": "category_search",
+                    "country_name": "Saudi Arabia",
+                    "city_name": "Riyadh",
+                    "prdcer_lyr_id": "",
+                    "text_search": "",
+                    "zoom_level": 0,
+                    "bounding_box": [],
+                    "included_types": [],
+                    "excluded_types": [],
+                    "ids_and_location_only": false,
+                    "include_rating_info": false,
+                    "include_only_sub_properties": true,
+                    "full_load": false
+                },
+                "cost": "Higher cost due to full data request with 30km radius"
+            }
+        }
     }
 }
