@@ -166,7 +166,7 @@ from backend_common.stripe_backend import (
     deduct_from_wallet,
 )
 from recolor_filter import (
-    color_based_on_agent,
+    recolor_based_on_agent,
     recolor_based_on,
     filter_based_on,
 )
@@ -1176,7 +1176,7 @@ async def ep_process_color_based_on_agent(
         req.request_body,
         ReqPrompt,
         ResModel[ValidationResult],
-        color_based_on_agent,
+        recolor_based_on_agent,
         wrap_output=True,
     )
     return response

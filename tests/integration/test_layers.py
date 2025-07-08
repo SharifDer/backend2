@@ -1,5 +1,5 @@
 # tests/integration/test_user.py
-from .fixtures.test_utils import create_parametrized_test
+from .fixtures.test_utils import save_parametrized_test
 
 # tests/integration/test_configs/user_configs.py
 from .fixtures.test_generator import ConfigDrivenTest, Prerequisites, Endpoint
@@ -8,14 +8,14 @@ from .fixtures.test_generator import ConfigDrivenTest, Prerequisites, Endpoint
 # You can add more test configurations here
 LAYER_MANAGEMENT_TESTS = [
     ConfigDrivenTest(
-        name="test_create_layer_with_auth",
+        name="test_save_layer_with_auth",
         description="Test creating a layer with authenticated user",
         prerequisites=Prerequisites(
             requires_user=True, requires_auth=True, user_type="admin"
         ),
         endpoint=Endpoint(method="POST", path="/save_layer"),
         input_data={
-            "message": "Create layer",
+            "message": "save layer",
             "request_info": {"request_id": "test-layer-001"},
             "request_body": {
                 "user_id": "${user.user_id}",
@@ -32,13 +32,18 @@ LAYER_MANAGEMENT_TESTS = [
             "response_body": {
                 "message": "Request received.",
                 "request_id": "${dynamic}",
-                "data": "Producer layer created successfully"
+                "data": "Producer layer saved successfully"
             },
         },
     )
 ]
 
+# /fastapi/save_layer
+# /fastapi/delete_layer
+# /fastapi/user_layers
+# /fastapi/prdcer_lyr_map_data
 
-test_user_profile_endpoints = create_parametrized_test(
+
+test_user_profile_endpoints = save_parametrized_test(
     LAYER_MANAGEMENT_TESTS
 )

@@ -802,7 +802,7 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
     return layers
 
 
-async def color_based_on_agent(req: ReqPrompt) -> ValidationResult:
+async def recolor_based_on_agent(req: ReqPrompt) -> ValidationResult:
     """Process agent-based color filtering requests."""
     user_layers = req.layers or await fetch_user_layers(req.user_id)
 
