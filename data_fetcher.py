@@ -232,7 +232,7 @@ def determine_data_type(
     # if so remove it from the boolean query and add it to the text search text_search_terms
     text_search_terms = re.findall(r"@([^@]+)@", boolean_query)
     for term in text_search_terms:
-        boolean_query = boolean_query.replace(f"@{term}@", "")
+        boolean_query = boolean_query.replace(f"@{term}@", f"{term}")
 
     # Extract just the terms
     terms = set(
@@ -248,10 +248,10 @@ def determine_data_type(
     if not terms:
         return None
 
-    # if req.search_type == "keyword_search":
-    #     # If the search type is text_search, we can assume it's a Google search
-    #     # and return the google_categories directly
-    #     return "google_categories"
+    if req.search_type == "keyword_search":
+        # If the search type is text_search, we can assume it's a Google search
+        # and return the google_categories directly
+        return "google_categories"
 
     # Create a set of all approved terms from all categories and organize by category
     approved_terms = set()

@@ -198,7 +198,7 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
         city_name=req.city_name,
         country_name=req.country_name,
         user_id=req.user_id,
-        boolean_query=f"@{req.target_search}@",
+        boolean_query=f"{req.target_search}",
         action="full data",
         analysis_bounds=req.analysis_bounds,
         search_type="keyword_search",
