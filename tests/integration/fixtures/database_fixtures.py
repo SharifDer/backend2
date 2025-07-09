@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any, Set
 from pathlib import Path
 from .user_fixtures import UserData
+# Add Firebase imports
+from firebase_admin import firestore
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,12 @@ class DatabaseSeeder:
         self.seeded_data: Dict[str, List[str]] = {}  # table_name -> list of primary keys
         self.db_seed_data_dir = Path(__file__).parent.parent / "db_seed_data"
         self._connection = None
+        # Firebase client for profile seeding
+        self._firebase_client = None
+        self.seeded_firebase_profiles: List[str] = []  # Track Firebase profiles for cleanup
+        self.seeded_firebase_layer_matchings: List[str] = []  # Track Firebase layer matchings for cleanup
+        self.seeded_firebase_user_layer_matchings: List[str] = []  # Track Firebase user layer matchings for cleanup
+        self.seeded_firebase_user_layer_matchings: List[str] = []  # Track Firebase user layer matchings for cleanup
     
     def _get_sync_connection(self):
         """Get a synchronous database connection"""
@@ -35,6 +43,35 @@ class DatabaseSeeder:
             logger.info("🔌 Created synchronous database connection")
         
         return self._connection
+    
+    def _get_firebase_client(self):
+        """Get Firebase client for Firestore operations"""
+        if self._firebase_client is None:
+            try:
+                # Initialize Firebase Admin SDK if not already done
+                import firebase_admin
+                from firebase_admin import credentials, firestore
+                
+                # Check if Firebase app is already initialized
+                try:
+                    firebase_app = firebase_admin.get_app()
+                    logger.info("🔥 Using existing Firebase app")
+                except ValueError:
+                    # App not initialized, initialize it
+                    logger.info("🔥 Initializing Firebase app for tests")
+                    # For tests, we might use default credentials or service account
+                    # This assumes Firebase is configured via environment variables
+                    cred = credentials.ApplicationDefault()
+                    firebase_app = firebase_admin.initialize_app(cred)
+                
+                self._firebase_client = firestore.client(firebase_app)
+                logger.info("🔥 Firebase client initialized successfully")
+                
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Firebase client: {e}")
+                raise
+        
+        return self._firebase_client
     
     def _execute_sync(self, query: str, *params):
         """Execute database query synchronously using psycopg2"""
@@ -75,7 +112,18 @@ class DatabaseSeeder:
     def _substitute_template_vars(self, data: Any, substitutions: Dict[str, str]) -> Any:
         """Recursively substitute template variables in data"""
         if isinstance(data, dict):
-            return {k: self._substitute_template_vars(v, substitutions) for k, v in data.items()}
+            # Substitute both keys and values
+            substituted_dict = {}
+            for k, v in data.items():
+                # Substitute template variables in key
+                substituted_key = k
+                if isinstance(k, str):
+                    for var, value in substitutions.items():
+                        substituted_key = substituted_key.replace(f"{{{var}}}", str(value))
+                # Substitute template variables in value recursively
+                substituted_value = self._substitute_template_vars(v, substitutions)
+                substituted_dict[substituted_key] = substituted_value
+            return substituted_dict
         elif isinstance(data, list):
             return [self._substitute_template_vars(item, substitutions) for item in data]
         elif isinstance(data, str):
@@ -336,8 +384,253 @@ class DatabaseSeeder:
         logger.info(f"✅ Seeded real estate test data for types: {property_types}")
         return variables
     
+    def seed_firebase_profiles(self, profile_configs: List[str], user_data: UserData = None, admin_user_data: UserData = None) -> Dict[str, Any]:
+        """
+        Seed Firebase user profiles for testing
+        
+        Args:
+            profile_configs: List of profile configuration names from firebase_profiles.json
+            user_data: User data for substitution in profiles
+            admin_user_data: Admin user data for member profiles that need admin_id
+        
+        Returns:
+            Dict with seeded profile information
+        """
+        firebase_client = self._get_firebase_client()
+        collection_name = "all_user_profiles"
+        
+        # Load profile templates from JSON
+        firebase_profiles_data = self._load_db_seed_data("firebase_profiles.json")
+        
+        variables = {}
+        seeded_profiles = []
+        
+        for profile_config in profile_configs:
+            if profile_config not in firebase_profiles_data:
+                logger.warning(f"⚠️ Profile config '{profile_config}' not found in firebase_profiles.json")
+                continue
+            
+            profile_template = firebase_profiles_data[profile_config].copy()
+            
+            # Prepare substitutions
+            substitutions = {
+                "test_run_id": self.test_run_id
+            }
+            logger.info(f"🔧 Using substitutions: {substitutions}")
+            
+            # Use provided user data or create default test data
+            if user_data:
+                substitutions.update({
+                    "user_id": user_data.user_id,
+                    "email": user_data.email,
+                    "username": user_data.username
+                })
+            else:
+                # Create test user data
+                substitutions.update({
+                    "user_id": f"test_user_{self.test_run_id}_{profile_config}",
+                    "email": f"test_{self.test_run_id}_{profile_config}@test.com",
+                    "username": f"test_user_{profile_config}"
+                })
+            
+            # For member profiles, use admin_user_data if provided
+            if profile_template.get("account_type") == "member" and admin_user_data:
+                substitutions["admin_id"] = admin_user_data.user_id
+            elif profile_template.get("account_type") == "member":
+                substitutions["admin_id"] = f"test_admin_{self.test_run_id}"
+            
+            # Apply substitutions to the profile data
+            profile_data = self._substitute_template_vars(profile_template, substitutions)
+            logger.info(f"🔧 Profile data after substitution for {profile_config}: {profile_data}")
+            
+            # Set the document ID to user_id
+            doc_id = profile_data["user_id"]
+            
+            try:
+                # Create document in Firestore
+                doc_ref = firebase_client.collection(collection_name).document(doc_id)
+                doc_ref.set(profile_data)
+                
+                # Track for cleanup
+                self.seeded_firebase_profiles.append(doc_id)
+                seeded_profiles.append(doc_id)
+                
+                # Store variables for test use
+                variables[f"{profile_config}_user_id"] = doc_id
+                variables[f"{profile_config}_email"] = profile_data["email"]
+                variables[f"{profile_config}_username"] = profile_data["username"]
+                variables[f"{profile_config}_account_type"] = profile_data["account_type"]
+                
+                logger.info(f"✅ Seeded Firebase profile: {profile_config} -> {doc_id}")
+                
+            except Exception as e:
+                logger.error(f"❌ Failed to seed Firebase profile {profile_config}: {e}")
+                raise
+        
+        logger.info(f"✅ Seeded {len(seeded_profiles)} Firebase profiles")
+        return variables
+    
+    def seed_firebase_layer_matchings(self) -> Dict[str, Any]:
+        """
+        Seed Firebase layer_matchings collection for testing
+        
+        Returns:
+            Dict with seeded matching information
+        """
+        firebase_client = self._get_firebase_client()
+        collection_name = "layer_matchings"
+        
+        # Load layer matching templates from JSON
+        layer_matchings_data = self._load_db_seed_data("layer_matchings.json")
+        
+        # Apply template variable substitution
+        substitutions = {"test_run_id": self.test_run_id}
+        logger.info(f"🔧 DEBUG: Applying substitutions to layer matchings: {substitutions}")
+        layer_matchings_data = self._substitute_template_vars(layer_matchings_data, substitutions)
+        
+        # Debug: Print the substituted data
+        logger.info(f"🔧 DEBUG: Substituted layer matchings data: {json.dumps(layer_matchings_data, indent=2)}")
+        
+        variables = {}
+        seeded_documents = []
+        
+        for doc_id, doc_data in layer_matchings_data.items():
+            try:
+                # Create document in Firestore
+                doc_ref = firebase_client.collection(collection_name).document(doc_id)
+                doc_ref.set(doc_data)
+                
+                # Track for cleanup
+                self.seeded_firebase_layer_matchings.append(doc_id)
+                seeded_documents.append(doc_id)
+                
+                # Store variables for test use
+                variables[f"layer_matching_{doc_id}"] = doc_data
+                
+                logger.info(f"✅ Seeded Firebase layer matching: {doc_id}")
+                
+            except Exception as e:
+                logger.error(f"❌ Failed to seed Firebase layer matching {doc_id}: {e}")
+                raise
+        
+        logger.info(f"✅ Seeded {len(seeded_documents)} Firebase layer matchings")
+        return variables
+    
+    def seed_firebase_user_layer_matchings(self, user_id: str = None) -> Dict[str, Any]:
+        """
+        Seed Firebase user_layer_matchings for testing
+        
+        Args:
+            user_id: The user ID to use for the mappings
+        
+        Returns:
+            Dict with seeded matching information
+        """
+        firebase_client = self._get_firebase_client()
+        collection_name = "layer_matchings"
+        document_id = "user_matching"
+        
+        # Load user layer matching templates from JSON
+        user_layer_matchings_data = self._load_db_seed_data("user_layer_matchings.json")
+        
+        # Apply substitutions if user_id provided
+        if user_id:
+            substitutions = {"user_id": user_id}
+            doc_data = self._substitute_template_vars(user_layer_matchings_data[document_id], substitutions)
+        else:
+            doc_data = user_layer_matchings_data[document_id]
+        
+        variables = {}
+        
+        try:
+            # Create document in Firestore
+            doc_ref = firebase_client.collection(collection_name).document(document_id)
+            doc_ref.set(doc_data)
+            
+            # Track for cleanup
+            self.seeded_firebase_user_layer_matchings.append(document_id)
+            
+            # Store variables for test use
+            variables[f"user_layer_matching_{document_id}"] = doc_data
+            
+            logger.info(f"✅ Seeded Firebase user layer matching: {document_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to seed Firebase user layer matching {document_id}: {e}")
+            raise
+        
+        logger.info("✅ Seeded Firebase user layer matchings")
+        return variables
+
+    # ...existing code...
+    
     def close_connection(self):
-        """Close the database connection"""
+        """Close the database connection and clean up Firebase profiles"""
+        # Clean up Firebase profiles first
+        if self.seeded_firebase_profiles and self._firebase_client:
+            try:
+                collection_ref = self._firebase_client.collection("all_user_profiles")
+                for doc_id in self.seeded_firebase_profiles:
+                    try:
+                        collection_ref.document(doc_id).delete()
+                        logger.info(f"🗑️ Deleted Firebase profile: {doc_id}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Error deleting Firebase profile {doc_id}: {e}")
+                
+                self.seeded_firebase_profiles.clear()
+                logger.info("🧹 Cleaned up Firebase profiles")
+            except Exception as e:
+                logger.warning(f"⚠️ Error during Firebase cleanup: {e}")
+        
+        # Clean up Firebase layer matchings
+        if self.seeded_firebase_layer_matchings and self._firebase_client:
+            try:
+                collection_ref = self._firebase_client.collection("layer_matchings")
+                for doc_id in self.seeded_firebase_layer_matchings:
+                    try:
+                        collection_ref.document(doc_id).delete()
+                        logger.info(f"🗑️ Deleted Firebase layer matching: {doc_id}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Error deleting Firebase layer matching {doc_id}: {e}")
+                
+                self.seeded_firebase_layer_matchings.clear()
+                logger.info("🧹 Cleaned up Firebase layer matchings")
+            except Exception as e:
+                logger.warning(f"⚠️ Error during Firebase layer matchings cleanup: {e}")
+        
+        # Clean up Firebase layer matchings
+        if self.seeded_firebase_layer_matchings and self._firebase_client:
+            try:
+                collection_ref = self._firebase_client.collection("layer_matchings")
+                for doc_id in self.seeded_firebase_layer_matchings:
+                    try:
+                        collection_ref.document(doc_id).delete()
+                        logger.info(f"🗑️ Deleted Firebase layer matching: {doc_id}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Error deleting Firebase layer matching {doc_id}: {e}")
+                
+                self.seeded_firebase_layer_matchings.clear()
+                logger.info("🧹 Cleaned up Firebase layer matchings")
+            except Exception as e:
+                logger.warning(f"⚠️ Error during Firebase layer matching cleanup: {e}")
+        
+        # Clean up Firebase user layer matchings
+        if self.seeded_firebase_user_layer_matchings and self._firebase_client:
+            try:
+                collection_ref = self._firebase_client.collection("layer_matchings")
+                for doc_id in self.seeded_firebase_user_layer_matchings:
+                    try:
+                        collection_ref.document(doc_id).delete()
+                        logger.info(f"🗑️ Deleted Firebase user layer matching: {doc_id}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Error deleting Firebase user layer matching {doc_id}: {e}")
+                
+                self.seeded_firebase_user_layer_matchings.clear()
+                logger.info("🧹 Cleaned up Firebase user layer matchings")
+            except Exception as e:
+                logger.warning(f"⚠️ Error during Firebase user layer matchings cleanup: {e}")
+        
+        # Close database connection
         if self._connection and not self._connection.closed:  # ✅ Fixed: removed ()
             self._connection.close()
             logger.info("🔌 Closed database connection")

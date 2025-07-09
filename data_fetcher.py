@@ -669,6 +669,12 @@ async def fetch_lyr_map_data(req: ReqPrdcerLyrMapData) -> ResLyrMapData:
     """
     Fetches detailed map data for a specific producer layer.
     """
+    # Validate layer ID is not empty
+    if not req.prdcer_lyr_id or not req.prdcer_lyr_id.strip():
+        raise HTTPException(
+            status_code=400, detail="Layer ID cannot be empty"
+        )
+    
     dataset = {}
     user_layer_matching = await load_user_layer_matching()
     layer_owner_id = user_layer_matching.get(req.prdcer_lyr_id)
@@ -685,6 +691,12 @@ async def fetch_lyr_map_data(req: ReqPrdcerLyrMapData) -> ResLyrMapData:
 
     dataset_id, dataset_info = await fetch_dataset_id(req.prdcer_lyr_id)
     dataset = await load_dataset(dataset_id, fetch_full_plan_datasets=True)
+
+    # Check if dataset was found
+    if dataset is None:
+        raise HTTPException(
+            status_code=404, detail=f"Dataset not found for layer {req.prdcer_lyr_id}"
+        )
 
     # Extract properties from first feature if available
     properties = []

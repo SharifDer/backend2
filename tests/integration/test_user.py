@@ -146,5 +146,7 @@ USER_PROFILE_TESTS = [
     ),
 ]
 
+# - POST /user_profile    - Get user profile (includes layers)
+
 
 test_user_profile_endpoints = create_parametrized_test(USER_PROFILE_TESTS)

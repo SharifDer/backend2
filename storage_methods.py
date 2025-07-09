@@ -131,9 +131,12 @@ async def fetch_dataset_id(lyr_id: str) -> Tuple[str, Dict]:
     for d_id, dataset_info in dataset_layer_matching.items():
         if lyr_id in dataset_info["prdcer_lyrs"]:
             return d_id, dataset_info
-    # raise HTTPException(
-    #     status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found for this layer"
-    # )
+    
+    # If no dataset found, raise appropriate error
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, 
+        detail="Dataset not found for this layer"
+    )
 
 
 def fetch_layer_owner(prdcer_lyr_id: str) -> str:

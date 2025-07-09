@@ -1,0 +1,114 @@
+{
+  "admin_profile_basic": {
+    "user_id": "{user_id}",
+    "email": "{email}",
+    "username": "{username}",
+    "account_type": "admin",
+    "admin_id": null,
+    "settings": {
+      "show_price_on_purchase": true
+    },
+    "prdcer": {
+      "prdcer_dataset": {},
+      "prdcer_lyrs": {},
+      "prdcer_ctlgs": {},
+      "draft_ctlgs": {}
+    }
+  },
+  
+  "admin_profile_with_datasets": {
+    "user_id": "{user_id}",
+    "email": "{email}",
+    "username": "{username}",
+    "account_type": "admin",
+    "admin_id": null,
+    "settings": {
+      "show_price_on_purchase": true
+    },
+    "prdcer": {
+      "prdcer_dataset": {
+        "plan_supermarket_Saudi Arabia_Riyadh": "plan_supermarket_Saudi Arabia_Riyadh",
+        "plan_grocery_store_OR_convenience_store_OR_market_OR_store_Saudi Arabia_Riyadh": "plan_grocery_store_OR_convenience_store_OR_market_OR_store_Saudi Arabia_Riyadh",
+        "plan_pharmacy_Saudi Arabia_Riyadh": "plan_pharmacy_Saudi Arabia_Riyadh"
+      },
+      "prdcer_lyrs": {
+        "l09a5e6ed-d22e-4db0-a0bd-cf0a0bd93548": {
+          "bknd_dataset_id": "46.6753_24.7136_30000.0_supermarket_token_{test_run_id}=",
+          "city_name": "Riyadh",
+          "layer_description": "",
+          "layer_legend": "SA-RIY-supermarket",
+          "points_color": "#28A745",
+          "prdcer_layer_name": "SA-RIY-supermarket",
+          "prdcer_lyr_id": "l09a5e6ed-d22e-4db0-a0bd-cf0a0bd93548"
+        },
+        "l116e3196-e721-4434-bad6-46291ba2aa0a": {
+          "bknd_dataset_id": "46.6753_24.7136_30000.0_pharmacy_token_{test_run_id}=",
+          "city_name": "Riyadh",
+          "layer_description": "",
+          "layer_legend": "SA-RIY-pharmacy",
+          "points_color": "#DC3545",
+          "prdcer_layer_name": "SA-RIY-pharmacy",
+          "prdcer_lyr_id": "l116e3196-e721-4434-bad6-46291ba2aa0a"
+        }
+      },
+      "prdcer_ctlgs": {},
+      "draft_ctlgs": {}
+    }
+  },
+
+  "member_profile_basic": {
+    "user_id": "{user_id}",
+    "email": "{email}",
+    "username": "{username}",
+    "account_type": "member",
+    "admin_id": "{admin_id}",
+    "settings": {
+      "show_price_on_purchase": false
+    },
+    "prdcer": {
+      "prdcer_dataset": {},
+      "prdcer_lyrs": {},
+      "prdcer_ctlgs": {},
+      "draft_ctlgs": {}
+    }
+  },
+
+  "admin_profile_with_real_estate": {
+    "user_id": "{user_id}",
+    "email": "{email}",
+    "username": "{username}",
+    "account_type": "admin",
+    "admin_id": null,
+    "settings": {
+      "show_price_on_purchase": true
+    },
+    "prdcer": {
+      "prdcer_dataset": {
+        "plan_warehouse_for_rent_Saudi Arabia_Riyadh": "plan_warehouse_for_rent_Saudi Arabia_Riyadh",
+        "plan_floor_for_rent_Saudi Arabia_Jeddah": "plan_floor_for_rent_Saudi Arabia_Jeddah"
+      },
+      "prdcer_lyrs": {
+        "l6852deb2-270a-483d-99ab-bcbdb6dd69d6": {
+          "bknd_dataset_id": "saudi_real_estate_riyadh_box=24.17191099651408,25.255249899881886,46.08231777169512,47.268282228304884_type=warehouse_for_rent",
+          "city_name": "Riyadh",
+          "layer_description": "",
+          "layer_legend": "warehouse for_rent",
+          "points_color": "#28A745",
+          "prdcer_layer_name": "warehouse for_rent",
+          "prdcer_lyr_id": "l6852deb2-270a-483d-99ab-bcbdb6dd69d6"
+        },
+        "l116e3196-e721-4434-bad6-46291ba2aa0b": {
+          "bknd_dataset_id": "saudi_real_estate_jeddah_box=21.001395380391024,22.08516943425843,38.593593441192226,39.75200655880778_type=floor_for_rent",
+          "city_name": "Jeddah",
+          "layer_description": "",
+          "layer_legend": "SA-JED-floor for_rent",
+          "points_color": "#17A2B8",
+          "prdcer_layer_name": "SA-JED-floor for_rent",
+          "prdcer_lyr_id": "l116e3196-e721-4434-bad6-46291ba2aa0b"
+        }
+      },
+      "prdcer_ctlgs": {},
+      "draft_ctlgs": {}
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "dataset_matching": {
+    "46.6753_24.7136_30000.0_supermarket_token_{test_run_id}=": {
+      "prdcer_lyrs": ["l09a5e6ed-d22e-4db0-a0bd-cf0a0bd93548"],
+      "description": "Test supermarket dataset for Riyadh",
+      "created_at": "2025-01-01T00:00:00Z",
+      "city": "Riyadh",
+      "country": "Saudi Arabia",
+      "category": "supermarket",
+      "records_count": 9191919
+    },
+    "46.6753_24.7136_30000.0_pharmacy_token_{test_run_id}=": {
+      "prdcer_lyrs": ["l116e3196-e721-4434-bad6-46291ba2aa0a"],
+      "description": "Test pharmacy dataset for Riyadh",
+      "created_at": "2025-01-01T00:00:00Z",
+      "city": "Riyadh",
+      "country": "Saudi Arabia",
+      "category": "pharmacy",
+      "records_count": 9191919
+    },
+    "46.6753_24.7136_30000.0_grocery_store_token_{test_run_id}=": {
+      "prdcer_lyrs": ["l28c9d4ba-a11b-4567-c89d-ef1234567890"],
+      "description": "Test grocery store dataset for Riyadh",
+      "created_at": "2025-01-01T00:00:00Z",
+      "city": "Riyadh",
+      "country": "Saudi Arabia",
+      "category": "grocery_store",
+      "records_count": 9191919
+    }
+  }
+}

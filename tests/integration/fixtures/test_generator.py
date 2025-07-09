@@ -41,6 +41,7 @@ class Prerequisites:
     real_estate_seeds: List[str] = (
         None  # ["residential_properties", "commercial_properties"]
     )
+    firebase_profile_seeds: List[str] = None  # ["admin_profile_basic", "admin_profile_with_datasets"]
     custom_user_config: Optional[Dict[str, Any]] = None
 
 
@@ -224,6 +225,42 @@ class ConfigTestGenerator:
                     f"✅ Real estate data seeded with variables: {list(real_estate_vars.keys())}"
                 )
 
+            # Seed Firebase profiles if specified
+            if config.prerequisites.firebase_profile_seeds:
+                logger.info(
+                    f"🔥 Seeding Firebase profiles: {config.prerequisites.firebase_profile_seeds}"
+                )
+                # Use the main user data if available, otherwise None
+                admin_user = context.user_data if context.user_data and context.user_data.account_type == "admin" else None
+                firebase_vars = self.database_seeder.seed_firebase_profiles(
+                    config.prerequisites.firebase_profile_seeds,
+                    context.user_data,
+                    admin_user
+                )
+                context.variables.update(
+                    {f"firebase.{k}": v for k, v in firebase_vars.items()}
+                )
+                context.database_vars.update(firebase_vars)
+                logger.info(
+                    f"✅ Firebase profiles seeded with variables: {list(firebase_vars.keys())}"
+                )
+                
+                # Also seed layer matchings if profiles contain layers
+                logger.info("🔗 Seeding Firebase layer matchings for profile compatibility")
+                layer_matching_vars = self.database_seeder.seed_firebase_layer_matchings()
+                context.variables.update(
+                    {f"firebase.{k}": v for k, v in layer_matching_vars.items()}
+                )
+                logger.info(f"✅ Layer matchings seeded with {len(layer_matching_vars)} entries")
+                
+                # Also seed user layer matchings
+                logger.info("👤 Seeding Firebase user layer matchings")
+                user_layer_matching_vars = self.database_seeder.seed_firebase_user_layer_matchings(context.user_data.user_id if context.user_data else None)
+                context.variables.update(
+                    {f"firebase.{k}": v for k, v in user_layer_matching_vars.items()}
+                )
+                logger.info(f"✅ User layer matchings seeded")
+
             # Register tables for cleanup
             if self.database_cleanup_manager:
                 for table in self.database_seeder.created_tables:
@@ -240,6 +277,8 @@ class ConfigTestGenerator:
                 seeded_types.append("transformed_datasets")
             if config.prerequisites.real_estate_seeds:
                 seeded_types.append("real_estate_data")
+            if config.prerequisites.firebase_profile_seeds:
+                seeded_types.append("firebase_profiles")
 
             logger.info(
                 f"✅ Database seeding completed for types: {seeded_types}"
@@ -609,12 +648,22 @@ class ConfigTestGenerator:
                     timeout=config.timeout,
                 )
             elif method == "delete":
-                response = self.http_client.delete(
-                    url,
-                    headers=headers,
-                    json=input_data,
-                    timeout=config.timeout,
-                )
+                # DELETE requests often send data in query params or body, but httpx.delete() doesn't accept json
+                # For FastAPI DELETE endpoints that need a body, we need to send data differently
+                if input_data:
+                    response = self.http_client.request(
+                        method="DELETE",
+                        url=url,
+                        headers=headers,
+                        json=input_data,
+                        timeout=config.timeout,
+                    )
+                else:
+                    response = self.http_client.delete(
+                        url,
+                        headers=headers,
+                        timeout=config.timeout,
+                    )
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
 
@@ -1122,6 +1171,7 @@ class ConfigTestGenerator:
                     config.prerequisites.ggl_raw_seeds,
                     config.prerequisites.dataset_seeds,
                     config.prerequisites.real_estate_seeds,
+                    config.prerequisites.firebase_profile_seeds,
                 ]
             )
             if not has_seeds:
