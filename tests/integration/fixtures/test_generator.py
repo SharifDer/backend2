@@ -241,9 +241,19 @@ class ConfigTestGenerator:
                     {f"firebase.{k}": v for k, v in firebase_vars.items()}
                 )
                 context.database_vars.update(firebase_vars)
+                
+                # Also expose layer IDs in the database namespace for compatibility
+                layer_id_vars = {k: v for k, v in firebase_vars.items() if k.endswith('_layer_id')}
+                context.variables.update(
+                    {f"database.{k}": v for k, v in layer_id_vars.items()}
+                )
                 logger.info(
                     f"✅ Firebase profiles seeded with variables: {list(firebase_vars.keys())}"
                 )
+                if layer_id_vars:
+                    logger.info(
+                        f"🔧 Layer IDs also exposed in database namespace: {list(layer_id_vars.keys())}"
+                    )
                 
                 # Also seed layer matchings if profiles contain layers
                 logger.info("🔗 Seeding Firebase layer matchings for profile compatibility")

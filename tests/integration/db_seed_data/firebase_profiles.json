@@ -73,6 +73,35 @@
     }
   },
 
+  "admin_profile_with_cafe_restaurant": {
+    "user_id": "{user_id}",
+    "email": "{email}",
+    "username": "{username}",
+    "account_type": "admin",
+    "admin_id": null,
+    "settings": {
+      "show_price_on_purchase": true
+    },
+    "prdcer": {
+      "prdcer_dataset": {
+        "plan_cafe_OR_restaurant_Saudi Arabia_Jeddah": "plan_cafe_OR_restaurant_Saudi Arabia_Jeddah"
+      },
+      "prdcer_lyrs": {
+        "l217d4297-f832-5545-cbd7-57392ca3bb1b": {
+          "bknd_dataset_id": "21.5433_39.1728_30000.0_cafe_restaurant_token_{test_run_id}=",
+          "city_name": "Jeddah",
+          "layer_description": "",
+          "layer_legend": "SA-JED-cafe-restaurant",
+          "points_color": "#17A2B8",
+          "prdcer_layer_name": "SA-JED-cafe-restaurant",
+          "prdcer_lyr_id": "l217d4297-f832-5545-cbd7-57392ca3bb1b"
+        }
+      },
+      "prdcer_ctlgs": {},
+      "draft_ctlgs": {}
+    }
+  },
+
   "admin_profile_with_real_estate": {
     "user_id": "{user_id}",
     "email": "{email}",

@@ -461,6 +461,20 @@ class DatabaseSeeder:
                 variables[f"{profile_config}_username"] = profile_data["username"]
                 variables[f"{profile_config}_account_type"] = profile_data["account_type"]
                 
+                # Extract layer IDs from prdcer_lyrs for test use (simple exact match storage)
+                prdcer_lyrs = profile_data.get("prdcer", {}).get("prdcer_lyrs", {})
+                for layer_id, layer_info in prdcer_lyrs.items():
+                    layer_name = layer_info.get("prdcer_layer_name", "")
+                    # Store by exact layer name for specific access
+                    safe_layer_name = layer_name.lower().replace("-", "_").replace(" ", "_").replace(".", "_")
+                    # Remove any non-alphanumeric characters except underscores
+                    safe_layer_name = "".join(c if c.isalnum() or c == "_" else "_" for c in safe_layer_name)
+                    # Remove duplicate underscores
+                    safe_layer_name = "_".join(filter(None, safe_layer_name.split("_")))
+                    
+                    if safe_layer_name:
+                        variables[f"{safe_layer_name}_layer_id"] = layer_id
+                
                 logger.info(f"✅ Seeded Firebase profile: {profile_config} -> {doc_id}")
                 
             except Exception as e:
