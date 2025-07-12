@@ -124,10 +124,10 @@ class ReqRecolorBasedon(BaseModel):
     based_on_lyr_id: str
     based_on_lyr_name: str
     coverage_value: float  # [10min , 20min or 300 m or 500m]
-    coverage_property: str  # [Drive_time or Radius]
-    color_based_on: str  # ["rating" or "user_ratings_total"]
+    area_coverage_property: str  # [Drive_time or Radius]
+    property_name: str  # ["rating" or "user_ratings_total"]
     list_names: Optional[List[str]] = []
-    comparison_type: str
+    comparison_operator: str
     
 # User prompt -> llm
 class ReqPrompt(BaseModel):
@@ -153,7 +153,7 @@ class ReqLLMFetchDataset(BaseModel):
     )
 
 class ReqFilter(ReqRecolorBasedon):
-    threshold: float|str
+    property_threshold: float|str
     
 class ReqSrcDistination(BaseModel):
     source : Coordinate

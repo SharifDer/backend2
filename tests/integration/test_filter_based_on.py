@@ -29,11 +29,11 @@ FILTER_BASED_ON_TESTS = [
                 "based_on_lyr_id": "l116e3196-e721-4434-bad6-46291ba2aa0a",
                 "based_on_lyr_name": "SA-RIY-pharmacy",
                 "coverage_value": 2.0,
-                "coverage_property": "radius",
-                "color_based_on": "rating",
+                "area_coverage_property": "radius",
+                "property_name": "rating",
                 "list_names": [],
-                "comparison_type": "greater",
-                "threshold": 4.0
+                "comparison_operator": "greater",
+                "property_threshold": 4.0
             }
         },
         expected_output_file="expected_responses/test_filter_based_on_radius_rating.json"
@@ -64,11 +64,11 @@ FILTER_BASED_ON_TESTS = [
                 "based_on_lyr_id": "l116e3196-e721-4434-bad6-46291ba2aa0a",
                 "based_on_lyr_name": "SA-RIY-pharmacy",
                 "coverage_value": 10.0,
-                "coverage_property": "drive_time",
-                "color_based_on": "name",
+                "area_coverage_property": "drive_time",
+                "property_name": "name",
                 "list_names": ["Test Supermarket Riyadh", "Test Hypermarket Riyadh"],
-                "comparison_type": "less",
-                "threshold": ""
+                "comparison_operator": "less",
+                "property_threshold": ""
             }
         },
         expected_output_file="expected_responses/test_filter_based_on_drive_time_name.json"
@@ -99,11 +99,11 @@ FILTER_BASED_ON_TESTS = [
                 "based_on_lyr_id": "l217d4297-f832-5545-cbd7-57392ca3bb1b",
                 "based_on_lyr_name": "SA-JED-cafe-restaurant",
                 "coverage_value": 1.5,
-                "coverage_property": "radius",
-                "color_based_on": "user_ratings_total",
+                "area_coverage_property": "radius",
+                "property_name": "user_ratings_total",
                 "list_names": [],
-                "comparison_type": "greater",
-                "threshold": 50
+                "comparison_operator": "greater",
+                "property_threshold": 50
             }
         },
         expected_output_file="expected_responses/test_filter_based_on_user_ratings_total.json"
@@ -134,11 +134,11 @@ FILTER_BASED_ON_TESTS = [
                 "based_on_lyr_id": "l09a5e6ed-d22e-4db0-a0bd-cf0a0bd93548",
                 "based_on_lyr_name": "SA-RIY-supermarket",
                 "coverage_value": 0.0,
-                "coverage_property": "",
-                "color_based_on": "rating",
+                "area_coverage_property": "",
+                "property_name": "rating",
                 "list_names": [],
-                "comparison_type": "greater",
-                "threshold": 4.0
+                "comparison_operator": "greater",
+                "property_threshold": 4.0
             }
         },
         expected_output_file="expected_responses/test_filter_based_on_no_coverage.json"
@@ -169,11 +169,11 @@ FILTER_BASED_ON_TESTS = [
                 "based_on_lyr_id": "l09a5e6ed-d22e-4db0-a0bd-cf0a0bd93548",
                 "based_on_lyr_name": "SA-RIY-supermarket",
                 "coverage_value": 1.0,
-                "coverage_property": "radius",
-                "color_based_on": "rating",
+                "area_coverage_property": "radius",
+                "property_name": "rating",
                 "list_names": [],
-                "comparison_type": "greater",
-                "threshold": 5.0  # Impossible rating threshold
+                "comparison_operator": "greater",
+                "property_threshold": 5.0  # Impossible rating threshold
             }
         },
         expected_output_file="expected_responses/test_filter_based_on_no_results.json"
