@@ -1,0 +1,85 @@
+{
+  "status_code": 200,
+  "response_body": {
+    "message": "Request received.",
+    "request_id": "min_length:1",
+    "data": [
+      {
+        "prdcer_layer_name": "SA-RIY-pharmacy - Radius Filter",
+        "prdcer_lyr_id": "min_length:1",
+        "bknd_dataset_id": "",
+        "points_color": "#DC3545",
+        "layer_legend": "Radius ≥ 0.0 km",
+        "layer_description": "Filtered based on coverage and property criteria",
+        "records_count": 1,
+        "city_name": "Riyadh",
+        "is_zone_lyr": "true",
+        "progress": 0,
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "displayName": "Test Pharmacy Riyadh",
+              "rating": 4.3,
+              "formattedAddress": "King Abdul Aziz Road, Riyadh, Saudi Arabia",
+              "id": "contains:ChIJtest_pharmacy_001_"
+            },
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                46.6653,
+                24.7036
+              ]
+            }
+          }
+        ],
+        "properties": [
+          "displayName",
+          "rating",
+          "formattedAddress",
+          "id"
+        ],
+        "sub_lyr_id": "contains:l116e3196-e721-4434-bad6-46291ba2aa0a_radius_filter"
+      },
+      {
+        "prdcer_layer_name": "SA-RIY-pharmacy - Radius Filter",
+        "prdcer_lyr_id": "min_length:1",
+        "bknd_dataset_id": "",
+        "points_color": "#DC3545",
+        "layer_legend": "Radius ≥ 0.0 km",
+        "layer_description": "Filtered based on coverage and property criteria",
+        "records_count": 1,
+        "city_name": "Riyadh",
+        "is_zone_lyr": "true",
+        "progress": 0,
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "displayName": "Test Medical Center Pharmacy",
+              "rating": 4.1,
+              "formattedAddress": "Olaya Street, Riyadh, Saudi Arabia",
+              "id": "contains:ChIJtest_pharmacy_002_"
+            },
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                46.6953,
+                24.7336
+              ]
+            }
+          }
+        ],
+        "properties": [
+          "displayName",
+          "rating",
+          "formattedAddress",
+          "id"
+        ],
+        "sub_lyr_id": "contains:l116e3196-e721-4434-bad6-46291ba2aa0a_radius_filter"
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "status_code": 500,
+  "response_body": {
+    "detail": "An unexpected error occurred: No features found based on the given criteria."
+  }
+}

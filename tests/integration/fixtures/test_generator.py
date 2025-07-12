@@ -594,6 +594,19 @@ class ConfigTestGenerator:
 
         try:
             # ======================
+            # 0. PRE-FLIGHT CHECK - Verify expected output file exists
+            # ======================
+            if config.expected_output_file:
+                expected_file_path = Path(__file__).parent.parent / config.expected_output_file
+                if not expected_file_path.exists():
+                    logger.error(f"❌ Expected output file missing: {expected_file_path}")
+                    logger.error(f"❌ Test '{config.name}' requires this file to run")
+                    logger.error(f"❌ Please create the expected response file before running this test")
+                    return False
+                else:
+                    logger.info(f"✅ Expected output file found: {config.expected_output_file}")
+
+            # ======================
             # 1. SEEDING - Set up prerequisites
             # ======================
             logger.info("🌱 Setting up prerequisites...")
