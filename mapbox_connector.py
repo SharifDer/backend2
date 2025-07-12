@@ -86,7 +86,7 @@ class MapBoxConnector:
         zoom_multiplier = RADIUS_ZOOM_MULTIPLIER.get(radius, 1)
 
         for idx, feature in enumerate(features):
-            feature["properties"]["popularity_score"] = (
+            feature["properties"]["popularity_score"] = int(
                 calculate_category_multiplier(idx) * zoom_multiplier
             )
 

@@ -1,6 +1,6 @@
 {
   "residential_properties": {
-    "filename_template": "test_real_estate_residential_24.7136_46.6753_{test_run_id}",
+    "filename_template": "test_real_estate_residential_24.7136_46.6753_test_006",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -62,7 +62,7 @@
     }
   },
   "commercial_properties": {
-    "filename_template": "test_real_estate_commercial_24.7136_46.6753_{test_run_id}",
+    "filename_template": "test_real_estate_commercial_24.7136_46.6753_test_007",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,

@@ -36,8 +36,7 @@ FILTER_BASED_ON_TESTS = [
                 "threshold": 4.0
             }
         },
-        expected_output_file="expected_responses/filter_based_on_responses.json",
-        expected_output_key="radius_rating_filter_response"
+        expected_output_file="expected_responses/test_filter_based_on_radius_rating.json"
     ),
     
     ConfigDrivenTest(
@@ -72,8 +71,7 @@ FILTER_BASED_ON_TESTS = [
                 "threshold": ""
             }
         },
-        expected_output_file="expected_responses/filter_based_on_responses.json",
-        expected_output_key="drive_time_name_filter_response"
+        expected_output_file="expected_responses/test_filter_based_on_drive_time_name.json"
     ),
     
     ConfigDrivenTest(
@@ -108,8 +106,7 @@ FILTER_BASED_ON_TESTS = [
                 "threshold": 50
             }
         },
-        expected_output_file="expected_responses/filter_based_on_responses.json",
-        expected_output_key="user_ratings_filter_response"
+        expected_output_file="expected_responses/test_filter_based_on_user_ratings_total.json"
     ),
     
     ConfigDrivenTest(
@@ -144,8 +141,7 @@ FILTER_BASED_ON_TESTS = [
                 "threshold": 4.0
             }
         },
-        expected_output_file="expected_responses/filter_based_on_responses.json",
-        expected_output_key="property_only_filter_response"
+        expected_output_file="expected_responses/test_filter_based_on_no_coverage.json"
     ),
     
     ConfigDrivenTest(
@@ -180,8 +176,7 @@ FILTER_BASED_ON_TESTS = [
                 "threshold": 5.0  # Impossible rating threshold
             }
         },
-        expected_output_file="expected_responses/filter_based_on_responses.json",
-        expected_output_key="no_results_error_response"
+        expected_output_file="expected_responses/test_filter_based_on_no_results.json"
     )
 ]
 

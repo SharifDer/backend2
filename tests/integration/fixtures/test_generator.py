@@ -66,12 +66,9 @@ class ConfigDrivenTest:
     expected_output: Dict[str, Any] = None  # ✅ Make this optional
     pydantic_model: Optional[str] = None
     timeout: int = 30
-    # ✅ New fields for JSON-based expected output
+    # JSON-based expected output
     expected_output_file: Optional[str] = (
-        None  # e.g., "test_fetch_dataset.json"
-    )
-    expected_output_key: Optional[str] = (
-        None  # e.g., "supermarket_cat_response"
+        None  # e.g., "expected_responses/test_fetch_dataset_supermarket.json"
     )
 
 
@@ -337,7 +334,7 @@ class ConfigTestGenerator:
         self, config: ConfigDrivenTest, context: RuntimeContext
     ) -> Dict[str, Any]:
         """Load expected output from JSON file if specified"""
-        if not config.expected_output_file or not config.expected_output_key:
+        if not config.expected_output_file:
             return config.expected_output
 
         # Construct path to JSON file
@@ -350,16 +347,10 @@ class ConfigTestGenerator:
             with open(json_file_path, "r", encoding="utf-8") as f:
                 json_data = json.load(f)
 
-            if config.expected_output_key not in json_data:
-                logger.error(
-                    f"❌ Key '{config.expected_output_key}' not found in {config.expected_output_file}"
-                )
-                logger.info(f"Available keys: {list(json_data.keys())}")
-                return config.expected_output or {}
-
-            expected_output = json_data[config.expected_output_key]
+            # Use the entire JSON file content as expected output
+            expected_output = json_data
             logger.info(
-                f"✅ Loaded expected output for key: {config.expected_output_key}"
+                f"✅ Loaded expected output from file: {config.expected_output_file}"
             )
 
             # Apply template substitution to the loaded JSON

@@ -1,6 +1,6 @@
 {
   "supermarket_cat_response": {
-    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_supermarket_exc_{test_run_id}",
+    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_supermarket_exc_test_008",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -7711,7 +7711,7 @@
   
 
   "coffee_shop_search": {
-    "filename_template": "test_text_search_46.6753_24.7136_30000.0_coffee_shop_{test_run_id}",
+    "filename_template": "test_text_search_46.6753_24.7136_30000.0_coffee_shop_test_009",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -7762,7 +7762,7 @@
     }
   },
   "restaurant_search": {
-    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_restaurant_exc_{test_run_id}",
+    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_restaurant_exc_test_010",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -7803,7 +7803,7 @@
     }
   },
   "cafe_restaurant_cat_response": {
-    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_cafe_restaurant_exc_{test_run_id}",
+    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_cafe_restaurant_exc_test_011",
     "request_data": {
       "lat": 21.5433,
       "lng": 39.1728,
@@ -7909,7 +7909,7 @@
     }
   },
   "restaurant_jeddah_cat_response": {
-    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_restaurant_exc_{test_run_id}",
+    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_restaurant_exc_test_012",
     "request_data": {
       "lat": 21.5433,
       "lng": 39.1728,
@@ -7970,7 +7970,7 @@
     }
   },
   "cafe_jeddah_cat_response": {
-    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_cafe_exc_restaurant_{test_run_id}",
+    "filename_template": "test_category_search_39.1728_21.5433_30000.0_inc_cafe_exc_restaurant_test_013",
     "request_data": {
       "lat": 21.5433,
       "lng": 39.1728,
@@ -8032,7 +8032,7 @@
     }
   },
   "supermarket_full_data_riyadh_response": {
-    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_supermarket_exc_full_data_{test_run_id}",
+    "filename_template": "test_category_search_46.6753_24.7136_30000.0_inc_supermarket_exc_full_data_test_014",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -8550,7 +8550,7 @@
     }
   },
   "supermarket_full_data_riyadh_token_response": {
-    "filename_template": "test_category_search_46.6753_24.7136_15000.0_inc_supermarket_exc_token_{test_run_id}",
+    "filename_template": "test_category_search_46.6753_24.7136_15000.0_inc_supermarket_exc_token_test_015",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -9100,7 +9100,7 @@
     }
   },
   "arabic_keyword_al_halaqa_response": {
-    "filename_template": "test_text_search_46.6753_24.7136_44616.54000299383_@الحلقه@_{test_run_id}",
+    "filename_template": "test_text_search_46.6753_24.7136_44616.54000299383_@الحلقه@_test_016",
     "request_data": {
       "textQuery": "الحلقه",
       "locationRestriction": {

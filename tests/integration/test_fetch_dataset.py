@@ -42,8 +42,7 @@ FETCH_DATASET_TESTS = [
             }
         },
         # ✅ Remove expected_output and use JSON instead
-        expected_output_file="test_fetch_dataset.json",
-        expected_output_key="supermarket_cat_response"
+        expected_output_file="expected_responses/test_fetch_dataset_supermarket.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_cafe_restaurant",
@@ -82,8 +81,7 @@ FETCH_DATASET_TESTS = [
                 "full_load": False
             }
         },
-        expected_output_file="test_fetch_dataset.json",
-        expected_output_key="cafe_restaurant_cat_response"
+        expected_output_file="expected_responses/test_fetch_dataset_cafe_restaurant.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_supermarket_full_data_riyadh",
@@ -122,8 +120,7 @@ FETCH_DATASET_TESTS = [
                 "full_load": False
             }
         },
-        expected_output_file="test_fetch_dataset.json",
-        expected_output_key="supermarket_full_data_riyadh_response"
+        expected_output_file="expected_responses/test_fetch_dataset_supermarket_full_data_riyadh.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_supermarket_full_data_with_token",
@@ -162,8 +159,7 @@ FETCH_DATASET_TESTS = [
                 "full_load": False
             }
         },
-        expected_output_file="test_fetch_dataset.json",
-        expected_output_key="supermarket_full_data_riyadh_token_response"
+        expected_output_file="expected_responses/test_fetch_dataset_supermarket_full_data_with_token.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_arabic_keyword_search",
@@ -202,8 +198,7 @@ FETCH_DATASET_TESTS = [
                 "full_load": False
             }
         },
-        expected_output_file="test_fetch_dataset.json",
-        expected_output_key="arabic_keyword_al_halaqa_response"
+        expected_output_file="expected_responses/test_fetch_dataset_arabic_keyword_search.json"
     )
 ]
 

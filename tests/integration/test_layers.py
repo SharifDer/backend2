@@ -280,8 +280,7 @@ LAYER_MANAGEMENT_TESTS = [
                 "prdcer_lyr_id": "l09a5e6ed-d22e-4db0-a0bd-cf0a0bd93548"
             },
         },
-        expected_output_file="expected_responses/supermarket_layer_response.json",
-        expected_output_key="complete_supermarket_response",
+        expected_output_file="expected_responses/test_prdcer_lyr_map_data_verify_feature_data.json"
     ),
     
     ConfigDrivenTest(

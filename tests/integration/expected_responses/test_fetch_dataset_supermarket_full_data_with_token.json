@@ -1,0 +1,610 @@
+{
+  "status_code": 200,
+  "response_body": {
+    "message": "Request received.",
+    "request_id": "min_length:1",
+    "data": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "cell_phone_store",
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "LuLu Hypermarket - Riyadh Avenue Mall - Murabba",
+            "id": "ChIJfxBoD4cFLz4RJFypsWDRxVA",
+            "popularity_score": 500
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7036873,
+              24.6637609
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "cell_phone_store",
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "LuLu Hypermarket - Al Batha",
+            "id": "ChIJceAdtaoFLz4Rg8h1oe-E1jQ",
+            "popularity_score": 500
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7156861,
+              24.633700299999997
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "cell_phone_store",
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "LuLu Hypermarket - Al Yasmin",
+            "id": "ChIJo9bWVQHlLj4RTgkIH0t9OCo",
+            "popularity_score": 500
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.6650409,
+              24.8176751
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "discount_store",
+              "convenience_store",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "The Economic Hall",
+            "id": "ChIJc2OcSh4HLz4RVzQWOC2CNE4",
+            "popularity_score": 500
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7898449,
+              24.6597835
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "shopping_mall",
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "shopping_mall",
+            "name": "Family Discount",
+            "id": "ChIJaYucAKcBLz4R2sSM6zEadb8",
+            "popularity_score": 500
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.814706799999996,
+              24.756598699999998
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Spinneys La Strada Yard",
+            "id": "ChIJcViaCwADLz4RqVIKab_MdWM",
+            "popularity_score": 400
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7151147,
+              24.750051499999998
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Nesto Hypermarket Batha",
+            "id": "ChIJKXW0yroFLz4Rpqm8mgLXILA",
+            "popularity_score": 400
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7188212,
+              24.635575499999998
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "department_store",
+              "supermarket",
+              "bakery",
+              "grocery_store",
+              "food_store",
+              "home_goods_store",
+              "wholesaler",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Nesto Hypermarket Azizia",
+            "id": "ChIJm3qkr0oPLz4RLsP9-X2oS7E",
+            "popularity_score": 400
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.747714599999995,
+              24.5986428
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "bakery",
+              "market",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Thimar Aloqailat Supermarket",
+            "id": "ChIJm9DEovbjLj4RADnMySSMAmU",
+            "popularity_score": 400
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.6500537,
+              24.802481399999998
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "WEMART HYPERMARKET",
+            "id": "ChIJoeLn_j4BLz4RrKxSOArZRK4",
+            "popularity_score": 400
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7842134,
+              24.727639099999998
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "cell_phone_store",
+              "asian_grocery_store",
+              "supermarket",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "LuLu Hypermarket - Al Malaz",
+            "id": "ChIJm7fUVcEHLz4R2Aeg1j2g3mw",
+            "popularity_score": 300
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7512699,
+              24.6593904
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Lulu Hypermarket atyaf mall",
+            "id": "ChIJd_H8lob_Lj4RauK4UQU5dxA",
+            "popularity_score": 300
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.767636599999996,
+              24.7929436
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "department_store",
+              "asian_grocery_store",
+              "bakery",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "LuLu Hypermarket - Dhahrat Laban",
+            "id": "ChIJGacpfwAZLz4RHcJkFd0Ldow",
+            "popularity_score": 300
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.5713041,
+              24.6204543
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "asian_grocery_store",
+              "supermarket",
+              "bakery",
+              "grocery_store",
+              "furniture_store",
+              "home_improvement_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Nesto Hypermarket Malaz",
+            "id": "ChIJQ5AB0iIELz4RFUyKQquAY2w",
+            "popularity_score": 300
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.738404,
+              24.6699905
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Carrefour",
+            "id": "ChIJx_cOX0ABLz4RjNc1s6hL41I",
+            "popularity_score": 300
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7751184,
+              24.7237689
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Al Madina Hypermarket",
+            "id": "ChIJCRmmWlwPLz4R6DTZrMkyauk",
+            "popularity_score": 200
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.7316925,
+              24.605586799999998
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "home_goods_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Carrefour",
+            "id": "ChIJ3VACQ24eLz4Re0oyelpcVIk",
+            "popularity_score": 200
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.582757799999996,
+              24.6856425
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "candy_store",
+              "supermarket",
+              "confectionery",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "candy_store",
+            "name": "Ice Sprinkles",
+            "id": "ChIJf36cSDX9Lj4RC7iODAOQNHQ",
+            "popularity_score": 200
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.714089099999995,
+              24.769568699999997
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "shopping_mall",
+              "supermarket",
+              "grocery_store",
+              "food_store",
+              "food",
+              "clothing_store",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "shopping_mall",
+            "name": "top center",
+            "id": "ChIJTWIjD-wALz4RYmXgz6drOHM",
+            "popularity_score": 200
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.801848500000006,
+              24.7386838
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "rating": "",
+            "types": [
+              "supermarket",
+              "convenience_store",
+              "grocery_store",
+              "food_store",
+              "food",
+              "store",
+              "point_of_interest",
+              "establishment"
+            ],
+            "priceLevel": "",
+            "primaryType": "supermarket",
+            "name": "Tamimi Markets",
+            "id": "ChIJS5Y3ZjgDLz4RqsqTHpLikMY",
+            "popularity_score": 200
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              46.681962999999996,
+              24.6909541
+            ]
+          }
+        }
+      ],
+      "bknd_dataset_id": "46.6753_24.7136_15000.0_supermarket_token=page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1",
+      "prdcer_lyr_id": "min_length:1",
+      "records_count": 20,
+      "delay_before_next_call": 3,
+      "progress": 0,
+      "next_page_token": "page_token=plan_supermarket_Saudi Arabia_Riyadh@#$2"
+    }
+  }
+}

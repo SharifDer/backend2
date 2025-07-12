@@ -1,0 +1,6 @@
+{
+  "status_code": 500,
+  "response_body": {
+    "detail": "contains:No features found based on the given criteria"
+  }
+}

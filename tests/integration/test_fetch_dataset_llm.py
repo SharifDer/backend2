@@ -20,8 +20,7 @@ FETCH_DATASET_LLM_TESTS = [
                 "query": "Find supermarkets in Riyadh"
             }
         },
-        expected_output_file="test_fetch_dataset_llm.json",
-        expected_output_key="valid_supermarket_query"
+        expected_output_file="expected_responses/test_fetch_dataset_llm_valid_query.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_llm_invalid_query_no_city",
@@ -39,8 +38,7 @@ FETCH_DATASET_LLM_TESTS = [
                 "query": "Find supermarkets"
             }
         },
-        expected_output_file="test_fetch_dataset_llm.json",
-        expected_output_key="invalid_query_no_city"
+        expected_output_file="expected_responses/test_fetch_dataset_llm_invalid_query_no_city.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_llm_invalid_query_multiple_cities",
@@ -58,8 +56,7 @@ FETCH_DATASET_LLM_TESTS = [
                 "query": "Find restaurants in Riyadh and Jeddah"
             }
         },
-        expected_output_file="test_fetch_dataset_llm.json",
-        expected_output_key="invalid_query_multiple_cities"
+        expected_output_file="expected_responses/test_fetch_dataset_llm_invalid_query_multiple_cities.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_llm_complex_boolean_query",
@@ -77,8 +74,7 @@ FETCH_DATASET_LLM_TESTS = [
                 "query": "Find restaurants or cafes in Riyadh"
             }
         },
-        expected_output_file="test_fetch_dataset_llm.json",
-        expected_output_key="complex_boolean_query"
+        expected_output_file="expected_responses/test_fetch_dataset_llm_complex_boolean_query.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_llm_invalid_category",
@@ -96,8 +92,7 @@ FETCH_DATASET_LLM_TESTS = [
                 "query": "Find alien spaceship landing sites in Riyadh"
             }
         },
-        expected_output_file="test_fetch_dataset_llm.json",
-        expected_output_key="invalid_category_query"
+        expected_output_file="expected_responses/test_fetch_dataset_llm_invalid_category.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_llm_non_location_query",
@@ -115,8 +110,7 @@ FETCH_DATASET_LLM_TESTS = [
                 "query": "What is the weather like in Riyadh?"
             }
         },
-        expected_output_file="test_fetch_dataset_llm.json",
-        expected_output_key="non_location_query"
+        expected_output_file="expected_responses/test_fetch_dataset_llm_non_location_query.json"
     ),
     ConfigDrivenTest(
         name="test_fetch_dataset_llm_conversational_query",
@@ -134,8 +128,7 @@ FETCH_DATASET_LLM_TESTS = [
                 "query": "I have an idea to open a fancy restaurant with my sister with my sister and where do you think I should open it in the city of Jeddah where people love dogs"
             }
         },
-        expected_output_file="test_fetch_dataset_llm.json",
-        expected_output_key="conversational_restaurant_query"
+        expected_output_file="expected_responses/test_fetch_dataset_llm_conversational_query.json"
     )
 
 ]

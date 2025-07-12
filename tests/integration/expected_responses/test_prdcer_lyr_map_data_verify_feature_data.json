@@ -1,0 +1,54 @@
+{
+  "status_code": 200,
+  "response_body": {
+    "message": "Request received.",
+    "request_id": "min_length:1",
+    "data": {
+      "prdcer_layer_name": "SA-RIY-supermarket",
+      "prdcer_lyr_id": "l09a5e6ed-d22e-4db0-a0bd-cf0a0bd93548",
+      "bknd_dataset_id": "contains:supermarket",
+      "points_color": "#28A745",
+      "layer_legend": "SA-RIY-supermarket",
+      "layer_description": "",
+      "records_count": 2,
+      "city_name": "Riyadh",
+      "is_zone_lyr": "false",
+      "progress": "type:int",
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": "min_length:2"
+          },
+          "properties": {
+            "id": "contains:ChIJtest_supermarket_001",
+            "displayName": "Test Supermarket Riyadh",
+            "rating": 4.2,
+            "formattedAddress": "King Fahd Road, Riyadh, Saudi Arabia"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": "min_length:2"
+          },
+          "properties": {
+            "id": "contains:ChIJtest_supermarket_002",
+            "displayName": "Test Hypermarket Riyadh",
+            "rating": 4.0,
+            "formattedAddress": "Prince Sultan Road, Riyadh, Saudi Arabia"
+          }
+        }
+      ],
+      "properties": [
+        "displayName",
+        "rating",
+        "formattedAddress",
+        "id"
+      ]
+    }
+  }
+}

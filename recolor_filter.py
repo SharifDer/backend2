@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Tuple, Optional
+from fastapi import HTTPException
 from all_types.response_dtypes import (
     ResRecolorBasedon,
     NearestPointRouteResponse,
@@ -24,6 +25,8 @@ LayerConfig = Dict[str, Any]
 
 def extract_coordinates(dataset: Dict[str, Any]) -> List[Dict[str, float]]:
     """Extract latitude/longitude coordinates from a dataset."""
+    if dataset is None or "features" not in dataset:
+        return []
     return [
         {
             "latitude": point["geometry"]["coordinates"][1],
@@ -515,7 +518,7 @@ def create_layers_from_config(
                 prdcer_layer_name=f"{base_name} - {config['name_suffix']}",
                 prdcer_lyr_id=str(uuid.uuid4()),
                 sub_lyr_id=f"{change_layer_id}_{config['category']}",
-                bknd_dataset_id=change_layer_id,
+                bknd_dataset_id="",
                 points_color=config["color"],
                 layer_legend=config["legend"],
                 layer_description=config["description"],
@@ -600,7 +603,7 @@ def create_unallocated_layer(
         prdcer_layer_name="Unallocated Points",
         prdcer_lyr_id=req.change_lyr_id,
         sub_lyr_id=f"{req.change_lyr_id}_unallocated",
-        bknd_dataset_id=req.change_lyr_id,
+        bknd_dataset_id="",
         points_color="#FFFFFF",
         layer_legend="No nearby points",
         layer_description="Points with no nearby reference points",
@@ -641,7 +644,7 @@ def create_gradient_layer(
         prdcer_layer_name=f"Gradient Layer {layer_index + 1}",
         prdcer_lyr_id=req.change_lyr_id,
         sub_lyr_id=f"{req.change_lyr_id}_gradient_{layer_index + 1}",
-        bknd_dataset_id=req.change_lyr_id,
+        bknd_dataset_id="",
         points_color=color,
         layer_legend=legend,
         layer_description=f"Gradient layer based on nearby {req.color_based_on} influence",
@@ -718,6 +721,12 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
     change_dataset, change_metadata = await given_layer_fetch_dataset(req.change_lyr_id)
     reference_dataset, _ = await given_layer_fetch_dataset(req.based_on_lyr_id)
     
+    # Check if datasets are valid
+    if change_dataset is None:
+        raise HTTPException(status_code=404, detail="Dataset not found for change layer")
+    if reference_dataset is None:
+        raise HTTPException(status_code=404, detail="Dataset not found for reference layer")
+    
     # Extract coordinates
     reference_coords = extract_coordinates(reference_dataset)
     target_coords = extract_coordinates(change_dataset)
@@ -737,13 +746,14 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
     
     # Create initial filtered dataset
     temp_features = []
-    for feature in change_dataset["features"]:
-        feature_coord = {
-            "latitude": feature["geometry"]["coordinates"][1],
-            "longitude": feature["geometry"]["coordinates"][0],
-        }
-        if feature_coord in valid_coords:
-            temp_features.append(feature)
+    if change_dataset and "features" in change_dataset:
+        for feature in change_dataset["features"]:
+            feature_coord = {
+                "latitude": feature["geometry"]["coordinates"][1],
+                "longitude": feature["geometry"]["coordinates"][0],
+            }
+            if feature_coord in valid_coords:
+                temp_features.append(feature)
     
     temp_dataset = {"features": temp_features}
     
@@ -776,7 +786,7 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
                 else f"{req.change_lyr_name} - Radius Filter"
             ),
             prdcer_lyr_id=str(uuid.uuid4()),
-            bknd_dataset_id=req.change_lyr_id,
+            bknd_dataset_id="",
             points_color=req.change_lyr_current_color,
             layer_legend=(
                 f"Drive Time {symbol} {req.coverage_value} min" 

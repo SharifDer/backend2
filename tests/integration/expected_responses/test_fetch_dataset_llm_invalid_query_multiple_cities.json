@@ -1,0 +1,16 @@
+{
+  "status_code": 200,
+  "response_body": {
+    "message": "Request received.",
+    "request_id": "min_length:1",
+    "data": {
+      "query": "Find restaurants in Riyadh and Jeddah",
+      "is_valid": "Invalid",
+      "reason": "min_length:1",
+      "endpoint": "/fastapi/fetch_dataset",
+      "suggestions": "type:list",
+      "body": null,
+      "cost": ""
+    }
+  }
+}

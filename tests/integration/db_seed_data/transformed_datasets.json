@@ -852,7 +852,7 @@
     }
   },
   "supermarket_full_data_riyadh_token_response": {
-    "filename_template": "46.6753_24.7136_15000.0_supermarket_token=page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1",
+    "filename_template": "46.6753_24.7136_15000.0_supermarket_token=page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1_test_015",
     "request_data": {
       "lat": 24.7136,
       "lng": 46.6753,
@@ -1196,7 +1196,7 @@
             ],
             "priceLevel": "",
             "primaryType": "supermarket",
-            "popularity_score": 150
+            "popularity_score": 300
           }
         },
         {
@@ -1223,7 +1223,7 @@
             ],
             "priceLevel": "",
             "primaryType": "supermarket",
-            "popularity_score": 150
+            "popularity_score": 300
           }
         },
         {

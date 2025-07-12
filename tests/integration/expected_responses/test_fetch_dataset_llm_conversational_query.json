@@ -1,0 +1,37 @@
+{
+  "status_code": 200,
+  "response_body": {
+    "message": "Request received.",
+    "request_id": "min_length:1",
+    "data": {
+      "query": "I have an idea to open a fancy restaurant with my sister with my sister and where do you think I should open it in the city of Jeddah where people love dogs",
+      "is_valid": "Valid",
+      "reason": "min_length:1",
+      "endpoint": "/fastapi/fetch_dataset",
+      "suggestions": "type:list",
+      "body": {
+        "user_id": "regex:^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+        "lat": "type:float",
+        "lng": "type:float",
+        "radius": "type:float",
+        "boolean_query": "restaurant",
+        "page_token": "",
+        "action": "sample",
+        "search_type": "category_search",
+        "country_name": "Saudi Arabia",
+        "city_name": "Jeddah",
+        "prdcer_lyr_id": "",
+        "text_search": "",
+        "zoom_level": 0,
+        "bounding_box": [],
+        "included_types": [],
+        "excluded_types": [],
+        "ids_and_location_only": false,
+        "include_rating_info": false,
+        "include_only_sub_properties": true,
+        "full_load": false
+      },
+      "cost": "min_length:1"
+    }
+  }
+}
