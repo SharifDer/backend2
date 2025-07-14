@@ -302,7 +302,6 @@ class TestServerManager:
         cmd = [
             sys.executable,
             "-m", "uvicorn", "fastapi_app:app",
-            "--reload",
             "--host", "127.0.0.1",  # Bind specifically to IPv4 localhost
             "--port", str(self.actual_port),
         ]
