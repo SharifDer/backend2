@@ -3,6 +3,50 @@
   "response_body": {
     "message": "Request received.",
     "request_id": "min_length:1",
-    "data": "non_empty_list"
+    "data": [
+      {
+        "prdcer_layer_name": "SA-RIY-pharmacy - Radius ≥ 3.0",
+        "prdcer_lyr_id": "min_length:1",
+        "bknd_dataset_id": "",
+        "points_color": "#17A2B8",
+        "layer_legend": "≥ 3.0  from SA-RIY-supermarket",
+        "layer_description": "Points greater than 3.0 ",
+        "records_count": 2,
+        "city_name": "Riyadh",
+        "is_zone_lyr": "true",
+        "progress": 0,
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "displayName": "Test Pharmacy Riyadh",
+              "rating": 4.3,
+              "formattedAddress": "King Abdul Aziz Road, Riyadh, Saudi Arabia",
+              "id": "contains:ChIJtest_pharmacy_001"
+            },
+            "geometry": {
+              "type": "Point",
+              "coordinates": [46.6653, 24.7036]
+            }
+          },
+          {
+            "type": "Feature",
+            "properties": {
+              "displayName": "Test Medical Center Pharmacy",
+              "rating": 4.1,
+              "formattedAddress": "Olaya Street, Riyadh, Saudi Arabia",
+              "id": "contains:ChIJtest_pharmacy_002"
+            },
+            "geometry": {
+              "type": "Point",
+              "coordinates": [46.6953, 24.7336]
+            }
+          }
+        ],
+        "properties": ["displayName", "rating", "formattedAddress", "id"],
+        "sub_lyr_id": "l116e3196-e721-4434-bad6-46291ba2aa0a_primary_condition"
+      }
+    ]
   }
 }

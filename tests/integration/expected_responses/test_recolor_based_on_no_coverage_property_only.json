@@ -3,6 +3,87 @@
   "response_body": {
     "message": "Request received.",
     "request_id": "min_length:1",
-    "data": "non_empty_list"
+    "data": [
+      {
+        "prdcer_layer_name": "Gradient Layer 1",
+        "prdcer_lyr_id": "min_length:1",
+        "bknd_dataset_id": "",
+        "points_color": "#FF0000",
+        "layer_legend": "contains:Influence Score",
+        "layer_description": "Gradient layer based on nearby rating influence",
+        "records_count": 1,
+        "city_name": "Riyadh",
+        "is_zone_lyr": "true",
+        "progress": 0,
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "displayName": "min_length:1",
+              "rating": 4.0,
+              "formattedAddress": "contains:Riyadh",
+              "id": "min_length:1",
+              "influence_score": 4.0
+            },
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                46.6853,
+                24.7236
+              ]
+            }
+          }
+        ],
+        "properties": [
+          "displayName",
+          "rating",
+          "formattedAddress",
+          "id",
+          "influence_score"
+        ],
+        "sub_lyr_id": "min_length:1"
+      },
+      {
+        "prdcer_layer_name": "Gradient Layer 6",
+        "prdcer_lyr_id": "min_length:1",
+        "bknd_dataset_id": "",
+        "points_color": "#FFFFFF",
+        "layer_legend": "contains:Influence Score",
+        "layer_description": "Gradient layer based on nearby rating influence",
+        "records_count": 1,
+        "city_name": "Riyadh",
+        "is_zone_lyr": "true",
+        "progress": 0,
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "displayName": "min_length:1",
+              "rating": 4.2,
+              "formattedAddress": "contains:Riyadh",
+              "id": "min_length:1",
+              "influence_score": 4.2
+            },
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                46.6753,
+                24.7136
+              ]
+            }
+          }
+        ],
+        "properties": [
+          "displayName",
+          "rating",
+          "formattedAddress",
+          "id",
+          "influence_score"
+        ],
+        "sub_lyr_id": "min_length:1"
+      }
+    ]
   }
 }
