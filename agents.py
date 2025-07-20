@@ -1,4 +1,4 @@
-from all_types.request_dtypes import (ReqRecolorBasedon,ValidationResult)
+from all_types.request_dtypes import (ReqColorBasedon,ValidationResult)
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
@@ -33,7 +33,7 @@ class ExplanationAgent:
 class ReqGradientColorBasedOnZoneAgent:
   def __init__(self):
     self.model=self.__getmodel()
-    self.parser=PydanticOutputParser(pydantic_object=ReqRecolorBasedon)
+    self.parser=PydanticOutputParser(pydantic_object=ReqColorBasedon)
     self.system_prompt=self.__create_system_prompt()
     self.format_instruction=self.parser.get_format_instructions()
     self.template=ChatPromptTemplate.from_messages(
@@ -96,10 +96,10 @@ class ReqGradientColorBasedOnZoneAgent:
       - Always use hex color codes (e.g., `#FF0000` for red).
       - For drive time-based recoloring:
         - Set `coverage_property` to `"drive_time"`.
-        - Specify `coverage_value` in minutes.
+        - Specify `area_coverage_value` in minutes.
       - For radius-based recoloring:
         - Set `coverage_property` to `"radius"`.
-        - Specify `coverage_value` in meters.
+        - Specify `area_coverage_value` in meters.
       - For rating-based recoloring, apply a color gradient.
       - For name-based filtering, set `color_based_on` to `"name"`.
       - Ensure `layer IDs` and `layer names` match exactly with `AVAILABLE LAYERS`.
@@ -135,9 +135,9 @@ class ReqGradientColorBasedOnZoneAgent:
           "based_on_lyr_id": "l1d77aec5-0c4c-4733-9297-bb6bc4f2a41a",
           "based_on_lyr_name": "SA-RIY-bank",
           "coverage_property": "radius",
-          "coverage_value": 100,
+          "area_coverage_value": 100,
           "color_based_on": "rating",
-          "list_names": []
+          "evaluation_name_list": []
       }}
       """
     return SYSTEM_PROMPT
@@ -304,15 +304,15 @@ class OutputValidationAgent:
         VALIDATION RULES:
         1. The processed output must correctly identify the layers to be modified based on the user's prompt.
         2. The selected color grid must match any color specifications mentioned in the prompt (e.g., "green to red").
-        3. If the prompt specifies a distance/radius/drive time, the coverage_property and coverage_value must match.
-        4. If the prompt mentions filtering by feature names, the list_names field must be populated appropriately.
+        3. If the prompt specifies a distance/radius/drive time, the coverage_property and area_coverage_value must match.
+        4. If the prompt mentions filtering by feature names, the evaluation_name_list field must be populated appropriately.
         5. The color_based_on field must correctly reflect what the user wants to base the coloring on (e.g., "rating", "name").
         
         EVALUATIONS TO PERFORM:
         1. Layer Identification: Compare the layers mentioned in the prompt with the change_lyr_name and based_on_lyr_name in the output.
         2. Color Selection: Verify that color_grid_choice aligns with any color specifications in the prompt.
         3. Coverage Type: Check if coverage_property (radius/drive_time) matches what the user requested.
-        4. Coverage Value: Ensure the coverage_value is appropriate for the mentioned distance/time.
+        4. Coverage Value: Ensure the area_coverage_value is appropriate for the mentioned distance/time.
         5. Coloring Basis: Confirm color_based_on field correctly represents the user's intent.
         
         OUTPUT FORMAT:
@@ -334,9 +334,9 @@ class OutputValidationAgent:
             "change_lyr_name": "ATMs",
             "based_on_lyr_name": "banks",
             "coverage_property": "radius",
-            "coverage_value": 100,
+            "area_coverage_value": 100,
             "color_based_on": "rating",
-            "list_names": []
+            "evaluation_name_list": []
         }}
         Response: {{
             "is_valid": true
@@ -349,21 +349,21 @@ class OutputValidationAgent:
             "change_lyr_name": "ATMs",
             "based_on_lyr_name": "banks",
             "coverage_property": "radius",
-            "coverage_value": 600,
+            "area_coverage_value": 600,
             "color_based_on": "distance",
-            "list_names": []
+            "evaluation_name_list": []
         }}
         Response: {{
             "is_valid": false,
             "reason": "Coverage property doesn't match user intent - user specified drive time but output uses radius",
-            "suggestions": ["Change coverage_property to 'drive_time'", "Adjust coverage_value to be in minutes (10) instead of meters"]
+            "suggestions": ["Change coverage_property to 'drive_time'", "Adjust area_coverage_value to be in minutes (10) instead of meters"]
         }}
         
         Be very thorough in your evaluation, but also consider reasonable interpretations of the user's intent. If the output is a reasonable interpretation of an ambiguous prompt, consider it valid.
         """
         return SYSTEM_PROMPT
     
-    def __call__(self, user_prompt: str, processed_output: ReqRecolorBasedon, available_layers) -> ValidationResult:
+    def __call__(self, user_prompt: str, processed_output: ReqColorBasedon, available_layers) -> ValidationResult:
         # Validate the output
         try:
             response = self.chain.invoke(

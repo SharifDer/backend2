@@ -38,7 +38,6 @@ class ReqSavePrdcerCtlg(PrdcerCtlg, UserId):
     image: Optional[UploadFile] = None
 
 
-
 class ReqDeletePrdcerCtlg(UserId):
     prdcer_ctlg_id: str
 
@@ -91,7 +90,6 @@ class ReqFetchDataset(ReqCityCountry, ReqPrdcerLyrMapData, Coordinate):
     full_load: Optional[bool] = False
 
 
-
 class ReqFetchCtlgLyrs(BaseModel):
     prdcer_ctlg_id: str
     as_layers: bool
@@ -115,49 +113,52 @@ class ReqNearestRoute(ReqPrdcerLyrMapData):
     points: List[Coordinate]
 
 
-class ReqRecolorBasedon(BaseModel):
-    color_grid_choice: list[str]
+class ReqColorBasedon(BaseModel):
     change_lyr_id: str
     change_lyr_name: str
-    change_lyr_current_color: Optional[str] = "#CCCCCC"
-    change_lyr_new_color: Optional[str] = "#FFFFFF"
+    change_lyr_current_color: str = "#CCCCCC"
+    change_lyr_new_color: str = "#FFFFFF"
     based_on_lyr_id: str
     based_on_lyr_name: str
-    coverage_value: float  # [10min , 20min or 300 m or 500m]
-    area_coverage_property: str  # [Drive_time or Radius]
-    property_name: str  # ["rating" or "user_ratings_total"]
-    list_names: Optional[List[str]] = []
-    comparison_operator: str
-    
+    area_coverage_value: float  # [10min , 20min or 300 m or 500m]
+    area_coverage_measure: str  # [Drive_time or Radius]
+    evaluation_property_name: str  # ["rating" or "user_ratings_total"]
+    evaluation_comparison_operator: str
+    color_grid_choice: Optional[List[str]] = []
+    evaluation_name_list: Optional[List[str]] = []
+
+
+class ReqFilterBasedon(ReqColorBasedon):
+    property_threshold: float | str
+
+
 # User prompt -> llm
-class ReqPrompt(BaseModel):
+class ReqLLMEditBasedon(BaseModel):
     user_id: str
     layers: List[Dict[str, Any]]
     prompt: str
+
 
 class ValidationResult(BaseModel):
     is_valid: bool
     reason: Optional[str] = None
     suggestions: Optional[List[str]] = None
     endpoint: Optional[str] = None
-    body: ReqRecolorBasedon = None
-
+    body: ReqColorBasedon = None
 
 
 class ReqLLMFetchDataset(BaseModel):
     """Extract Location Based Information from the Query"""
 
     query: str = Field(
-        default = "",
-        description = "Original query passed by the user."
+        default="", description="Original query passed by the user."
     )
 
-class ReqFilter(ReqRecolorBasedon):
-    property_threshold: float|str
-    
+
 class ReqSrcDistination(BaseModel):
-    source : Coordinate
-    destination : Coordinate
+    source: Coordinate
+    destination: Coordinate
+
 
 class ReqIntelligenceData(BaseModel):
     min_lng: float
@@ -166,15 +167,14 @@ class ReqIntelligenceData(BaseModel):
     max_lat: float
     zoom_level: int
     user_id: str
-    population:Optional[bool]
-    income:Optional[bool]
+    population: Optional[bool]
+    income: Optional[bool]
 
-class ReqClustersForSalesManData(BooleanQuery, UserId,ReqCityCountry):
+
+class ReqClustersForSalesManData(BooleanQuery, UserId, ReqCityCountry):
     num_sales_man: int
     distance_limit: float = 2.5
     include_raw_data: bool = False
-
-
 
 
 class ReqHubExpansion(BaseModel):
@@ -269,4 +269,3 @@ class ReqHubExpansion(BaseModel):
 
     # User context
     user_id: str = "default_user"
-

@@ -54,16 +54,16 @@ from all_types.request_dtypes import (
     ReqCostEstimate,
     ReqSavePrdcerCtlg,
     ReqDeletePrdcerCtlg,
-    ReqRecolorBasedon,
+    ReqColorBasedon,
     ReqStreeViewCheck,
     ReqSavePrdcerLyer,
     ReqFetchCtlgLyrs,
     ReqCityCountry,
     ReqDeletePrdcerLayer,
     ReqLLMFetchDataset,
-    ReqPrompt,
+    ReqLLMEditBasedon,
     ValidationResult,
-    ReqFilter,
+    ReqFilterBasedon,
     ReqSrcDistination,
     ReqIntelligenceData,
     ReqClustersForSalesManData,
@@ -758,17 +758,47 @@ async def ep_fetch_gradient_colors():
     response_model=ResModel[list[ResRecolorBasedon]],
 )
 async def ep_recolor_based_on(
-    req: ReqModel[ReqRecolorBasedon], request: Request
+    req: ReqModel[ReqColorBasedon], request: Request
 ):
     response = await request_handling(
         req.request_body,
-        ReqRecolorBasedon,
+        ReqColorBasedon,
         ResModel[list[ResRecolorBasedon]],
         recolor_based_on,
         wrap_output=True,
     )
     return response
 
+@app.post(
+    CONF.filter_based_on,
+    response_model=ResModel[list[ResRecolorBasedon]],
+)
+async def ep_filter_based_on(req: ReqModel[ReqFilterBasedon], request: Request):
+    response = await request_handling(
+        req.request_body,
+        ReqFilterBasedon,
+        ResModel[list[ResRecolorBasedon]],
+        filter_based_on,
+        wrap_output=True,
+    )
+    return response
+
+
+@app.post(
+    CONF.recolor_based + "_llm",
+    response_model=ResModel[ValidationResult],
+)
+async def ep_process_color_based_on_agent(
+    req: ReqModel[ReqLLMEditBasedon], request: Request
+):
+    response = await request_handling(
+        req.request_body,
+        ReqLLMEditBasedon,
+        ResModel[ValidationResult],
+        recolor_based_on_agent,
+        wrap_output=True,
+    )
+    return response
 
 @app.post(
     CONF.check_street_view,
@@ -1166,36 +1196,9 @@ async def update_user_profile_endpoint(req: ReqModel[UserProfileSettings]):
     return response
 
 
-@app.post(
-    CONF.recolor_based + "_llm",
-    response_model=ResModel[ValidationResult],
-)
-async def ep_process_color_based_on_agent(
-    req: ReqModel[ReqPrompt], request: Request
-):
-    response = await request_handling(
-        req.request_body,
-        ReqPrompt,
-        ResModel[ValidationResult],
-        recolor_based_on_agent,
-        wrap_output=True,
-    )
-    return response
 
 
-@app.post(
-    CONF.filter_based_on,
-    response_model=ResModel[list[ResRecolorBasedon]],
-)
-async def filter_based_on_(req: ReqModel[ReqFilter], request: Request):
-    response = await request_handling(
-        req.request_body,
-        ReqFilter,
-        ResModel[list[ResRecolorBasedon]],
-        filter_based_on,
-        wrap_output=True,
-    )
-    return response
+
 
 
 @app.post(

@@ -58,26 +58,26 @@ def find_matching_feature(
     return None
 
 
-def apply_comparison(value: Any, threshold: Any, comparison_operator: str) -> bool:
+def apply_comparison(value: Any, threshold: Any, evaluation_comparison_operator: str) -> bool:
     """
-    Apply comparison operation based on comparison_operator.
+    Apply comparison operation based on evaluation_comparison_operator.
     
     Args:
         value: The value to compare
         threshold: The threshold to compare against
-        comparison_operator: "less" or "more"
+        evaluation_comparison_operator: "less" or "more"
     
     Returns:
         bool: Result of the comparison
     """
-    if comparison_operator == "less":
+    if evaluation_comparison_operator == "less":
         return value <= threshold
     else:  # "more"
         return value >= threshold
 
 
 def calculate_nearby_average(
-    property_name: str,
+    evaluation_property_name: str,
     point: Dict[str, Any],
     reference_dataset: Dict[str, Any],
     radius: float,
@@ -90,7 +90,7 @@ def calculate_nearby_average(
     nearby_values = []
 
     for ref_point in reference_dataset["features"]:
-        if property_name not in ref_point["properties"]:
+        if evaluation_property_name not in ref_point["properties"]:
             continue
 
         distance = geodesic(
@@ -102,7 +102,7 @@ def calculate_nearby_average(
         ).meters
 
         if distance <= radius:
-            nearby_values.append(ref_point["properties"][property_name])
+            nearby_values.append(ref_point["properties"][evaluation_property_name])
 
     if nearby_values:
         cleaned_values = [
@@ -237,28 +237,28 @@ def filter_by_name(dataset: Dict[str, Any], names: List[str]) -> FilterResult:
 
 def filter_by_property(
     dataset: Dict[str, Any], 
-    property_name: str, 
+    evaluation_property_name: str, 
     property_value: Any,
-    comparison_operator: str
+    evaluation_comparison_operator: str
 ) -> FilterResult:
     """Filter features by property value with comparison."""
     matched, unmatched = [], []
 
     for feature in dataset["features"]:
         props = feature["properties"]
-        feature_value = props.get(property_name)
+        feature_value = props.get(evaluation_property_name)
 
         if feature_value is None:
             unmatched.append(create_feature(feature))
             continue
 
         try:
-            if property_name == "types":
+            if evaluation_property_name == "types":
                 is_match = property_value in feature_value
-            elif property_name in ["rating", "popularity_score", "user_ratings_total", "heatmap_weight"]:
-                is_match = apply_comparison(float(feature_value), property_value, comparison_operator)
+            elif evaluation_property_name in ["rating", "popularity_score", "user_ratings_total", "heatmap_weight"]:
+                is_match = apply_comparison(float(feature_value), property_value, evaluation_comparison_operator)
             else:
-                is_match = apply_comparison(feature_value, property_value, comparison_operator)
+                is_match = apply_comparison(feature_value, property_value, evaluation_comparison_operator)
 
             target_list = matched if is_match else unmatched
             target_list.append(create_feature(feature))
@@ -272,7 +272,7 @@ def filter_by_distance(
     target_coords: List[Dict[str, float]],
     reference_coords: List[Dict[str, float]],
     threshold: float,
-    comparison_operator: str,
+    evaluation_comparison_operator: str,
     distance_unit: str = "meters"
 ) -> List[Dict[str, float]]:
     """Filter coordinates by distance threshold."""
@@ -283,7 +283,7 @@ def filter_by_distance(
         for ref in reference_coords:
             if target != ref:
                 distance = calculate_distance(ref, target)
-                if apply_comparison(distance, threshold_meters, comparison_operator):
+                if apply_comparison(distance, threshold_meters, evaluation_comparison_operator):
                     valid_coords.append(target)
                     break
 
@@ -294,7 +294,7 @@ async def filter_by_drive_time(
     target_coords: List[Dict[str, float]],
     reference_coords: List[Dict[str, float]],
     threshold_minutes: float,
-    comparison_operator: str
+    evaluation_comparison_operator: str
 ) -> Tuple[List[Dict[str, float]], List[Dict[str, float]]]:
     """Filter coordinates by drive time using cardinal points method."""
     cardinal_extremes = find_cardinal_extreme_points(reference_coords)
@@ -316,7 +316,7 @@ async def filter_by_drive_time(
             )
             min_estimated_time = min(min_estimated_time, estimated_time)
 
-        if apply_comparison(min_estimated_time, threshold_minutes, comparison_operator):
+        if apply_comparison(min_estimated_time, threshold_minutes, evaluation_comparison_operator):
             within_time.append(target_coord)
         else:
             outside_time.append(target_coord)
@@ -349,11 +349,11 @@ async def create_drive_time_filter_result(
     target_coords: List[Dict[str, float]],
     reference_coords: List[Dict[str, float]],
     threshold_minutes: float,
-    comparison_operator: str
+    evaluation_comparison_operator: str
 ) -> FilterResult:
     """Create FilterResult for drive time filtering."""
     within_time_coords, outside_time_coords = await filter_by_drive_time(
-        target_coords, reference_coords, threshold_minutes, comparison_operator
+        target_coords, reference_coords, threshold_minutes, evaluation_comparison_operator
     )
     
     within_time, outside_time, unallocated = [], [], []
@@ -386,9 +386,9 @@ async def create_drive_time_filter_result(
 
 def create_layer_configs(
     filter_type: str,
-    comparison_operator: str,
+    evaluation_comparison_operator: str,
     threshold: float,
-    req: ReqRecolorBasedon,
+    req: ReqColorBasedon,
     unit: str = ""
 ) -> List[LayerConfig]:
     """Create layer configurations based on filter type and comparison."""
@@ -400,8 +400,8 @@ def create_layer_configs(
                 "category": "matched",
                 "name_suffix": "Matched Names",
                 "color": req.change_lyr_new_color,
-                "legend": f"Contains: {', '.join(req.list_names)}",
-                "description": f"Features matching names: {', '.join(req.list_names)}",
+                "legend": f"Contains: {', '.join(req.evaluation_name_list)}",
+                "description": f"Features matching names: {', '.join(req.evaluation_name_list)}",
             },
             {
                 "feature_key": "unmatched",
@@ -414,9 +414,9 @@ def create_layer_configs(
         ]
     
     elif filter_type == "drive_time":
-        symbol = "≤" if comparison_operator == "less" else "≥"
-        primary_desc = f"{comparison_operator} than {threshold} minutes"
-        opposite_desc = f"{'more' if comparison_operator == 'less' else 'less'} than {threshold} minutes"
+        symbol = "≤" if evaluation_comparison_operator == "less" else "≥"
+        primary_desc = f"{evaluation_comparison_operator} than {threshold} minutes"
+        opposite_desc = f"{'more' if evaluation_comparison_operator == 'less' else 'less'} than {threshold} minutes"
         
         return [
             {
@@ -430,9 +430,9 @@ def create_layer_configs(
             {
                 "feature_key": "outside_time",
                 "category": "opposite_condition",
-                "name_suffix": f"Drive Time {'>' if comparison_operator == 'less' else '<'} {threshold}m",
+                "name_suffix": f"Drive Time {'>' if evaluation_comparison_operator == 'less' else '<'} {threshold}m",
                 "color": req.change_lyr_current_color,
-                "legend": f"Drive Time {'>' if comparison_operator == 'less' else '<'} {threshold} min",
+                "legend": f"Drive Time {'>' if evaluation_comparison_operator == 'less' else '<'} {threshold} min",
                 "description": f"Points {opposite_desc} drive time",
             },
             {
@@ -446,9 +446,9 @@ def create_layer_configs(
         ]
     
     elif filter_type == "radius":
-        symbol = "≤" if comparison_operator == "less" else "≥"
-        primary_desc = f"{comparison_operator} than {threshold} {unit}"
-        opposite_desc = f"{'more' if comparison_operator == 'less' else 'less'} than {threshold} {unit}"
+        symbol = "≤" if evaluation_comparison_operator == "less" else "≥"
+        primary_desc = f"{evaluation_comparison_operator} than {threshold} {unit}"
+        opposite_desc = f"{'more' if evaluation_comparison_operator == 'less' else 'less'} than {threshold} {unit}"
         
         return [
             {
@@ -462,15 +462,15 @@ def create_layer_configs(
             {
                 "feature_key": "unmatched",
                 "category": "opposite_condition",
-                "name_suffix": f"Radius {'>' if comparison_operator == 'less' else '<'} {threshold}{unit}",
+                "name_suffix": f"Radius {'>' if evaluation_comparison_operator == 'less' else '<'} {threshold}{unit}",
                 "color": req.change_lyr_current_color,
-                "legend": f"{'>' if comparison_operator == 'less' else '<'} {threshold} {unit} from {req.based_on_lyr_name}",
+                "legend": f"{'>' if evaluation_comparison_operator == 'less' else '<'} {threshold} {unit} from {req.based_on_lyr_name}",
                 "description": f"Points {opposite_desc}",
             },
         ]
     
     else:  # property-based filtering
-        symbol = "≤" if comparison_operator == "less" else "≥"
+        symbol = "≤" if evaluation_comparison_operator == "less" else "≥"
         return [
             {
                 "feature_key": "matched",
@@ -478,15 +478,15 @@ def create_layer_configs(
                 "name_suffix": f"{filter_type.title()} {symbol} {threshold}",
                 "color": req.change_lyr_new_color,
                 "legend": f"{filter_type} {symbol} {threshold}",
-                "description": f"Points with {filter_type} {comparison_operator} than {threshold}",
+                "description": f"Points with {filter_type} {evaluation_comparison_operator} than {threshold}",
             },
             {
                 "feature_key": "unmatched",
                 "category": "opposite_condition",
-                "name_suffix": f"{filter_type.title()} {'>' if comparison_operator == 'less' else '<'} {threshold}",
+                "name_suffix": f"{filter_type.title()} {'>' if evaluation_comparison_operator == 'less' else '<'} {threshold}",
                 "color": req.change_lyr_current_color,
-                "legend": f"{filter_type} {'>' if comparison_operator == 'less' else '<'} {threshold}",
-                "description": f"Points with {filter_type} {'more' if comparison_operator == 'less' else 'less'} than {threshold}",
+                "legend": f"{filter_type} {'>' if evaluation_comparison_operator == 'less' else '<'} {threshold}",
+                "description": f"Points with {filter_type} {'more' if evaluation_comparison_operator == 'less' else 'less'} than {threshold}",
             },
         ]
 
@@ -537,7 +537,7 @@ def create_layers_from_config(
 # ============================================================================
 
 async def process_gradient_coloring(
-    req: ReqRecolorBasedon,
+    req: ReqColorBasedon,
 ) -> List[ResRecolorBasedon]:
     """Process gradient coloring based on surrounding point influence."""
     change_dataset, change_metadata = await given_layer_fetch_dataset(req.change_lyr_id)
@@ -551,7 +551,7 @@ async def process_gradient_coloring(
         point["id"] = point_id
 
         avg_influence = calculate_nearby_average(
-            req.property_name, point, reference_dataset, req.coverage_value
+            req.evaluation_property_name, point, reference_dataset, req.area_coverage_value
         )
 
         if avg_influence is not None:
@@ -592,7 +592,7 @@ async def process_gradient_coloring(
 
 def create_unallocated_layer(
     features: List[Dict[str, Any]],
-    req: ReqRecolorBasedon,
+    req: ReqColorBasedon,
     metadata: Dict[str, Any],
 ) -> ResRecolorBasedon:
     """Create layer for unallocated points."""
@@ -618,7 +618,7 @@ def create_gradient_layer(
     features: List[Dict[str, Any]],
     layer_index: int,
     thresholds: List[float],
-    req: ReqRecolorBasedon,
+    req: ReqColorBasedon,
     metadata: Dict[str, Any],
 ) -> ResRecolorBasedon:
     """Create a single gradient layer."""
@@ -647,7 +647,7 @@ def create_gradient_layer(
         bknd_dataset_id="",
         points_color=color,
         layer_legend=legend,
-        layer_description=f"Gradient layer based on nearby {req.property_name} influence",
+        layer_description=f"Gradient layer based on nearby {req.evaluation_property_name} influence",
         records_count=len(features),
         city_name=metadata.get("city_name", ""),
         is_zone_lyr="true",
@@ -659,7 +659,7 @@ def create_gradient_layer(
 # MAIN API FUNCTIONS
 # ============================================================================
 
-async def recolor_based_on(req: ReqRecolorBasedon) -> List[ResRecolorBasedon]:
+async def recolor_based_on(req: ReqColorBasedon) -> List[ResRecolorBasedon]:
     """Main function to process color-based filtering requests."""
     
     # Fetch datasets
@@ -667,33 +667,33 @@ async def recolor_based_on(req: ReqRecolorBasedon) -> List[ResRecolorBasedon]:
     city_name = change_metadata.get("city_name", "")
     
     # Handle name-based filtering
-    if req.property_name == "name":
-        if not req.list_names:
-            raise HTTPException(status_code=422, detail="list_names must be provided when property_name is 'name'.")
+    if req.evaluation_property_name == "name":
+        if not req.evaluation_name_list:
+            raise HTTPException(status_code=422, detail="evaluation_name_list must be provided when evaluation_property_name is 'name'.")
         if req.based_on_lyr_id == req.change_lyr_id:
             raise HTTPException(status_code=422, detail="based_on_lyr_id and change_lyr_id must be different.")
 
-        filtered_features = filter_by_name(change_dataset, req.list_names)
+        filtered_features = filter_by_name(change_dataset, req.evaluation_name_list)
         filter_type = "name"
         base_name = req.change_lyr_name
         
     # Handle coverage-based filtering
-    elif hasattr(req, "area_coverage_property") and req.area_coverage_property:
+    elif hasattr(req, "area_coverage_measure") and req.area_coverage_measure:
         reference_dataset, _ = await given_layer_fetch_dataset(req.based_on_lyr_id)
         reference_coords = extract_coordinates(reference_dataset)
         target_coords = extract_coordinates(change_dataset)
         
-        if req.area_coverage_property == "drive_time":
+        if req.area_coverage_measure == "drive_time":
             filtered_features = await create_drive_time_filter_result(
                 change_dataset, target_coords, reference_coords,
-                req.coverage_value, req.comparison_operator
+                req.area_coverage_value, req.evaluation_comparison_operator
             )
             filter_type = "drive_time"
             base_name = f"{req.change_lyr_name} based on {req.based_on_lyr_name}"
         else:  # radius
             valid_coords = filter_by_distance(
-                target_coords, reference_coords, req.coverage_value, 
-                req.comparison_operator, "km"
+                target_coords, reference_coords, req.area_coverage_value, 
+                req.evaluation_comparison_operator, "km"
             )
             filtered_features = create_filter_result_from_coords(
                 change_dataset, valid_coords, target_coords
@@ -706,15 +706,15 @@ async def recolor_based_on(req: ReqRecolorBasedon) -> List[ResRecolorBasedon]:
         return await process_gradient_coloring(req)
     
     # Common layer creation logic
-    layer_configs = create_layer_configs(filter_type, req.comparison_operator, 
-                                       getattr(req, 'coverage_value', 0), req)
+    layer_configs = create_layer_configs(filter_type, req.evaluation_comparison_operator, 
+                                       getattr(req, 'area_coverage_value', 0), req)
     layer = create_layers_from_config(
         filtered_features, base_name, layer_configs, req.change_lyr_id, city_name
     )
     return layer
 
 
-async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
+async def filter_based_on(req: ReqFilterBasedon) -> List[ResRecolorBasedon]:
     """Filter features based on coverage and property criteria."""
     
     # Fetch datasets
@@ -732,14 +732,14 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
     target_coords = extract_coordinates(change_dataset)
     
     # Apply coverage filter
-    if req.area_coverage_property == "drive_time":
+    if req.area_coverage_measure == "drive_time":
         valid_coords, _ = await filter_by_drive_time(
-            target_coords, reference_coords, req.coverage_value, req.comparison_operator
+            target_coords, reference_coords, req.area_coverage_value, req.evaluation_comparison_operator
         )
-    elif req.area_coverage_property == "radius":
+    elif req.area_coverage_measure == "radius":
         valid_coords = filter_by_distance(
-            target_coords, reference_coords, req.coverage_value, 
-            req.comparison_operator, "km"
+            target_coords, reference_coords, req.area_coverage_value, 
+            req.evaluation_comparison_operator, "km"
         )
     else:
         valid_coords = target_coords
@@ -758,13 +758,13 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
     temp_dataset = {"features": temp_features}
     
     # Apply property filter if specified
-    if req.property_name:
-        if req.property_name == "name":
-            property_result = filter_by_name(temp_dataset, req.list_names)
+    if req.evaluation_property_name:
+        if req.evaluation_property_name == "name":
+            property_result = filter_by_name(temp_dataset, req.evaluation_name_list)
             final_features = property_result["matched"]
         else:
             property_result = filter_by_property(
-                temp_dataset, req.property_name, req.property_threshold, req.comparison_operator
+                temp_dataset, req.evaluation_property_name, req.property_threshold, req.evaluation_comparison_operator
             )
             final_features = property_result["matched"]
     else:
@@ -776,22 +776,22 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
     
     # Create individual layers for each feature
     layers = []
-    symbol = "≤" if req.comparison_operator == "less" else "≥"
+    symbol = "≤" if req.evaluation_comparison_operator == "less" else "≥"
     
     for feature in final_features:
         layer = ResRecolorBasedon(
             prdcer_layer_name=(
                 f"{req.change_lyr_name} - Drive Time Filter" 
-                if req.area_coverage_property == "drive_time"
+                if req.area_coverage_measure == "drive_time"
                 else f"{req.change_lyr_name} - Radius Filter"
             ),
             prdcer_lyr_id=str(uuid.uuid4()),
             bknd_dataset_id="",
             points_color=req.change_lyr_current_color,
             layer_legend=(
-                f"Drive Time {symbol} {req.coverage_value} min" 
-                if req.area_coverage_property == "drive_time"
-                else f"Radius {symbol} {req.coverage_value} km"
+                f"Drive Time {symbol} {req.area_coverage_value} min" 
+                if req.area_coverage_measure == "drive_time"
+                else f"Radius {symbol} {req.area_coverage_value} km"
             ),
             is_zone_lyr="true",
             type="FeatureCollection",
@@ -799,7 +799,7 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
             properties=list(feature.get("properties", {}).keys()),
             sub_lyr_id=(
                 f"{req.change_lyr_id}_drive_time_filter" 
-                if req.area_coverage_property == "drive_time"
+                if req.area_coverage_measure == "drive_time"
                 else f"{req.change_lyr_id}_radius_filter"
             ),
             layer_description="Filtered based on coverage and property criteria",
@@ -812,7 +812,7 @@ async def filter_based_on(req: ReqFilter) -> List[ResRecolorBasedon]:
     return layers
 
 
-async def recolor_based_on_agent(req: ReqPrompt) -> ValidationResult:
+async def recolor_based_on_agent(req: ReqLLMEditBasedon) -> ValidationResult:
     """Process agent-based color filtering requests."""
     user_layers = req.layers or await fetch_user_layers(req.user_id)
 

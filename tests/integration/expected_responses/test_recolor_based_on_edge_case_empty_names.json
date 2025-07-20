@@ -1,6 +1,6 @@
 {
   "status_code": 422,
   "response_body": {
-  "detail": "list_names must be provided when property_name is 'name'."
+  "detail": "evaluation_name_list must be provided when evaluation_property_name is 'name'."
 }
 }

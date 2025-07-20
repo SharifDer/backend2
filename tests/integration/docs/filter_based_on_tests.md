@@ -92,10 +92,10 @@ Each test sends a request with this structure:
     "change_lyr_new_color": "#FF0000",
     "based_on_lyr_id": "${database.pharmacy_layer_id}",
     "based_on_lyr_name": "SA-RIY-pharmacy",
-    "coverage_value": 2.0,
+    "area_coverage_value": 2.0,
     "coverage_property": "radius", // or "drive_time"
     "color_based_on": "rating", // or "user_ratings_total", "name" 
-    "list_names": [], // for name-based filtering
+    "evaluation_name_list": [], // for name-based filtering
     "comparison_type": "greater", // or "less"
     "threshold": 4.0
   }
