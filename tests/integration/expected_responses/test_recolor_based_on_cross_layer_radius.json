@@ -6,7 +6,7 @@
     "data": [
       {
         "prdcer_layer_name": "SA-RIY-supermarket - Radius ≥ 2.0",
-        "prdcer_lyr_id": "contains:c",
+        "prdcer_lyr_id": "min_length:1",
         "bknd_dataset_id": "",
         "points_color": "#FF0000",
         "layer_legend": "≥ 2.0  from SA-RIY-pharmacy",

@@ -669,9 +669,9 @@ async def recolor_based_on(req: ReqRecolorBasedon) -> List[ResRecolorBasedon]:
     # Handle name-based filtering
     if req.property_name == "name":
         if not req.list_names:
-            raise ValueError("list_names must be provided when property_name is 'name'.")
+            raise HTTPException(status_code=422, detail="list_names must be provided when property_name is 'name'.")
         if req.based_on_lyr_id == req.change_lyr_id:
-            raise ValueError("based_on_lyr_id and change_lyr_id must be different.")
+            raise HTTPException(status_code=422, detail="based_on_lyr_id and change_lyr_id must be different.")
 
         filtered_features = filter_by_name(change_dataset, req.list_names)
         filter_type = "name"

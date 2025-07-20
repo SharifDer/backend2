@@ -1,8 +1,8 @@
 {
-  "status_code": 400,
+  "status_code": 422,
   "response_body": {
     "message": "Request received.",
     "request_id": "min_length:1",
-    "data": "contains:list_names must be provided when property_name is 'name'"
+    "data": "min_length:1"
   }
 }
