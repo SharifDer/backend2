@@ -20,7 +20,7 @@ from fastapi import (
     Form,
 )
 from all_types.response_dtypes import ResSalesman
-from fetch_dataset_llm import process_llm_query
+from data_fetcher_llm import process_llm_query
 import json
 from backend_common.background import set_background_tasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -266,6 +266,7 @@ def cleanup_old_plots(
 origins = [CONF.enable_CORS_url]
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
+
 app.add_middleware(
     CORSMiddleware,
     # allow_origins=origins,
@@ -304,7 +305,7 @@ async def shutdown_event():
     # Properly close all logging handlers
     root_logger = logging.getLogger()
     handlers = root_logger.handlers[:]  # Make a copy of the list
-    
+
     for handler in handlers:
         try:
             handler.close()
@@ -312,18 +313,17 @@ async def shutdown_event():
         except Exception as e:
             # Log to stderr since our file handler might be closing
             print(f"Error closing logging handler: {e}", file=sys.stderr)
-    
+
     # Also close handlers for your specific logger
     app_logger = logging.getLogger(__name__)
     app_handlers = app_logger.handlers[:]
-    
+
     for handler in app_handlers:
         try:
             handler.close()
             app_logger.removeHandler(handler)
         except Exception as e:
             print(f"Error closing app logging handler: {e}", file=sys.stderr)
-    
 
 
 @app.get(CONF.fetch_acknowlg_id, response_model=ResModel[str])
@@ -757,9 +757,7 @@ async def ep_fetch_gradient_colors():
     CONF.recolor_based,
     response_model=ResModel[list[ResRecolorBasedon]],
 )
-async def ep_recolor_based_on(
-    req: ReqModel[ReqColorBasedon], request: Request
-):
+async def ep_recolor_based_on(req: ReqModel[ReqColorBasedon], request: Request):
     response = await request_handling(
         req.request_body,
         ReqColorBasedon,
@@ -768,6 +766,7 @@ async def ep_recolor_based_on(
         wrap_output=True,
     )
     return response
+
 
 @app.post(
     CONF.filter_based_on,
@@ -799,6 +798,7 @@ async def ep_process_color_based_on_agent(
         wrap_output=True,
     )
     return response
+
 
 @app.post(
     CONF.check_street_view,
@@ -1194,11 +1194,6 @@ async def update_user_profile_endpoint(req: ReqModel[UserProfileSettings]):
         wrap_output=True,
     )
     return response
-
-
-
-
-
 
 
 @app.post(
