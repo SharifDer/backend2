@@ -1,237 +1,41 @@
 import logging
-import uuid
 import os
 import sys
 import glob
 import time
+import asyncio
 from fastapi.staticfiles import StaticFiles
-from typing import Optional, Type, Callable, Awaitable, Any, TypeVar, Union
 import stripe
-from fastapi import (
-    Body,
-    HTTPException,
-    status,
-    FastAPI,
-    Request,
-    Depends,
-    BackgroundTasks,
-    UploadFile,
-    File,
-    Form,
-)
-from all_types.response_dtypes import ResSalesman
-from data_fetcher_llm import process_llm_query
-import json
-from backend_common.background import set_background_tasks
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
-from pydantic import BaseModel
-from hub_expansion_analysis import (
-    analyze_hub_expansion,
-    ReqHubExpansion,
-    ResHubExpansion,
-)
-import asyncio
-from backend_common.dtypes.auth_dtypes import (
-    ReqChangeEmail,
-    ReqChangePassword,
-    ReqConfirmReset,
-    ReqCreateFirebaseUser,
-    ReqResetPassword,
-    ReqUserLogin,
-    ReqUserProfile,
-    ReqRefreshToken,
-    ReqCreateUserProfile,
-    UserProfileSettings,
-)
-from all_types.internal_types import UserId
-from all_types.request_dtypes import (
-    ReqModel,
-    ReqFetchDataset,
-    ReqPrdcerLyrMapData,
-    # ReqNearestRoute,
-    ReqCostEstimate,
-    ReqSavePrdcerCtlg,
-    ReqDeletePrdcerCtlg,
-    ReqColorBasedon,
-    ReqStreeViewCheck,
-    ReqSavePrdcerLyer,
-    ReqFetchCtlgLyrs,
-    ReqCityCountry,
-    ReqDeletePrdcerLayer,
-    ReqLLMFetchDataset,
-    ReqLLMEditBasedon,
-    ValidationResult,
-    ReqFilterBasedon,
-    ReqSrcDistination,
-    ReqIntelligenceData,
-    ReqClustersForSalesManData,
-)
-from backend_common.request_processor import request_handling
-from backend_common.auth import (
-    create_firebase_user,
-    login_user,
-    reset_password,
-    confirm_reset,
-    change_password,
-    refresh_id_token,
-    change_email,
-    firebase_db,
-    JWTBearer,
-    create_user_profile,
-)
 
-from all_types.response_dtypes import (
-    ResModel,
-    ResFetchDataset,
-    ResCostEstimate,
-    ResAddPaymentMethod,
-    ResRecolorBasedon,
-    ResGetPaymentMethods,
-    ResLyrMapData,
-    card_metadata,
-    CityData,
-    NearestPointRouteResponse,
-    UserCatalogInfo,
-    LayerInfo,
-    ResLLMFetchDataset,
-    ResSrcDistination,
-    PopulationViewportData,
-)
-
-from google_api_connector import check_street_view_availability
-from config_factory import CONF
-from cost_calculator import calculate_cost
-from data_fetcher import (
-    fetch_country_city_data,
-    fetch_catlog_collection,
-    fetch_layer_collection,
-    save_lyr,
-    delete_layer,
-    aquire_user_lyrs,
-    fetch_lyr_map_data,
-    save_prdcer_ctlg,
-    delete_prdcer_ctlg,
-    fetch_prdcer_ctlgs,
-    fetch_ctlg_lyrs,
-    poi_categories,
-    save_draft_catalog,
-    fetch_gradient_colors,
-    get_user_profile,
-    # fetch_nearest_points_Gmap,
-    fetch_dataset,
-    load_area_intelligence_categories,
-    update_profile,
-    load_distance_drive_time_polygon,
-)
-from backend_common.dtypes.stripe_dtypes import (
-    ProductReq,
-    ProductRes,
-    CustomerReq,
-    CustomerRes,
-    SubscriptionCreateReq,
-    SubscriptionUpdateReq,
-    SubscriptionRes,
-    PaymentMethodReq,
-    PaymentMethodUpdateReq,
-    PaymentMethodRes,
-    PaymentMethodAttachReq,
-    TopUpWalletReq,
-    DeductWalletReq,
-)
+from backend_common.background import set_background_tasks
 from backend_common.database import Database
-from logging_wrapper import log_and_validate
-from backend_common.stripe_backend import (
-    create_stripe_product,
-    update_stripe_product,
-    delete_stripe_product,
-    list_stripe_products,
-    create_stripe_customer,
-    update_customer,
-    list_customers,
-    get_customer_spending,
-    fetch_customer,
-    create_subscription,
-    update_subscription,
-    deactivate_subscription,
-    create_payment_method,
-    update_payment_method,
-    attach_payment_method,
-    delete_payment_method,
-    list_payment_methods,
-    set_default_payment_method,
-    testing_create_card_payment_source,
-    top_up_wallet,
-    fetch_wallet,
-    deduct_from_wallet,
-)
-from recolor_filter import (
-    recolor_based_on_agent,
-    recolor_based_on,
-    filter_based_on,
-)
-from storage_methods import fetch_intelligence_by_viewport
-from sales_man_problem import get_clusters_for_sales_man
+from backend_common.auth import firebase_db
+from config_factory import CONF
+
+# Import routers
+from routers.authentication import auth_router
+from routers.data_layers import data_layers_router
+from routers.catalogs import catalogs_router
+from routers.stripe_payments import stripe_router
+from routers.analysis_intelligence import analysis_router
 
 # TODO: Add stripe secret key
 
 stripe.api_key = CONF.stripe_api_key
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T", bound=BaseModel)
-U = TypeVar("U", bound=BaseModel)
-
-
-def create_formatted_example(model_class):
-    """Create a formatted JSON example string"""
-    schema = model_class.model_json_schema()
-
-    def get_default_value(field_type):
-        if field_type == "string":
-            return "string"
-        elif field_type == "integer" or field_type == "number":
-            return 0
-        elif field_type == "array":
-            return []
-        elif field_type == "object":
-            return {}
-        return None
-
-    def create_example_from_properties(properties, required_fields):
-        example = {}
-        for field_name, field_info in properties.items():
-            if field_info.get("type") == "array" and "items" in field_info:
-                items = field_info["items"]
-                if "$ref" in items:
-                    ref_name = items["$ref"].split("/")[-1]
-                    ref_schema = schema["$defs"][ref_name]
-                    example[field_name] = [
-                        create_example_from_properties(
-                            ref_schema["properties"],
-                            ref_schema.get("required", []),
-                        )
-                    ]
-                else:
-                    example[field_name] = [get_default_value(items["type"])]
-            else:
-                example[field_name] = get_default_value(
-                    field_info.get("type", "string")
-                )
-        return example
-
-    example = {
-        "message": "string",
-        "request_info": {},
-        "request_body": create_example_from_properties(
-            schema["properties"], schema.get("required", [])
-        ),
-    }
-
-    return example
-
 
 app = FastAPI()
+
+# Include routers
+app.include_router(auth_router, tags=["Authentication"])
+app.include_router(data_layers_router, tags=["Data & Layers"])
+app.include_router(catalogs_router, tags=["Catalogs"])
+app.include_router(stripe_router, tags=["Stripe"])
+app.include_router(analysis_router, tags=["Analysis & Intelligence"])
 
 # Create static directory and mount static files
 os.makedirs("static/plots", exist_ok=True)
@@ -326,7 +130,20 @@ async def shutdown_event():
             print(f"Error closing app logging handler: {e}", file=sys.stderr)
 
 
-@app.get(CONF.fetch_acknowlg_id, response_model=ResModel[str])
+# ========================================
+# ORIGINAL ENDPOINTS - NOW HANDLED BY ROUTERS
+# All endpoints below have been moved to separate router modules:
+# - Authentication: routers/authentication.py
+# - Data & Layers: routers/data_layers.py  
+# - Catalogs: routers/catalogs.py
+# - Stripe: routers/stripe_payments.py
+# - Analysis & Intelligence: routers/analysis_intelligence.py
+# ========================================
+
+"""
+ORIGINAL ENDPOINTS COMMENTED OUT - NOW HANDLED BY ROUTERS
+
+# @app.get(CONF.fetch_acknowlg_id, response_model=ResModel[str])
 async def fetch_acknowlg_id():
     response = await request_handling(
         None, None, ResModel[str], None, wrap_output=True
@@ -1262,3 +1079,5 @@ async def ep_hub_expansion_analysis(
         wrap_output=True,
     )
     return response
+
+"""
