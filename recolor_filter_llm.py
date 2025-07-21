@@ -1,4 +1,4 @@
-from all_types.request_dtypes import ReqColorBasedon, ValidationResult
+from all_types.request_dtypes import ReqColorBasedon, ResValidationResult
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
@@ -165,7 +165,7 @@ class PromptValidationAgent:
                 ("human", "{input_text}"),
             ]
         )
-        self.parser = PydanticOutputParser(pydantic_object=ValidationResult)
+        self.parser = PydanticOutputParser(pydantic_object=ResValidationResult)
         self.format_instruction = self.parser.get_format_instructions()
         self.chain = self.template | self.model | self.parser
 
@@ -242,16 +242,16 @@ class PromptValidationAgent:
         """
         return SYSTEM_PROMPT
 
-    def __call__(self, input_text: str, available_layers) -> ValidationResult:
+    def __call__(self, input_text: str, available_layers) -> ResValidationResult:
         if available_layers is None or available_layers == "":
-            return ValidationResult(
+            return ResValidationResult(
                 is_valid=False,
                 reason="No available layers provided",
                 suggestions=["Invalid available_layers"],
             )
 
         if not isinstance(available_layers, list) or not available_layers:
-            return ValidationResult(
+            return ResValidationResult(
                 is_valid=False,
                 reason="Invalid available_layers",
                 suggestions=[
@@ -269,7 +269,7 @@ class PromptValidationAgent:
             return response
         except Exception as e:
             # Fallback in case parsing fails
-            return ValidationResult(
+            return ResValidationResult(
                 is_valid=False,
                 reason=f"Failed to validate request: {str(e)}",
                 suggestions=["Please try rephrasing your request"],
@@ -288,7 +288,7 @@ class OutputValidationAgent:
                 ),
             ]
         )
-        self.parser = PydanticOutputParser(pydantic_object=ValidationResult)
+        self.parser = PydanticOutputParser(pydantic_object=ResValidationResult)
         self.format_instruction = self.parser.get_format_instructions()
         self.chain = self.template | self.model | self.parser
 
@@ -369,7 +369,7 @@ class OutputValidationAgent:
         user_prompt: str,
         processed_output: ReqColorBasedon,
         available_layers,
-    ) -> ValidationResult:
+    ) -> ResValidationResult:
         # Validate the output
         try:
             response = self.chain.invoke(
@@ -383,7 +383,7 @@ class OutputValidationAgent:
             return response
         except Exception as e:
             # Fallback in case parsing fails
-            return ValidationResult(
+            return ResValidationResult(
                 is_valid=False,
                 reason=f"Failed to validate output: {str(e)}",
                 suggestions=["Please check the output format manually"],

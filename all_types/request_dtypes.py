@@ -144,12 +144,13 @@ class ReqLLMEditBasedon(BaseModel):
     prompt: str
 
 
-class ValidationResult(BaseModel):
+class ResValidationResult(BaseModel):
     is_valid: bool
     reason: Optional[str] = None
     suggestions: Optional[List[str]] = None
     endpoint: Optional[str] = None
     body: ReqColorBasedon = None
+    recolor_result: Optional[List] = None
 
 
 class ReqLLMFetchDataset(BaseModel):

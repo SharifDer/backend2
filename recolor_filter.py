@@ -813,7 +813,7 @@ async def filter_based_on(req: ReqFilterBasedon) -> List[ResRecolorBasedon]:
     return layers
 
 
-async def recolor_based_on_agent(req: ReqLLMEditBasedon) -> ValidationResult:
+async def recolor_based_on_agent(req: ReqLLMEditBasedon) -> ResValidationResult:
     """Process agent-based color filtering requests."""
     user_layers = req.layers or await fetch_user_layers(req.user_id)
 
@@ -835,5 +835,15 @@ async def recolor_based_on_agent(req: ReqLLMEditBasedon) -> ValidationResult:
     if final_validation.is_valid:
         final_validation.endpoint = CONF.recolor_based
         final_validation.body = recolor_object
+        
+        # Call recolor_based_on function and include the result
+        try:
+            recolor_result = await recolor_based_on(recolor_object)
+            final_validation.recolor_result = recolor_result
+        except Exception as e:
+            # If recolor fails, set validation to false and include error
+            final_validation.is_valid = False
+            final_validation.reason = f"Recolor operation failed: {str(e)}"
+            final_validation.recolor_result = None
 
     return final_validation

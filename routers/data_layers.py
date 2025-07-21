@@ -16,7 +16,7 @@ from all_types.request_dtypes import (
     ReqColorBasedon,
     ReqFilterBasedon,
     ReqLLMEditBasedon,
-    ValidationResult,
+    ResValidationResult,
 )
 from all_types.response_dtypes import (
     ResModel,
@@ -325,7 +325,7 @@ async def ep_filter_based_on(req: ReqModel[ReqFilterBasedon], request: Request):
 
 @data_layers_router.post(
     CONF.recolor_based + "_llm",
-    response_model=ResModel[ValidationResult],
+    response_model=ResModel[ResValidationResult],
 )
 async def ep_process_color_based_on_agent(
     req: ReqModel[ReqLLMEditBasedon], request: Request
@@ -333,7 +333,7 @@ async def ep_process_color_based_on_agent(
     response = await request_handling(
         req.request_body,
         ReqLLMEditBasedon,
-        ResModel[ValidationResult],
+        ResModel[ResValidationResult],
         recolor_based_on_agent,
         wrap_output=True,
     )
