@@ -1,68 +1,67 @@
-from all_types.request_dtypes import (ReqColorBasedon,ValidationResult)
+from all_types.request_dtypes import ReqColorBasedon, ValidationResult
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 from config_factory import CONF
 
+
 class ExplanationAgent:
     def __init__(self):
         self.model = self.__getmodel()
-        self.template = ChatPromptTemplate.from_messages([
-            ("system", "You are an assistant that explains the results of a map feature recoloring request based on the user's prompt."),
-            ("human", "User Prompt: {user_prompt}\nResults: {results}")
-        ])
-        self.chain=self.template|self.model
+        self.template = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "You are an assistant that explains the results of a map feature recoloring request based on the user's prompt.",
+                ),
+                ("human", "User Prompt: {user_prompt}\nResults: {results}"),
+            ]
+        )
+        self.chain = self.template | self.model
 
     def __getmodel(self):
-      client=ChatGoogleGenerativeAI(
-          google_api_key=CONF.gemini_api_key,
-          model="gemini-2.5-flash"
-      )
-      return client
+        client = ChatGoogleGenerativeAI(
+            google_api_key=CONF.gemini_api_key, model="gemini-2.5-flash"
+        )
+        return client
 
     def __call__(self, user_prompt, results):
         response = self.chain.invoke(
-            {
-              "user_prompt": user_prompt,
-              "results": results
-            }
+            {"user_prompt": user_prompt, "results": results}
         )
         return response
 
-class ReqGradientColorBasedOnZoneAgent:
-  def __init__(self):
-    self.model=self.__getmodel()
-    self.parser=PydanticOutputParser(pydantic_object=ReqColorBasedon)
-    self.system_prompt=self.__create_system_prompt()
-    self.format_instruction=self.parser.get_format_instructions()
-    self.template=ChatPromptTemplate.from_messages(
-        [
-            ("system",self.system_prompt),
-            ("human","{input_text}")
-        ]
-    )
-    self.chain=self.template|self.model
 
-  def __getmodel(self):
-    client=ChatGoogleGenerativeAI(
-        google_api_key=CONF.gemini_api_key,
-        model="gemini-2.5-flash"
-    )
-    return client
-  
-  def __create_system_prompt(self):
-    """
-    Creates a system prompt with dynamic layer information.
-    
-    Args:
-        available_layers: Dictionary of available layers with their IDs and names
-        Example: {
-            "banks": {"id": "l1d77aec5-0c4c-4733-9297-bb6bc4f2a41a", "name": "SA-RIY-bank"},
-            "atms": {"id": "lb578d63c-512e-4852-81a8-0760062c2000", "name": "ATMs"}
-        }
-    """
-    SYSTEM_PROMPT="""
+class ReqGradientColorBasedOnZoneAgent:
+    def __init__(self):
+        self.model = self.__getmodel()
+        self.parser = PydanticOutputParser(pydantic_object=ReqColorBasedon)
+        self.system_prompt = self.__create_system_prompt()
+        self.format_instruction = self.parser.get_format_instructions()
+        self.template = ChatPromptTemplate.from_messages(
+            [("system", self.system_prompt), ("human", "{input_text}")]
+        )
+        self.chain = self.template | self.model
+
+    def __getmodel(self):
+        client = ChatGoogleGenerativeAI(
+            google_api_key=CONF.gemini_api_key, model="gemini-2.5-flash"
+        )
+        return client
+
+    def __create_system_prompt(self):
+        """
+        Creates a system prompt with dynamic layer information.
+
+        Args:
+            available_layers: Dictionary of available layers with their IDs and names
+            Example: {
+                "banks": {"id": "l1d77aec5-0c4c-4733-9297-bb6bc4f2a41a", "name": "SA-RIY-bank"},
+                "atms": {"id": "lb578d63c-512e-4852-81a8-0760062c2000", "name": "ATMs"}
+            }
+        """
+        SYSTEM_PROMPT = """
       You are an AI system designed to process natural language requests related to recoloring and filtering map features. Your role is to convert these requests into structured JSON data based on predefined layers and operations.
       STRICT RESPONSE RULES:
       1. If the user's request is **unrelated** to map features, recoloring, or filtering, respond **exactly** with:
@@ -140,44 +139,42 @@ class ReqGradientColorBasedOnZoneAgent:
           "evaluation_name_list": []
       }}
       """
-    return SYSTEM_PROMPT
+        return SYSTEM_PROMPT
 
-  
-  def __call__(self,input_text,available_layers):
-    output=self.chain.invoke(
-          {
-              "input_text":input_text,
-              "format_instruction":self.format_instruction,
-              "available_layers":available_layers
-          }
-    )
-    try:
-      
-      return self.parser.invoke(output)
-    except Exception:
-      raise Exception(str(output.content))
-    
+    def __call__(self, input_text, available_layers):
+        output = self.chain.invoke(
+            {
+                "input_text": input_text,
+                "format_instruction": self.format_instruction,
+                "available_layers": available_layers,
+            }
+        )
+        try:
 
+            return self.parser.invoke(output)
+        except Exception:
+            raise Exception(str(output.content))
 
 
 class PromptValidationAgent:
     def __init__(self):
         self.model = self.__getmodel()
-        self.template = ChatPromptTemplate.from_messages([
-            ("system", self.__create_system_prompt()),
-            ("human", "{input_text}")
-        ])
-        self.parser=PydanticOutputParser(pydantic_object=ValidationResult)
-        self.format_instruction=self.parser.get_format_instructions()
+        self.template = ChatPromptTemplate.from_messages(
+            [
+                ("system", self.__create_system_prompt()),
+                ("human", "{input_text}"),
+            ]
+        )
+        self.parser = PydanticOutputParser(pydantic_object=ValidationResult)
+        self.format_instruction = self.parser.get_format_instructions()
         self.chain = self.template | self.model | self.parser
-    
+
     def __getmodel(self):
         client = ChatGoogleGenerativeAI(
-            google_api_key=CONF.gemini_api_key,
-            model="gemini-2.5-flash"
+            google_api_key=CONF.gemini_api_key, model="gemini-2.5-flash"
         )
         return client
-    
+
     def __create_system_prompt(self):
         SYSTEM_PROMPT = """
         You are an AI system designed to validate user requests related to map feature recoloring and filtering. Your job is to determine if a request is:
@@ -244,59 +241,63 @@ class PromptValidationAgent:
         }}
         """
         return SYSTEM_PROMPT
-    
+
     def __call__(self, input_text: str, available_layers) -> ValidationResult:
         if available_layers is None or available_layers == "":
             return ValidationResult(
                 is_valid=False,
                 reason="No available layers provided",
-                suggestions=["Invalid available_layers"]
+                suggestions=["Invalid available_layers"],
             )
-        
+
         if not isinstance(available_layers, list) or not available_layers:
             return ValidationResult(
                 is_valid=False,
                 reason="Invalid available_layers",
-                suggestions=["Please provide a non-empty dictionary of available layers"]
+                suggestions=[
+                    "Please provide a non-empty dictionary of available layers"
+                ],
             )
         try:
-          response = self.chain.invoke(
-              {
-                  "input_text": input_text,
-                  "available_layers": available_layers,
-                  "format_instruction":self.format_instruction
-              }
-          )
-          return response
+            response = self.chain.invoke(
+                {
+                    "input_text": input_text,
+                    "available_layers": available_layers,
+                    "format_instruction": self.format_instruction,
+                }
+            )
+            return response
         except Exception as e:
             # Fallback in case parsing fails
             return ValidationResult(
                 is_valid=False,
                 reason=f"Failed to validate request: {str(e)}",
-                suggestions=["Please try rephrasing your request"]
+                suggestions=["Please try rephrasing your request"],
             )
-
-
 
 
 class OutputValidationAgent:
     def __init__(self):
         self.model = self.__getmodel()
-        self.template = ChatPromptTemplate.from_messages([
-            ("system", self.__create_system_prompt()),
-            ("human", "User Prompt: {user_prompt}\n\nProcessed Output: {processed_output}\n\nAvailable Layers: {available_layers}")
-        ])
-        self.parser=PydanticOutputParser(pydantic_object=ValidationResult)
-        self.format_instruction=self.parser.get_format_instructions()
+        self.template = ChatPromptTemplate.from_messages(
+            [
+                ("system", self.__create_system_prompt()),
+                (
+                    "human",
+                    "User Prompt: {user_prompt}\n\nProcessed Output: {processed_output}\n\nAvailable Layers: {available_layers}",
+                ),
+            ]
+        )
+        self.parser = PydanticOutputParser(pydantic_object=ValidationResult)
+        self.format_instruction = self.parser.get_format_instructions()
         self.chain = self.template | self.model | self.parser
-    
+
     def __getmodel(self):
         client = ChatGoogleGenerativeAI(
-            google_api_key=CONF.gemini_api_key,
-            model="gemini-2.5-flash"
+            google_api_key=CONF.gemini_api_key, model="gemini-2.5-flash"
         )
         return client
-    
+
     def __create_system_prompt(self):
         SYSTEM_PROMPT = """
         You are an AI system designed to validate whether the processed output from a map feature recoloring request correctly matches the user's intent in their prompt. 
@@ -362,22 +363,28 @@ class OutputValidationAgent:
         Be very thorough in your evaluation, but also consider reasonable interpretations of the user's intent. If the output is a reasonable interpretation of an ambiguous prompt, consider it valid.
         """
         return SYSTEM_PROMPT
-    
-    def __call__(self, user_prompt: str, processed_output: ReqColorBasedon, available_layers) -> ValidationResult:
+
+    def __call__(
+        self,
+        user_prompt: str,
+        processed_output: ReqColorBasedon,
+        available_layers,
+    ) -> ValidationResult:
         # Validate the output
         try:
             response = self.chain.invoke(
-            {
-                "user_prompt": user_prompt,
-                "format_instruction": self.format_instruction,
-                "processed_output": processed_output,
-                "available_layers": available_layers
-            })
+                {
+                    "user_prompt": user_prompt,
+                    "format_instruction": self.format_instruction,
+                    "processed_output": processed_output,
+                    "available_layers": available_layers,
+                }
+            )
             return response
         except Exception as e:
             # Fallback in case parsing fails
             return ValidationResult(
                 is_valid=False,
                 reason=f"Failed to validate output: {str(e)}",
-                suggestions=["Please check the output format manually"]
+                suggestions=["Please check the output format manually"],
             )

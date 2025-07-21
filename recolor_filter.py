@@ -12,7 +12,7 @@ from geopy.distance import geodesic
 import numpy as np
 import uuid
 import asyncio
-from agents import *
+from recolor_filter_llm import *
 
 # Type definitions
 FilterResult = Dict[str, List[Dict[str, Any]]]
