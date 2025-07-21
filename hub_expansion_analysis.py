@@ -73,13 +73,15 @@ def normalize_score(
     return final_score
 
 
-async def fetch_population_centers(req: ReqHubExpansion) -> List[Dict[str, Any]]:
+async def fetch_population_centers(
+    req: ReqHubExpansion,
+) -> List[Dict[str, Any]]:
     """Fetch population center data using the intelligence viewport system with population_centers"""
-    
+
     # Determine bounding box for analysis
     if req.analysis_bounds:
         min_lng = req.analysis_bounds.get("min_lng")
-        min_lat = req.analysis_bounds.get("min_lat") 
+        min_lat = req.analysis_bounds.get("min_lat")
         max_lng = req.analysis_bounds.get("max_lng")
         max_lat = req.analysis_bounds.get("max_lat")
     else:
@@ -87,12 +89,12 @@ async def fetch_population_centers(req: ReqHubExpansion) -> List[Dict[str, Any]]
         temp_req = ReqFetchDataset(
             city_name=req.city_name,
             country_name=req.country_name,
-            user_id=req.user_id
+            user_id=req.user_id,
         )
         temp_req = fetch_lat_lng_bounding_box(temp_req)
         bbox_coords = temp_req.bounding_box
         min_lng = bbox_coords[0]
-        min_lat = bbox_coords[1] 
+        min_lat = bbox_coords[1]
         max_lng = bbox_coords[2]
         max_lat = bbox_coords[3]
 
@@ -105,48 +107,52 @@ async def fetch_population_centers(req: ReqHubExpansion) -> List[Dict[str, Any]]
         zoom_level=10,  # Appropriate zoom level for city analysis
         user_id=req.user_id,
         population=True,
-        income=False
+        income=False,
     )
 
     # Fetch population data using the intelligence system
     population_data = await fetch_intelligence_by_viewport(intel_req)
 
     # Extract population centers from the metadata
-    population_centers_geojson = population_data.get("metadata", {}).get("population_centers")
-    
+    population_centers_geojson = population_data.get("metadata", {}).get(
+        "population_centers"
+    )
+
     if not population_centers_geojson:
         # Fallback: if no population_centers in metadata, return empty list
         return []
 
     # Process population centers from the dedicated GeoJSON
     population_centers = []
-    
+
     features = population_centers_geojson.get("features", [])
     for feature in features:
         properties = feature.get("properties", {})
         geometry = feature.get("geometry", {})
         coordinates = geometry.get("coordinates", [])
-        
+
         if len(coordinates) >= 2:
             lng, lat = coordinates[0], coordinates[1]
         else:
             continue
 
         # Extract population data with multiple possible field names
-        population = properties.get("Population_Count", 
-                    properties.get("population", 
-                    properties.get("TotalPopulation", 0)))
-        
-        # Extract density data with multiple possible field names  
-        density = properties.get("Population_Density_KM2",
-                 properties.get("density", 
-                 properties.get("PopulationDensity", 0)))
-        
+        population = properties.get(
+            "Population_Count",
+            properties.get("population", properties.get("TotalPopulation", 0)),
+        )
+
+        # Extract density data with multiple possible field names
+        density = properties.get(
+            "Population_Density_KM2",
+            properties.get("density", properties.get("PopulationDensity", 0)),
+        )
+
         # Extract additional useful information
         urban_score = properties.get("urban_score", 0)
         population_rank = properties.get("population_center_rank", 0)
         city = properties.get("city", req.city_name)
-        
+
         # Only include centers above minimum population threshold
         if population > req.min_population_threshold:
             center_data = {
@@ -166,12 +172,12 @@ async def fetch_population_centers(req: ReqHubExpansion) -> List[Dict[str, Any]]
 
     # Sort by population rank first (lower rank = higher priority), then by population
     sorted_centers = sorted(
-        population_centers, 
-        key=lambda x: (x.get("population_rank", 999), -x.get("population", 0))
+        population_centers,
+        key=lambda x: (x.get("population_rank", 999), -x.get("population", 0)),
     )
-    
+
     # Take top centers based on the requirement, default to 8 if not specified
-    max_centers = getattr(req, 'max_population_centers', 8)
+    max_centers = getattr(req, "max_population_centers", 8)
     top_centers = sorted_centers[:max_centers]
 
     return top_centers
@@ -642,7 +648,6 @@ def calculate_competitive_advantage_score(
     for competitor in competitor_locations:
         comp_coords = competitor.get("geometry", {}).get("coordinates", [])
 
-
         comp_lng = comp_coords[0]
         comp_lat = comp_coords[1]
 
@@ -675,8 +680,12 @@ def calculate_competitive_advantage_score(
     density_penalty = min(density_penalty_max, competitors_in_radius * 1.0)
     score = distance_score - density_penalty
 
-    closest_competitor_name = closest_competitor.get("properties", {}).get("name", None)
-    closest_competitor_url = closest_competitor.get("properties", {}).get("googleMapsUri", None)
+    closest_competitor_name = closest_competitor.get("properties", {}).get(
+        "name", None
+    )
+    closest_competitor_url = closest_competitor.get("properties", {}).get(
+        "googleMapsUri", None
+    )
     closest_competitor_distance_km = round(min_distance_km, 2)
     details = {
         "nearest_competitor_name": closest_competitor_name,

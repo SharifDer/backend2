@@ -1,6 +1,7 @@
 # tests/integration/test_fetch_dataset.py
 from .fixtures.test_utils import create_parametrized_test
 from .fixtures.test_generator import ConfigDrivenTest, Prerequisites, Endpoint
+from all_types.request_dtypes import ReqFetchDataset
 
 # Dataset fetch test configurations
 FETCH_DATASET_TESTS = [
@@ -18,30 +19,29 @@ FETCH_DATASET_TESTS = [
         input_data={
             "message": "Fetch dataset sample",
             "request_info": {"request_id": "test-fetch-sample-001"},
-            "request_body": {
-                "user_id": "${user.user_id}",
-                "lat": 0,
-                "lng": 0,
-                "radius": 30000.0,
-                "boolean_query": "supermarket",
-                "page_token": "",
-                "action": "sample",
-                "search_type": "category_search",
-                "country_name": "Saudi Arabia",
-                "city_name": "Riyadh",
-                "prdcer_lyr_id": "",
-                "text_search": "",
-                "zoom_level": 0,
-                "bounding_box": [],
-                "included_types": [],
-                "excluded_types": [],
-                "ids_and_location_only": False,
-                "include_rating_info": False,
-                "include_only_sub_properties": True,
-                "full_load": False
-            }
+            "request_body": ReqFetchDataset(
+                user_id="${user.user_id}",
+                lat=0,
+                lng=0,
+                radius=30000.0,
+                boolean_query="supermarket",
+                page_token="",
+                action="sample",
+                search_type="category_search",
+                country_name="Saudi Arabia",
+                city_name="Riyadh",
+                prdcer_lyr_id="",
+                text_search="",
+                zoom_level=0,
+                bounding_box=[],
+                included_types=[],
+                excluded_types=[],
+                ids_and_location_only=False,
+                include_rating_info=False,
+                include_only_sub_properties=True,
+                full_load=False
+            ).model_dump()
         },
-        # ✅ Remove expected_output and use JSON instead
         expected_output_file="expected_responses/test_fetch_dataset_supermarket.json"
     ),
     ConfigDrivenTest(
@@ -58,28 +58,28 @@ FETCH_DATASET_TESTS = [
         input_data={
             "message": "Fetch dataset sample",
             "request_info": {"request_id": "test-fetch-cafe-restaurant-001"},
-            "request_body": {
-                "user_id": "${user.user_id}",
-                "lat": 0,
-                "lng": 0,
-                "radius": 30000.0,
-                "boolean_query": "cafe OR restaurant",
-                "page_token": "",
-                "action": "sample",
-                "search_type": "category_search",
-                "country_name": "Saudi Arabia",
-                "city_name": "Jeddah",
-                "prdcer_lyr_id": "",
-                "text_search": "",
-                "zoom_level": 0,
-                "bounding_box": [],
-                "included_types": [],
-                "excluded_types": [],
-                "ids_and_location_only": False,
-                "include_rating_info": False,
-                "include_only_sub_properties": True,
-                "full_load": False
-            }
+            "request_body": ReqFetchDataset(
+                user_id="${user.user_id}",
+                lat=0,
+                lng=0,
+                radius=30000.0,
+                boolean_query="cafe OR restaurant",
+                page_token="",
+                action="sample",
+                search_type="category_search",
+                country_name="Saudi Arabia",
+                city_name="Jeddah",
+                prdcer_lyr_id="",
+                text_search="",
+                zoom_level=0,
+                bounding_box=[],
+                included_types=[],
+                excluded_types=[],
+                ids_and_location_only=False,
+                include_rating_info=False,
+                include_only_sub_properties=True,
+                full_load=False
+            ).model_dump()
         },
         expected_output_file="expected_responses/test_fetch_dataset_cafe_restaurant.json"
     ),
@@ -97,28 +97,28 @@ FETCH_DATASET_TESTS = [
         input_data={
             "message": "Fetch full dataset for supermarkets in Riyadh",
             "request_info": {"request_id": "test-fetch-full-data-supermarket-riyadh-001"},
-            "request_body": {
-                "user_id": "${user.user_id}",
-                "lat": 0,
-                "lng": 0,
-                "radius": 30000.0,
-                "boolean_query": "supermarket",
-                "page_token": "",
-                "action": "full data",
-                "search_type": "category_search",
-                "country_name": "Saudi Arabia",
-                "city_name": "Riyadh",
-                "prdcer_lyr_id": "",
-                "text_search": "",
-                "zoom_level": 0,
-                "bounding_box": [],
-                "included_types": [],
-                "excluded_types": [],
-                "ids_and_location_only": False,
-                "include_rating_info": False,
-                "include_only_sub_properties": True,
-                "full_load": False
-            }
+            "request_body": ReqFetchDataset(
+                user_id="${user.user_id}",
+                lat=0,
+                lng=0,
+                radius=30000.0,
+                boolean_query="supermarket",
+                page_token="",
+                action="full data",
+                search_type="category_search",
+                country_name="Saudi Arabia",
+                city_name="Riyadh",
+                prdcer_lyr_id="",
+                text_search="",
+                zoom_level=0,
+                bounding_box=[],
+                included_types=[],
+                excluded_types=[],
+                ids_and_location_only=False,
+                include_rating_info=False,
+                include_only_sub_properties=True,
+                full_load=False
+            ).model_dump()
         },
         expected_output_file="expected_responses/test_fetch_dataset_supermarket_full_data_riyadh.json"
     ),
@@ -136,28 +136,28 @@ FETCH_DATASET_TESTS = [
         input_data={
             "message": "Fetch dataset with token",
             "request_info": {"request_id": "test-fetch-token-supermarket-riyadh-001"},
-            "request_body": {
-                "user_id": "${user.user_id}",
-                "lat": 0,
-                "lng": 0,
-                "radius": 15000.0,
-                "boolean_query": "supermarket",
-                "page_token": "page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1",
-                "action": "full data",
-                "search_type": "category_search",
-                "country_name": "Saudi Arabia",
-                "city_name": "Riyadh",
-                "prdcer_lyr_id": "",
-                "text_search": "",
-                "zoom_level": 0,
-                "bounding_box": [],
-                "included_types": [],
-                "excluded_types": [],
-                "ids_and_location_only": False,
-                "include_rating_info": False,
-                "include_only_sub_properties": True,
-                "full_load": False
-            }
+            "request_body": ReqFetchDataset(
+                user_id="${user.user_id}",
+                lat=0,
+                lng=0,
+                radius=15000.0,
+                boolean_query="supermarket",
+                page_token="page_token=plan_supermarket_Saudi Arabia_Riyadh@#$1",
+                action="full data",
+                search_type="category_search",
+                country_name="Saudi Arabia",
+                city_name="Riyadh",
+                prdcer_lyr_id="",
+                text_search="",
+                zoom_level=0,
+                bounding_box=[],
+                included_types=[],
+                excluded_types=[],
+                ids_and_location_only=False,
+                include_rating_info=False,
+                include_only_sub_properties=True,
+                full_load=False
+            ).model_dump()
         },
         expected_output_file="expected_responses/test_fetch_dataset_supermarket_full_data_with_token.json"
     ),
@@ -175,28 +175,28 @@ FETCH_DATASET_TESTS = [
         input_data={
             "message": "Fetch dataset sample for Arabic keyword",
             "request_info": {"request_id": "test-fetch-arabic-keyword-001"},
-            "request_body": {
-                "user_id": "${user.user_id}",
-                "lat": 0,
-                "lng": 0,
-                "radius": 30000.0,
-                "boolean_query": "@الحلقه@",
-                "page_token": "",
-                "action": "sample",
-                "search_type": "keyword_search",
-                "country_name": "Saudi Arabia",
-                "city_name": "Riyadh",
-                "prdcer_lyr_id": "",
-                "text_search": "",
-                "zoom_level": 0,
-                "bounding_box": [],
-                "included_types": [],
-                "excluded_types": [],
-                "ids_and_location_only": False,
-                "include_rating_info": False,
-                "include_only_sub_properties": True,
-                "full_load": False
-            }
+            "request_body": ReqFetchDataset(
+                user_id="${user.user_id}",
+                lat=0,
+                lng=0,
+                radius=30000.0,
+                boolean_query="@الحلقه@",
+                page_token="",
+                action="sample",
+                search_type="keyword_search",
+                country_name="Saudi Arabia",
+                city_name="Riyadh",
+                prdcer_lyr_id="",
+                text_search="",
+                zoom_level=0,
+                bounding_box=[],
+                included_types=[],
+                excluded_types=[],
+                ids_and_location_only=False,
+                include_rating_info=False,
+                include_only_sub_properties=True,
+                full_load=False
+            ).model_dump()
         },
         expected_output_file="expected_responses/test_fetch_dataset_arabic_keyword_search.json"
     )
