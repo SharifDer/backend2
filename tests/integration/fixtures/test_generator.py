@@ -648,12 +648,45 @@ class ConfigTestGenerator:
                     timeout=config.timeout,
                 )
             elif method == "post":
-                response = self.http_client.post(
-                    url,
-                    headers=headers,
-                    json=input_data,
-                    timeout=config.timeout,
-                )
+                # Check if this is a multipart form data request
+                if isinstance(input_data, dict) and input_data.get("_form_data"):
+                    # Prepare multipart form data
+                    files = {}
+                    data = {}
+                    
+                    for key, value in input_data.items():
+                        if key == "_form_data":
+                            continue  # Skip the flag
+                        elif key == "req":
+                            # Convert the req object to JSON string
+                            data[key] = json.dumps(value)
+                        elif key == "image":
+                            # Handle image file upload
+                            if value is not None:
+                                files[key] = value
+                        else:
+                            # Regular form data
+                            data[key] = value
+                    
+                    logger.info(f"📝 Sending multipart form data with fields: {list(data.keys())}")
+                    if files:
+                        logger.info(f"📁 Including files: {list(files.keys())}")
+                    
+                    response = self.http_client.post(
+                        url,
+                        headers=headers,
+                        data=data,
+                        files=files if files else None,
+                        timeout=config.timeout,
+                    )
+                else:
+                    # Regular JSON request
+                    response = self.http_client.post(
+                        url,
+                        headers=headers,
+                        json=input_data,
+                        timeout=config.timeout,
+                    )
             elif method == "put":
                 response = self.http_client.put(
                     url,

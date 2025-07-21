@@ -733,7 +733,7 @@ async def save_prdcer_ctlg(req: ReqSavePrdcerCtlg) -> str:
     try:
         user_data = await load_user_profile(req.user_id)
         new_ctlg_id = str(uuid.uuid4())
-
+        thumbnail_url = "No image uploaded"
         if req.image:
             try:
                 thumbnail_url = upload_file_to_google_cloud_bucket(
