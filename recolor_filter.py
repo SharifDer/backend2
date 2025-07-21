@@ -13,6 +13,7 @@ import numpy as np
 import uuid
 import asyncio
 from recolor_filter_llm import *
+from config_factory import CONF
 
 # Type definitions
 FilterResult = Dict[str, List[Dict[str, Any]]]
@@ -832,7 +833,7 @@ async def recolor_based_on_agent(req: ReqLLMEditBasedon) -> ValidationResult:
     final_validation = output_validator(req.prompt, recolor_object, user_layers)
 
     if final_validation.is_valid:
-        final_validation.endpoint = "gradient_color_based_on_zone"
+        final_validation.endpoint = CONF.recolor_based
         final_validation.body = recolor_object
 
     return final_validation

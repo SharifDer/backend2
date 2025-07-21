@@ -1,4 +1,4 @@
-from typing import Dict, List, TypeVar, Generic, Optional, Any, Literal
+from typing import Dict, List, TypeVar, Generic, Optional
 from fastapi import UploadFile
 
 from pydantic import BaseModel, Field
@@ -132,10 +132,15 @@ class ReqFilterBasedon(ReqColorBasedon):
     property_threshold: float | str
 
 
+class LayerReference(BaseModel):
+    id: str
+    name: str
+
+
 # User prompt -> llm
 class ReqLLMEditBasedon(BaseModel):
     user_id: str
-    layers: List[Dict[str, Any]]
+    layers: List[LayerReference] = Field(..., description="List of layers with required id and name fields")
     prompt: str
 
 
