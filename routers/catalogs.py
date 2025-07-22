@@ -13,10 +13,9 @@ from all_types.request_dtypes import (
 )
 from all_types.response_dtypes import (
     ResModel,
-    UserCatalogInfo,
     ResLyrMapData,
 )
-from all_types.internal_types import UserId
+from all_types.internal_types import UserCatalogInfo, UserId
 from backend_common.request_processor import request_handling
 from backend_common.auth import JWTBearer
 from data_fetcher import (

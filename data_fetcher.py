@@ -29,7 +29,7 @@ from backend_common.gbucket import (
 )
 from config_factory import CONF
 from all_types.request_dtypes import *
-from all_types.response_dtypes import ResLyrMapData, LayerInfo, UserCatalogInfo
+from all_types.response_dtypes import ResLyrMapData, LayerInfo, ResUserCatalogInfo
 from cost_calculator import calculate_cost
 from geo_std_utils import fetch_lat_lng_bounding_box
 from google_api_connector import (
@@ -752,7 +752,7 @@ async def save_prdcer_ctlg(req: ReqSavePrdcerCtlg) -> str:
                 # Keep the original thumbnail_url if upload fails
 
         # Create new catalog using Pydantic model
-        new_catalog = UserCatalogInfo(
+        new_catalog = ResUserCatalogInfo(
             prdcer_ctlg_name=req.prdcer_ctlg_name,
             prdcer_ctlg_id=new_ctlg_id,
             subscription_price=req.subscription_price,
@@ -814,7 +814,7 @@ async def delete_prdcer_ctlg(req: ReqDeletePrdcerCtlg) -> str:
         raise e
 
 
-async def fetch_prdcer_ctlgs(req: UserId) -> List[UserCatalogInfo]:
+async def fetch_prdcer_ctlgs(req: UserId) -> List[ResUserCatalogInfo]:
     """
     Retrieves all producer catalogs associated with a specific user.
     """
@@ -824,15 +824,13 @@ async def fetch_prdcer_ctlgs(req: UserId) -> List[UserCatalogInfo]:
 
         for ctlg_id, ctlg_data in user_catalogs.items():
             validated_catalogs.append(
-                UserCatalogInfo(
+                ResUserCatalogInfo(
                     prdcer_ctlg_id=ctlg_id,
                     prdcer_ctlg_name=ctlg_data["prdcer_ctlg_name"],
                     ctlg_description=ctlg_data["ctlg_description"],
                     thumbnail_url=ctlg_data.get("thumbnail_url", ""),
                     subscription_price=ctlg_data["subscription_price"],
-                    lyrs=ctlg_data["lyrs"],
                     ctlg_owner_user_id=ctlg_data["ctlg_owner_user_id"],
-                    display_elements=ctlg_data.get("display_elements", {}),
                     total_records=ctlg_data.get("total_records", 0),
                 )
             )
