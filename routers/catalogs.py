@@ -14,8 +14,9 @@ from all_types.request_dtypes import (
 from all_types.response_dtypes import (
     ResModel,
     ResLyrMapData,
+    ResUserCatalogInfo
 )
-from all_types.internal_types import UserCatalogInfo, UserId
+from all_types.internal_types import UserId
 from backend_common.request_processor import request_handling
 from backend_common.auth import JWTBearer
 from data_fetcher import (
@@ -132,12 +133,12 @@ async def ep_delete_producer_catalog(
     return response
 
 
-@catalogs_router.post(CONF.user_catalogs, response_model=ResModel[list[UserCatalogInfo]])
+@catalogs_router.post(CONF.user_catalogs, response_model=ResModel[list[ResUserCatalogInfo]])
 async def user_catalogs(req: ReqModel[UserId]):
     response = await request_handling(
         req.request_body,
         UserId,
-        ResModel[list[UserCatalogInfo]],
+        ResModel[list[ResUserCatalogInfo]],
         fetch_prdcer_ctlgs,
         wrap_output=True,
     )
