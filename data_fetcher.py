@@ -760,7 +760,7 @@ async def save_prdcer_ctlg(req: ReqSavePrdcerCtlg) -> str:
             total_records=req.total_records,
             lyrs=req.lyrs,
             thumbnail_url=thumbnail_url,
-            ctlg_owner_user_id=req.user_id,
+            user_id=req.user_id,
             display_elements=req.display_elements,
         )
         user_data["prdcer"]["prdcer_ctlgs"][
@@ -830,7 +830,7 @@ async def fetch_prdcer_ctlgs(req: UserId) -> List[ResUserCatalogInfo]:
                     ctlg_description=ctlg_data["ctlg_description"],
                     thumbnail_url=ctlg_data.get("thumbnail_url", ""),
                     subscription_price=ctlg_data["subscription_price"],
-                    ctlg_owner_user_id=ctlg_data["ctlg_owner_user_id"],
+                    user_id=ctlg_data["UserId"],
                     total_records=ctlg_data.get("total_records", 0),
                 )
             )
@@ -866,7 +866,7 @@ async def fetch_ctlg_lyrs(req: ReqFetchCtlgLyrs) -> List[ResLyrMapData]:
         if not ctlg:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        ctlg_owner_data = await load_user_profile(ctlg["ctlg_owner_user_id"])
+        ctlg_owner_data = await load_user_profile(ctlg["UserId"])
         ctlg_lyrs_map_data = []
 
         for lyr_info in ctlg["lyrs"]:
@@ -953,7 +953,7 @@ async def save_draft_catalog(req: ReqSavePrdcerLyer) -> str:
                 "total_records": req.total_records,
                 "lyrs": req.lyrs,
                 "thumbnail_url": req.thumbnail_url,
-                "ctlg_owner_user_id": req.user_id,
+                "UserId": req.user_id,
             }
             user_data["prdcer"]["draft_ctlgs"][new_ctlg_id] = new_catalog
 

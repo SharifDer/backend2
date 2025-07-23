@@ -5,7 +5,7 @@
             "ctlg_description": "Database of all Saudi Arabia gas stations points of Interests",
             "thumbnail_url": "https://catalog-assets.s3.ap-northeast-1.amazonaws.com/SAUgasStations.pNG",
             "subscription_price":"99",
-            "ctlg_owner_user_id":"18954",
+            "UserId":"18954",
             "total_records": 300,
             "lyrs":["p33"]
           }
