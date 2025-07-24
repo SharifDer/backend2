@@ -340,7 +340,7 @@ async def check_purchase(req: ReqFetchDataset, plan_name: str):
     if CONF.test_mode:
         logger.info("TEST_MODE: Bypassing payment check for full data request")
         return
-        
+
     if req.action == "full data":
         contains_text_search = False
         if "@" in req.boolean_query:
@@ -515,7 +515,9 @@ async def fetch_dataset(req: ReqFetchDataset):
 
             if req.full_load:
                 # TODO at the moment we can't do full load unless progress is 100 following background task
-                progress, progress_complete = await fetch_plan_progress(plan_name)
+                progress, progress_complete = await fetch_plan_progress(
+                    plan_name
+                )
                 progress_check_counts = 0
                 while progress <= 100 and progress_check_counts < 1:
                     if progress == 100:
@@ -523,10 +525,10 @@ async def fetch_dataset(req: ReqFetchDataset):
 
                         # execute in db merge+deduplicate all datasets
                         output_filenames = await transform_plan_items(req, plan)
-                        geojson_dataset = (
-                            await get_full_load_geojson(output_filenames)
+                        geojson_dataset = await get_full_load_geojson(
+                            output_filenames
                         )
-                        
+
                         break
                     else:
                         progress = await bkgnd_full_load(
@@ -671,10 +673,8 @@ async def fetch_lyr_map_data(req: ReqPrdcerLyrMapData) -> ResLyrMapData:
     """
     # Validate layer ID is not empty
     if not req.prdcer_lyr_id or not req.prdcer_lyr_id.strip():
-        raise HTTPException(
-            status_code=400, detail="Layer ID cannot be empty"
-        )
-    
+        raise HTTPException(status_code=400, detail="Layer ID cannot be empty")
+
     dataset = {}
     user_layer_matching = await load_user_layer_matching()
     layer_owner_id = user_layer_matching.get(req.prdcer_lyr_id)
@@ -695,7 +695,8 @@ async def fetch_lyr_map_data(req: ReqPrdcerLyrMapData) -> ResLyrMapData:
     # Check if dataset was found
     if dataset is None:
         raise HTTPException(
-            status_code=404, detail=f"Dataset not found for layer {req.prdcer_lyr_id}"
+            status_code=404,
+            detail=f"Dataset not found for layer {req.prdcer_lyr_id}",
         )
 
     # Extract properties from first feature if available
@@ -772,7 +773,7 @@ async def save_prdcer_ctlg(req: ReqSavePrdcerCtlg) -> str:
     except Exception as e:
         raise e
 
-# Fetch a single catalog object for a user by catalog ID
+
 async def fetch_single_catalog(req: ReqCatalogId) -> ResPrdcerCtlg:
     """
     Fetch a single catalog object for a user by catalog ID.
@@ -784,7 +785,9 @@ async def fetch_single_catalog(req: ReqCatalogId) -> ResPrdcerCtlg:
         .get(req.ctlg_id, None)
     )
     if not ctlg:
-        raise HTTPException(status_code=404, detail="Catalog not found for this user.")
+        raise HTTPException(
+            status_code=404, detail="Catalog not found for this user."
+        )
     # Return as ResPrdcerCtlg object
     return ResPrdcerCtlg(**ctlg)
 
