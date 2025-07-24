@@ -3,7 +3,7 @@ from fastapi import UploadFile
 
 from pydantic import BaseModel, Field
 
-from all_types.internal_types import PrdcerCtlg, UserId, BooleanQuery
+from all_types.internal_types import CtlgItems, UserId, BooleanQuery
 
 U = TypeVar("U")
 
@@ -34,7 +34,7 @@ class boxmapProperties(BaseModel):
     user_ratings_total: int
 
 
-class ReqSavePrdcerCtlg(PrdcerCtlg, UserId):
+class ReqSavePrdcerCtlg(CtlgItems):
     image: Optional[UploadFile] = None
 
 
@@ -42,8 +42,6 @@ class ReqDeletePrdcerCtlg(UserId):
     prdcer_ctlg_id: str
 
 
-class ReqDeletePrdcerCtlg(UserId):
-    prdcer_ctlg_id: str
 
 
 class ZoneLayerInfo(BaseModel):

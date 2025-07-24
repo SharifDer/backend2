@@ -2,7 +2,6 @@ from typing import Dict, List, TypeVar, Generic, Literal, Any, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from all_types.internal_types import LyrInfoInCtlgSave, PrdcerCtlg, CtlgMetaData
 from all_types.request_dtypes import ReqFetchDataset
 
 T = TypeVar("T")
@@ -63,11 +62,6 @@ class ResFetchDataset(BaseModel):
     delay_before_next_call: Optional[int] = 0
     progress: Optional[int] = 0
     next_page_token: Optional[str] = ""
-
-
-class ResUserCatalogInfo(CtlgMetaData):
-    prdcer_ctlg_id: str
-    thumbnail_url: str
 
 
 class LayerInfo(BaseModel):

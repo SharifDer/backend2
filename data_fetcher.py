@@ -12,7 +12,7 @@ import base64
 from fastapi import HTTPException
 from fastapi import status
 import stripe
-from all_types.internal_types import UserId
+from all_types.internal_types import ResUserCatalogInfo, UserId, ResPrdcerCtlg
 from backend_common.auth import (
     load_user_profile,
     update_user_profile,
@@ -29,7 +29,7 @@ from backend_common.gbucket import (
 )
 from config_factory import CONF
 from all_types.request_dtypes import *
-from all_types.response_dtypes import ResLyrMapData, LayerInfo, ResUserCatalogInfo
+from all_types.response_dtypes import ResLyrMapData, LayerInfo
 from cost_calculator import calculate_cost
 from geo_std_utils import fetch_lat_lng_bounding_box
 from google_api_connector import (
@@ -752,7 +752,7 @@ async def save_prdcer_ctlg(req: ReqSavePrdcerCtlg) -> str:
                 # Keep the original thumbnail_url if upload fails
 
         # Create new catalog using Pydantic model
-        new_catalog = ResUserCatalogInfo(
+        new_catalog = ResPrdcerCtlg(
             prdcer_ctlg_name=req.prdcer_ctlg_name,
             prdcer_ctlg_id=new_ctlg_id,
             subscription_price=req.subscription_price,
