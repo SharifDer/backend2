@@ -64,6 +64,7 @@ class ApiConfig(CommonApiConfig):
     ggl_txt_search_ids_only_essential: str = "places.id,places.name"
     ggl_details_fields: str = "id,name,photos,location,types"
     save_draft_catalog: str = backend_base_uri + "save_draft_catalog"
+    fetch_single_catalog: str = backend_base_uri + "fetch_single_catalog"
     fetch_gradient_colors: str = backend_base_uri + "fetch_gradient_colors"
     recolor_based: str = backend_base_uri + "recolor_based"
     filter_based_on: str = backend_base_uri + "filter_based_on"

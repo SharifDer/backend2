@@ -119,7 +119,7 @@ async def ep_save_producer_catalog(
 
 
 @catalogs_router.post(
-    "/fastapi/fetch_single_catalog",
+    CONF.fetch_single_catalog,
     response_model=ResModel[ResPrdcerCtlg],
     dependencies=[Depends(JWTBearer())],
 )
