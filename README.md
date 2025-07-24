@@ -1,20 +1,14 @@
-Here's an improved README that incorporates your spoken instructions and makes the setup process clearer and more beginner-friendly:
-
 ```markdown
 # Backend Server Setup Guide
 
 This guide will help you set up and run the backend server on your Windows computer.
 
 ## What You'll Need
-- Windows 10 or Windows 11
 - The zip file I gave you
-- Internet connection
 
-## Step 1: Extract the Project Files
-1. Locate the zip file I gave you
-2. Right-click on the zip file and select **"Extract All..."**
-3. Choose where you want to extract it (Desktop is fine)
-4. Open the extracted folder
+## Step 1: Project Files
+1. git clone the repo
+2. Extract zip file to root of project
 
 ## Step 2: Install uv (Python Package Manager)
 ### Open PowerShell
@@ -70,49 +64,3 @@ This will install all the required packages for the project.
 - If F5 doesn't work, make sure you have a Python file open and selected
 - If you can't find the Python interpreter with `.venv`, try running `uv sync` again
 - If you get permission errors, make sure you're running as administrator
-
-## That's It!
-Your backend server should now be running. You can make changes to the code and press F5 again to restart the server with your changes.
-```
-
-
-
-
-
-
-Create required directories and files:
-
-```
-mkdir .vscode
-mkdir secrets
-```
-
-Add these files (I'll need to provide them):
-
-**`.vscode/launch.json`** - VS Code debug configuration
-
-**`secrets/`** directory with:
-- `ggl_bucket_sa.json`
-- `launch.json`
-- `postgres_db.json`
-- `secrets_firebase.json`
-- `secrets_gmap.json`
-- `secrets_llm.json`
-- `secret_dev-s-locator-SA.json`
-- `secret_LLM_api_key.json`
-- `secret_stripe.json`
-
-Run Backend Server
-Press `F5` in VS Code
-
-## MCP Server
-
-Run MCP Server
-```
-f:/git/s_locator/my_middle_API/.venv/Scripts/python.exe f:/git/s_locator/my_middle_API/tool_bridge_mcp_server/mcp_server.py
-```
-
-Inspect MCP Server
-```
-mcp dev tool_bridge_mcp_server/mcp_server.py
-```
