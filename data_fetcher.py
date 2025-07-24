@@ -772,6 +772,22 @@ async def save_prdcer_ctlg(req: ReqSavePrdcerCtlg) -> str:
     except Exception as e:
         raise e
 
+# Fetch a single catalog object for a user by catalog ID
+async def fetch_single_catalog(req: ReqCatalogId) -> ResPrdcerCtlg:
+    """
+    Fetch a single catalog object for a user by catalog ID.
+    """
+    user_data = await load_user_profile(req.user_id)
+    ctlg = (
+        user_data.get("prdcer", {})
+        .get("prdcer_ctlgs", {})
+        .get(req.ctlg_id, None)
+    )
+    if not ctlg:
+        raise HTTPException(status_code=404, detail="Catalog not found for this user.")
+    # Return as ResPrdcerCtlg object
+    return ResPrdcerCtlg(**ctlg)
+
 
 async def delete_prdcer_ctlg(req: ReqDeletePrdcerCtlg) -> str:
     """

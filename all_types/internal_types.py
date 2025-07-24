@@ -20,11 +20,6 @@ class CtlgMetaData(UserId):
     total_records: int
 
 
-class ResUserCatalogInfo(CtlgMetaData):
-    prdcer_ctlg_id: str
-    thumbnail_url: str
-
-
 class CtlgItems(CtlgMetaData):
     lyrs: List[LyrInfoInCtlgSave] = Field(
         ..., description="list of layer objects."
@@ -33,6 +28,11 @@ class CtlgItems(CtlgMetaData):
         default_factory=dict,
         description="Flexible field for frontend to store arbitrary key-value pairs",
     )
+
+
+class ResUserCatalogInfo(CtlgMetaData):
+    prdcer_ctlg_id: str
+    thumbnail_url: str
 
 
 class ResPrdcerCtlg(ResUserCatalogInfo):

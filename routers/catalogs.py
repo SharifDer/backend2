@@ -15,7 +15,10 @@ from all_types.response_dtypes import (
     ResModel,
     ResLyrMapData
 )
-from all_types.internal_types import ResUserCatalogInfo, UserId
+from all_types.internal_types import ResUserCatalogInfo, UserId, ResPrdcerCtlg
+from fastapi import HTTPException
+from all_types.request_dtypes import ReqCatalogId
+from all_types.internal_types import ResPrdcerCtlg
 from backend_common.request_processor import request_handling
 from backend_common.auth import JWTBearer
 from data_fetcher import (
@@ -24,6 +27,7 @@ from data_fetcher import (
     fetch_prdcer_ctlgs,
     fetch_ctlg_lyrs,
     save_draft_catalog,
+    fetch_single_catalog,
 )
 from config_factory import CONF
 import json
@@ -112,6 +116,26 @@ async def ep_save_producer_catalog(
         wrap_output=True,
     )
     return response
+
+
+@catalogs_router.post(
+    "/fastapi/fetch_single_catalog",
+    response_model=ResModel[ResPrdcerCtlg],
+    dependencies=[Depends(JWTBearer())],
+)
+async def fetch_single_catalog_endpoint(
+    req: ReqModel[ReqCatalogId],
+    request: Request
+):
+    response = await request_handling(
+        req.request_body,
+        ReqCatalogId,
+        ResModel[ResPrdcerCtlg],
+        fetch_single_catalog,
+        wrap_output=True,
+    )
+    return response
+
 
 
 @catalogs_router.delete(

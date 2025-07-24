@@ -49,8 +49,8 @@ class ZoneLayerInfo(BaseModel):
     property_key: str
 
 
-class ReqCatalogId(BaseModel):
-    catalogue_dataset_id: str
+class ReqCatalogId(UserId):
+    ctlg_id: str
 
 
 class ReqPrdcerLyrMapData(UserId):
