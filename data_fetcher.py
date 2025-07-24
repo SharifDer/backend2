@@ -826,11 +826,11 @@ async def fetch_prdcer_ctlgs(req: UserId) -> List[ResUserCatalogInfo]:
             validated_catalogs.append(
                 ResUserCatalogInfo(
                     prdcer_ctlg_id=ctlg_id,
-                    prdcer_ctlg_name=ctlg_data["prdcer_ctlg_name"],
-                    ctlg_description=ctlg_data["ctlg_description"],
+                    prdcer_ctlg_name=ctlg_data.get("prdcer_ctlg_name", ""),
+                    ctlg_description=ctlg_data.get("ctlg_description", ""),
                     thumbnail_url=ctlg_data.get("thumbnail_url", ""),
-                    subscription_price=ctlg_data["subscription_price"],
-                    user_id=ctlg_data["UserId"],
+                    subscription_price=ctlg_data.get("subscription_price", 0),
+                    user_id=ctlg_data.get("user_id", ""),
                     total_records=ctlg_data.get("total_records", 0),
                 )
             )
@@ -866,7 +866,7 @@ async def fetch_ctlg_lyrs(req: ReqFetchCtlgLyrs) -> List[ResLyrMapData]:
         if not ctlg:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        ctlg_owner_data = await load_user_profile(ctlg["UserId"])
+        ctlg_owner_data = await load_user_profile(ctlg["user_id"])
         ctlg_lyrs_map_data = []
 
         for lyr_info in ctlg["lyrs"]:

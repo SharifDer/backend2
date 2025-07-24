@@ -150,16 +150,12 @@ def create_grid(
     ------
     A dataframe containing geometry column having polygon covering the ROI
     """
-
     logger.info(
         f"Starting grid creation with {len(population)} population data points"
     )
-
     population = population.set_crs("EPSG:4326")
 
     # Extract the minimum bounding rectangle (MBR) of all population data points
-    # This follows cartographic principles of defining the spatial extent for tessellation
-    # Example output: minx=-74.25, miny=40.47, maxx=-73.70, maxy=40.92 (NYC coordinates)
     minx, miny, maxx, maxy = population.total_bounds
     total_area = (maxx - minx) * (maxy - miny)
 
@@ -169,7 +165,6 @@ def create_grid(
     logger.info(
         f"Total study area: {total_area:.2f} square degrees ({total_area * 111.32**2:.2f} km² approx)"
     )
-
     # Calculate optimal grid size using spatial statistical theory
     # Formula: grid_size = √(total_area / number_of_points)
     # This ensures each grid cell represents approximately one data point on average
@@ -181,7 +176,6 @@ def create_grid(
     logger.info(
         f"Calculated optimal grid size: {a_grid_size:.6f} degrees ({a_grid_size * 111.32:.2f} km)"
     )
-
     # Use calculated optimal size if no manual override provided
     # Allows for adaptive grid resolution based on data density
     if grid_size is None:
@@ -197,25 +191,19 @@ def create_grid(
     expected_y_cells = int(np.ceil((maxy - miny) / grid_size))
     expected_total_cells = expected_x_cells * expected_y_cells
 
+
     logger.info(
         f"Expected grid dimensions: {expected_x_cells} × {expected_y_cells} = {expected_total_cells} total cells"
     )
-
     # Create regular tessellation using systematic sampling theory
     # Generates a fishnet grid of square polygons covering the entire study area
     # Each box(x, y, x+size, y+size) creates a square polygon geometry
     # Uses nested list comprehension for efficient vectorized grid generation
     # Example: For 55km x 45km area with 1.57km grid size = ~35 x 29 = ~1015 grid cells
     grid_cells = [
-        box(
-            x, y, x + grid_size, y + grid_size
-        )  # Create square polygon for each grid position
-        for x in np.arange(
-            minx, maxx, grid_size
-        )  # Iterate through x-coordinates
-        for y in np.arange(
-            miny, maxy, grid_size
-        )  # Iterate through y-coordinates
+        box(x, y, x + grid_size, y + grid_size)
+        for x in np.arange(minx, maxx, grid_size)
+        for y in np.arange(miny, maxy, grid_size)
     ]
 
     logger.info(
@@ -225,7 +213,6 @@ def create_grid(
     # Convert list of geometries to GeoDataFrame with proper coordinate reference system
     # Inherits CRS from population data to maintain spatial accuracy
     grid = gpd.GeoDataFrame(geometry=grid_cells, crs=population.crs)
-
     logger.info(f"Created grid GeoDataFrame with CRS: {grid.crs}")
     logger.info("Grid creation completed successfully")
     return grid
@@ -248,14 +235,12 @@ def haversine(
     A numpy array for distance matrix calculated using haversine formula which takes inaccount the
     curvature of the earth. The returned distances are in km
     """
-
     logger.info(
         f"Computing Haversine distances: {len(lat1_array)} origins × {len(lat2_array)} destinations"
     )
     logger.info(
         f"Total distance calculations: {len(lat1_array) * len(lat2_array):,}"
     )
-
     # Convert decimal degrees to radians for trigonometric calculations
     # All trigonometric functions in numpy work with radians, not degrees
     # Example: 40.7589° → 0.7118 radians, -73.9851° → -1.2915 radians
@@ -269,54 +254,37 @@ def haversine(
     logger.debug(
         f"Origin longitude range: {np.min(lon1_rad):.4f} to {np.max(lon1_rad):.4f} radians"
     )
-
     # Reshape origin arrays to enable broadcasting for distance matrix computation
-    # Creates column vectors (M, 1) for origins to broadcast against row vectors (N,) for destinations
-    # This mathematical technique enables vectorized computation of all pairwise distances
-    # Example: 500 origins × 200 destinations = 500×1 array broadcasts to 500×200 matrix
-    lat1_rad = lat1_rad[
-        :, np.newaxis
-    ]  # (M, 1) - each origin latitude as column
-    lon1_rad = lon1_rad[
-        :, np.newaxis
-    ]  # (M, 1) - each origin longitude as column
-
+    lat1_rad = lat1_rad[:, np.newaxis]
+    lon1_rad = lon1_rad[:, np.newaxis]
+    
     logger.debug(
         f"Reshaped arrays for broadcasting: {lat1_rad.shape} × {lat2_rad.shape}"
     )
-
     # Calculate coordinate differences using broadcasting
-    # Results in (M, N) matrices where each element [i,j] represents difference between origin i and destination j
-    # Example: Manhattan to Brooklyn bridge = 40.7831-40.7589 = 0.0242° ≈ 0.0004 radians latitude difference
-    dlat = lat2_rad - lat1_rad  # (M, N) - latitude differences
-    dlon = lon2_rad - lon1_rad  # (M, N) - longitude differences
-
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
     logger.debug(f"Calculated coordinate differences with shape: {dlat.shape}")
 
-    # Apply Haversine formula for great-circle distances on a sphere
+   # Apply Haversine formula for great-circle distances on a sphere
     # Formula: a = sin²(Δφ/2) + cos φ₁ ⋅ cos φ₂ ⋅ sin²(Δλ/2)
     # This accounts for Earth's curvature and provides accurate distances
     # First term: handles latitudinal differences
     # Second term: handles longitudinal differences scaled by latitude cosines
     # Example: For 2.5km distance, a ≈ 0.000039 (very small for short distances)
     a = (
-        np.sin(dlat / 2.0) ** 2  # Latitudinal component
+        np.sin(dlat / 2.0) ** 2
         + np.cos(lat1_rad)
         * np.cos(lat2_rad)
-        * np.sin(dlon / 2.0) ** 2  # Longitudinal component
+        * np.sin(dlon / 2.0) ** 2
     )
 
-    # Complete Haversine formula: c = 2 ⋅ arctan2(√a, √(1−a))
-    # arctan2 handles edge cases better than arcsin and provides numerical stability
-    # Example: For a=0.000039, c ≈ 0.000395 radians (angular distance)
+    # Complete Haversine formula
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
     # Earth's mean radius in kilometers (WGS84 approximation)
-    # Multiply angular distance by radius to get linear distance
-    # Example: 0.000395 radians × 6371 km = 2.52 km (final distance)
     R = 6371.0
-    distances = R * c  # (M, N) - final distance matrix in kilometers
-
+    distances = R * c
     logger.info(
         f"Haversine calculation completed. Distance matrix shape: {distances.shape}"
     )
@@ -326,7 +294,6 @@ def haversine(
     logger.info(
         "This represents realistic Earth-surface distances accounting for planetary curvature"
     )
-
     return distances
 
 
@@ -352,7 +319,9 @@ def get_grids_of_data(
     a single geodataframe containing polygons (grids) for entire ROI and aggregated data for each grid
     cell (population, places counts)
     """
+    
 
+    # Ensure population data has proper CRS
     logger.info(
         f"Starting grid data aggregation with {len(population_gdf)} population centers, {len(places)} places"
     )
@@ -361,31 +330,22 @@ def get_grids_of_data(
     )
     logger.info(f"Income weights provided: {weights is not None}")
 
-    # Ensure population data has proper CRS - coordinates look like lat/lon (EPSG:4326)
     population_gdf = population_gdf.set_crs("EPSG:4326")
-    # Ensure places data has same CRS as population
     places = places.set_crs("EPSG:4326")
 
     # Standardize population data structure for consistent processing
     # Extract centroids as representative points for polygon data
     # This follows spatial analysis principles of point-in-polygon representation
     origins = population_gdf.copy()
-    origins["longitude"] = (
-        origins.geometry.centroid.x
-    )  # X-coordinate of geometric center
-    origins["latitude"] = (
-        origins.geometry.centroid.y
-    )  # Y-coordinate of geometric center
-    origins["population"] = origins[
-        "Population_Count"
-    ]  # Standardize population column name
+    origins["longitude"] = origins.geometry.centroid.x
+    origins["latitude"] = origins.geometry.centroid.y
+    origins["population"] = origins["Population_Count"]
 
     total_population = origins["population"].sum()
     logger.info(f"Total population in study area: {total_population:,} people")
     logger.info(
         f"Population density: {total_population/len(origins):.0f} people per population center"
     )
-
     # Select only essential columns to optimize memory usage and processing speed
     # Follows data science best practices of working with minimal necessary data
     origins = origins[
@@ -393,11 +353,11 @@ def get_grids_of_data(
     ].reset_index(drop=True)
 
     # Prepare destinations dataset with consistent structure
-    # Assumes places already have longitude/latitude coordinates
     destinations = places[["geometry", "longitude", "latitude"]].reset_index(
         drop=True
     )
 
+    # Compute full distance matrix between all origins and destinations
     logger.info(
         f"Prepared {len(origins)} origins and {len(destinations)} destinations for analysis"
     )
@@ -414,50 +374,34 @@ def get_grids_of_data(
         destinations.longitude.values,
     )
 
-    # Initialize accessibility mapping using origin-destination cost matrix
+    # Initialize accessibility mapping
+     # Initialize accessibility mapping using origin-destination cost matrix
     # Dictionary stores lists of accessible destination indices for each origin
     # This implements the concept of service catchment areas in spatial analysis
     od_cost_matrix = {k: [] for k in range(matrix.shape[0])}
 
+    # Calculate accessibility for each population center
     logger.info("Calculating accessibility for each population center...")
 
-    # Calculate accessibility for each population center (origin)
-    # Implements distance-based accessibility measurement theory
     accessibility_counts = []
 
     for i in range(matrix.shape[0]):
-        # Get distances from current origin to all destinations
-        # Example: [1.2, 3.4, 0.8, 5.2, 2.1, 8.9, 1.5, 4.3] km to 8 supermarkets
-        od = matrix[i].tolist()  # Convert to list for manipulation
+        od = matrix[i].tolist()
 
-        # Iteratively find accessible destinations within distance threshold
-        # Continues until all destinations are evaluated or distance limit exceeded
+        # Find accessible destinations within distance threshold
         while len(od_cost_matrix[i]) < matrix.shape[1]:
-
-            # Check if closest remaining destination is within travel threshold
-            # Implements spatial accessibility theory with distance decay
-            # Example: If distance_limit=5km, destinations at [1.2, 3.4, 0.8, 2.1, 1.5, 4.3] qualify
             if np.min(od) < distanace_limit:
-                amn = np.argmin(od)  # Find index of closest destination
-
-                # Validate that the index is finite (not NaN or infinite)
+                amn = np.argmin(od)
                 if np.isfinite(amn):
-                    od_cost_matrix[i].append(
-                        amn
-                    )  # Add to accessible destinations
-
-                # Mark destination as processed by setting distance to infinity
-                # Prevents re-selection in subsequent iterations
+                    od_cost_matrix[i].append(amn)
                 od[amn] = np.inf
             else:
-                # Fallback: if no destinations within limit, assign closest one
-                # Ensures every origin has at least one accessible destination
-                # Prevents zero-division errors in subsequent calculations
+                # Ensure every origin has at least one accessible destination
                 if len(od_cost_matrix[i]) == 0:
                     amn = np.argmin(od)
                     if np.isfinite(amn):
                         od_cost_matrix[i].append(amn)
-                break  # Exit loop when distance threshold exceeded
+                break
 
         accessibility_counts.append(len(od_cost_matrix[i]))
 
@@ -470,7 +414,6 @@ def get_grids_of_data(
     avg_accessibility = np.mean(accessibility_counts)
     max_accessibility = np.max(accessibility_counts)
     min_accessibility = np.min(accessibility_counts)
-
     logger.info("Accessibility analysis completed:")
     logger.info(
         f"  Average accessible places per population center: {avg_accessibility:.1f}"
@@ -488,24 +431,22 @@ def get_grids_of_data(
     # Compute population effective purchasing power using accessibility-weighted demographics
     # Implements spatial equity theory: divides population by service availability
     # Areas with fewer accessible services get higher population effective purchasing power weights
+    #! Compute population effective purchasing power
+    #! The effective market value of a population center
     if weights is None:
-        # Simple accessibility weighting: population inversely proportional to service access
-        # Population centers with fewer accessible markets carry more weight per person
-        # Example: 5000 people with 2 markets = 2500 effective pop vs 3000 people with 6 markets = 500 effective pop
         origins["population_purchasing_power"] = (
             origins["population"] / origins["number_of_accessibile_markets"]
         )
         logger.info("Using simple accessibility weighting (no income data)")
     else:
-        # ===== REPLACE YOUR ENTIRE else: BLOCK WITH THIS =====
-        # Handle NaN values in income data - Enhanced debugging
-        logger.info("=== INCOME PROCESSING DEBUG ===")
-        original_income_values = weights["income"].values
+        # Handle NaN values in income data
+        income_values = weights["income"].values.copy()
+       
         logger.info(
-            f"STEP 1 - Original income sample: {original_income_values[:5]}"
+            f"STEP 1 - Original income sample: {income_values[:5]}"
         )
         logger.info(
-            f"STEP 1 - Original income NaN count: {np.isnan(original_income_values).sum()}"
+            f"STEP 1 - Original income NaN count: {np.isnan(income_values).sum()}"
         )
 
         income_values = weights["income"].values.copy()  # Make a copy
@@ -517,17 +458,13 @@ def get_grids_of_data(
         logger.info(
             f"STEP 3 - Income data quality: {valid_count}/{len(income_values)} valid values, {nan_count} NaN values"
         )
-
         if nan_count > 0:
             median_income = np.nanmedian(income_values)
             logger.info(
                 f"STEP 4 - Calculated median income: SAR{median_income:,.0f}"
             )
-
             if np.isnan(median_income):
-                logger.warning(
-                    "STEP 5 - All income values are NaN, using neutral weight of 1.0"
-                )
+                logger.warning("All income values are NaN, using neutral weight of 1.0")
                 income_values = np.ones_like(income_values)
             else:
                 logger.info(
@@ -544,67 +481,24 @@ def get_grids_of_data(
 
         # Check alignment
         if len(income_values) != len(origins):
-            logger.warning(
-                f"MISMATCH: income ({len(income_values)}) vs origins ({len(origins)})"
-            )
             income_values = income_values[: len(origins)]
 
-        # CRITICAL FIX: Use the corrected income_values throughout
+        # Calculate purchasing power
         population_values = origins["population"].values
         accessibility_values = origins["number_of_accessibile_markets"].values
-
-        logger.info(f"STEP 7 - Final income values sample: {income_values[:5]}")
-        logger.info(
-            f"STEP 7 - Population values sample: {population_values[:5]}"
+        
+        origins["population_purchasing_power"] = (
+            population_values * income_values / accessibility_values
         )
-        logger.info(
-            f"STEP 7 - Accessibility values sample: {accessibility_values[:5]}"
-        )
-
-        # Calculate step by step using CORRECTED income_values
-        step1 = population_values * income_values  # Use corrected values
-        step2 = step1 / accessibility_values
-
-        logger.info(
-            f"STEP 8 - Step 1 (pop * corrected_income) sample: {step1[:5]}"
-        )
-        logger.info(
-            f"STEP 8 - Step 2 (result / accessibility) sample: {step2[:5]}"
-        )
-        logger.info(
-            f"STEP 8 - Final population effective purchasing power NaN count: {np.isnan(step2).sum()}"
-        )
-
-        if np.isnan(step2).sum() > 0:
-            logger.error("STILL HAVE NaN VALUES AFTER CORRECTION!")
-            logger.error(
-                f"  NaN positions in income: {np.where(np.isnan(income_values))[0][:5]}"
-            )
-            logger.error(
-                f"  NaN positions in step1: {np.where(np.isnan(step1))[0][:5]}"
-            )
-            logger.error(
-                f"  NaN positions in step2: {np.where(np.isnan(step2))[0][:5]}"
-            )
-
-        origins["population_purchasing_power"] = step2
-        logger.info("Using income-weighted accessibility calculation")
-        logger.info(f"Average income weight: SAR{np.mean(income_values):,.0f}")
-        logger.info("=== END INCOME PROCESSING DEBUG ===")
-        # ===== END ENHANCED INCOME DEBUGGING =====
 
     total_population_purchasing_power = origins["population_purchasing_power"].sum()
     logger.info(
         f"Total market value without considering accessibility: {total_population_purchasing_power:,.0f}"
     )
-
     # Calculate market potential for each destination (place/facility)
     # Implements gravity model theory: sum of accessible population effective purchasing powers
     # Each destination's market size = sum of all populations that can reach it
-    market = {
-        k: [] for k in range(matrix.shape[1])
-    }  # Initialize market potential storage
-
+    market = {k: [] for k in range(matrix.shape[1])}
     logger.info("Calculating market potential for each destination...")
     logger.info("Market potential calculation (w/o accessibility) diagnostic:")
     logger.info(
@@ -613,17 +507,9 @@ def get_grids_of_data(
     logger.info(
         f"  Market potential NaN count: {origins['population_purchasing_power'].isna().sum()}"
     )
-
-    for i in range(matrix.shape[1]):  # Iterate through each destination
-        for (
-            k,
-            v,
-        ) in (
-            od_cost_matrix.items()
-        ):  # Check each origin's accessible destinations
-            if i in v:  # If current destination is accessible from origin k
-                # Add origin's population effective purchasing power to destination's market potential
-                # This implements cumulative accessibility/market catchment theory
+    for i in range(matrix.shape[1]):
+        for k, v in od_cost_matrix.items():
+            if i in v:
                 market[i].append(origins["population_purchasing_power"].iloc[k])
 
     # Aggregate market potential for each destination
@@ -672,7 +558,6 @@ def get_grids_of_data(
     accessible_destinations_per_origin = [
         len(v) for v in od_cost_matrix.values()
     ]
-
     logger.info(
         f"Origins with 0 accessible destinations: {sum(x == 0 for x in accessible_destinations_per_origin)}"
     )
@@ -683,6 +568,8 @@ def get_grids_of_data(
     # ===== END ENHANCED MARKET CALCULATION DEBUGGING =====
 
     market_stats = destinations["market"]
+    destinations["market"] = [sum(v) for v in market.values()]
+    
     logger.info("Market potential calculated:")
     logger.info(
         f"  Average market size per destination: {np.mean(market_stats):,.0f} potential market value"
@@ -696,6 +583,7 @@ def get_grids_of_data(
 
     # Create spatial tessellation grid for aggregation analysis
     # Uses adaptive grid sizing based on population density
+    # Create spatial tessellation grid for aggregation analysis
     grid = create_grid(origins, grid_size=None)
 
     # Perform spatial joins to assign data points to grid cells
@@ -748,8 +636,9 @@ def create_territory_boundaries(
     Returns:
         Tuple of (boundaries_gdf, boundaries_geojson_dict)
     """
-    logger.info("Creating territory boundaries using convex hull method...")
     
+    logger.info("Creating territory boundaries using convex hull method...")
+
     # Aggregate data by group
     aggregated_output = masked_grided_data.groupby("group", observed=False).agg({
         "number_of_persons": "sum",
@@ -757,9 +646,9 @@ def create_territory_boundaries(
         "number_of_supermarkets": "sum",
         "population_purchasing_potential": "sum"
     })
-
-    logger.info(f"Aggregated data for {len(aggregated_output)} groups")
     
+    logger.info(f"Aggregated data for {len(aggregated_output)} groups")
+
     # Create boundaries list
     boundaries = []
     for group in masked_grided_data.group.unique():
@@ -783,14 +672,12 @@ def create_territory_boundaries(
     boundaries_gdf = gpd.GeoDataFrame(boundaries_df)
     
     logger.info(f"Created {len(boundaries_gdf)} territory boundaries")
-    
+
     # Handle overlapping geometries
-    # This prevents overlapping territory boundaries
     for i in range(len(boundaries_gdf)):
         current_geom = boundaries_gdf.iloc[i].geometry
         for j in range(i):
             if j < len(boundaries_gdf):
-                # Subtract previous territories from current one to avoid overlap
                 prev_geom = boundaries_gdf.iloc[j].geometry
                 try:
                     current_geom = current_geom.difference(prev_geom)
@@ -799,9 +686,9 @@ def create_territory_boundaries(
         
         boundaries_gdf.iloc[i, boundaries_gdf.columns.get_loc('geometry')] = current_geom
     
+    # Create GeoJSON representation
     logger.info("Applied difference operations to prevent boundary overlaps")
-    
-    # Create GeoJSON representation for separate return
+
     boundaries_geojson = {
         "type": "FeatureCollection",
         "features": []
@@ -820,8 +707,8 @@ def create_territory_boundaries(
             "geometry": row["geometry"].__geo_interface__
         }
         boundaries_geojson["features"].append(feature)
-    
     logger.info("Created GeoJSON representation of territory boundaries")
+    
     
     return boundaries_gdf, boundaries_geojson
 
@@ -845,7 +732,6 @@ def select_nbrs_with_sum(
     ------
     a list of neighboring gridcells for origin i that will become of cluster
     """
-
     logger.debug(f"Building cluster starting from grid cell {i}")
     logger.debug(
         f"Target max share: {max_share:,.0f}, Available unused cells: {len(cost) - len(used)}"
@@ -857,45 +743,33 @@ def select_nbrs_with_sum(
     # Example: From grid cell 45, sorted neighbors might be [46, 44, 55, 35, 47, 43, 56, 34...]
     x = np.argsort(cost)  # Returns indices sorted by ascending distance
 
+
     logger.debug(f"Sorted {len(x)} neighbors by distance from seed cell {i}")
 
-    # Initialize accumulator variables for greedy cluster building
-    value = 0  # Running sum of indicator values (market potential)
-    nbrs = []  # List of neighbor indices to include in cluster
-    # Track cells for logging purposes
+    # Initialize accumulator variables
+    value = 0
+    nbrs = []
+
     added_cells = []
     skipped_cells = []
 
     # Greedy nearest-neighbor selection with capacity constraint
-    # Implements load-balancing principle: distribute total workload equally
-    for idx, cell_idx in enumerate(
-        x
-    ):  # Iterate through grid cells in order of proximity
-
+    for idx, cell_idx in enumerate(x):
         # Skip grid cells already assigned to other clusters
-        # Ensures each spatial unit belongs to exactly one cluster (partition constraint)
         if cell_idx in used:
-            skipped_cells.append(cell_idx)
             continue
 
         # Add current grid cell's indicator value to cluster total
-        # Accumulates market potential/workload for current cluster
-        # Example: Adding grid cells with SAR2.5M, SAR1.8M, SAR3.2M market value → total value = SAR7.5M
         cell_value = shares[cell_idx]
         value += cell_value
-        nbrs.append(cell_idx)  # Include grid cell in current cluster
-        added_cells.append(
-            cell_idx
-        )  # Check if cluster has reached target capacity (load balancing)
-        # Stops growing cluster when maximum share threshold is exceeded
-        # Implements equitable distribution of total market potential across clusters
-        # Example: If max_share=25000 and value=26300, stop adding cells to this cluster
+        nbrs.append(cell_idx)
+        
+        # Check if cluster has reached target capacity
         if value >= max_share:
             logger.debug(
                 f"  Cluster reached target capacity ({value:,.0f} >= {max_share:,.0f})"
             )
             break
-
     # Determine which cells were never considered (after the break or beyond capacity)
     all_cells = set(x)  # All cells sorted by distance
     considered_cells = set(added_cells + skipped_cells)
@@ -914,7 +788,6 @@ def select_nbrs_with_sum(
     logger.info(
         f"  Cell usage summary: {len(added_cells)} added, {len(skipped_cells)} skipped, {len(never_used_cells)} never considered"
     )
-
     return nbrs
 
 
@@ -1042,8 +915,6 @@ def plot_facilities_with_territories(places, boundaries_gdf, request_id):
         return f"/static/plots/{filename}"
     
     return None
-    
-
 def generate_all_plots(
     masked_grided_data: gpd.GeoDataFrame,
     places: gpd.GeoDataFrame,
@@ -1100,17 +971,9 @@ def generate_all_plots(
     # Individual metric plots
     metrics = [
         ("number_of_persons", "Greens", "Number of persons"),
-        (
-            "population_purchasing_power",
-            "Reds",
-            "population effective purchasing power",
-        ),
+        ("population_purchasing_power", "Reds", "population effective purchasing power"),
         ("number_of_supermarkets", "Blues", "Number of supermarkets"),
-        (
-            "population_purchasing_potential",
-            "Purples",
-            "population purchasing potential",
-        ),
+        ("population_purchasing_potential", "Purples", "population purchasing potential"),
     ]
 
     for column, color, title in metrics:
@@ -1133,35 +996,36 @@ def generate_all_plots(
     return plots
 
 
-async def get_clusters_for_sales_man(
-    req: ReqClustersForSalesManData,
-) -> dict[any, any]:
+async def get_clusters_for_sales_man( req: ReqClustersForSalesManData,) -> dict[any, any]:
     """
     Main funtion to produce the clusters for the salesman problem
-    args:
-    ----
-    `num_sales_man` is the number of cluster we want in the final output geodataframe
-    `population` is the raw census dataframe
-    `places` is the raw places dataframe containing responese column
-    `weights` is the raw income data
-    `bounding_box` is a list if longitude, latitude pair
-    `distance_limit` is the max distace a cosumer is willing to travel to reach destination
-    `zoom_level` is the zoom_level for the census data
-
-    return:
-    ------
-    A geodataframe constaining gridcells (polygons) under geometry column
-    each grid cell is classfied by cluster index under group column
+    
+    Returns a geodataframe containing gridcells (polygons) under geometry column
+    each grid cell is classified by cluster index under group column
     """
+    # req = {
+    #     "city_name": "Riyadh",
+    #     "country_name": "Saudi Arabia",
+    #     "user_id": "test_user",
+    #     "boolean_query": "supermarket",
+    #     "num_sales_man": 4,
+    #     "distance_limit": 5,
+    #     "include_raw_data": True
+    # }
+  
+    # from types import SimpleNamespace
+    # req = SimpleNamespace(**req)
+
 
     default_zoom = 14
+    
     logger.info(
-        f"Starting sales territory clustering for {req.city_name}, {req.country_name}"
-    )
+            f"Starting sales territory clustering for {req.city_name}, {req.country_name}"
+        )
     logger.info(f"Target number of sales territories: {req.num_sales_man}")
     logger.info(
-        f"Distance limit: {req.distance_limit}km, Zoom level: {default_zoom}"
-    )
+            f"Distance limit: {req.distance_limit}km, Zoom level: {default_zoom}"
+        )
 
     # Retrieve geographic boundary data for specified city
     all_cities = await fetch_country_city_data()
@@ -1177,20 +1041,18 @@ async def get_clusters_for_sales_man(
         logger.error(f"City {req.city_name} not found in {req.country_name}")
         raise ValueError(f"City not found: {req.city_name}")
 
-    # Extract bounding box coordinates that define study area extent
+    # Extract bounding box coordinates
     bounding_box = found_city.get("bounding_box", [])
     logger.info(f"City bounding box: {len(bounding_box)} coordinate pairs")
-
+    
     # Load demographic and economic data for the study area
     # Zoom level controls resolution/granularity of population data
     logger.info("Loading population and income data...")
     population_gdf, income_gdf = await get_population_and_income(
         bounding_box, zoom_level=default_zoom
     )
+    logger.info(f"Loaded {len(population_gdf)} population records")
 
-    logger.info(
-        f"Loaded {len(population_gdf)} population records, {len(income_gdf) if income_gdf is not None else 0} income records"
-    )
     if income_gdf is not None and len(income_gdf) > 0:
         logger.info("Income data diagnostic:")
         for col in income_gdf.columns:
@@ -1205,7 +1067,9 @@ async def get_clusters_for_sales_man(
                     )
     else:
         logger.warning("Income data is empty or None")
-    # Retrieve businesses/facilities data for the entire city
+
+
+    # Retrieve and filter businesses/facilities data
     logger.info("Loading business/facility data...")
     page_token = ""
     data_load_req = ReqFetchDataset(
@@ -1217,15 +1081,16 @@ async def get_clusters_for_sales_man(
         user_id=req.user_id,
         full_load=True,
     )
-    places = await fetch_dataset(data_load_req)
 
-    # Filter facilities to study area boundaries
+    places = await fetch_dataset(data_load_req)
     places = filter_data_by_bounding_box(places, bounding_box)
     logger.info(f"Filtered to {len(places)} places within study area")
+    
+    # Remove duplicate facility locations
 
-    # Remove duplicate facility locations (data quality control)
     original_count = len(places)
     places = places.loc[places.geometry.drop_duplicates().index]
+    logger.info(f"Processing+++ {len(places)} unique places")
     logger.info(
         f"Removed {original_count - len(places)} duplicate locations, {len(places)} unique places remain"
     )
@@ -1247,22 +1112,15 @@ async def get_clusters_for_sales_man(
         raise ValueError("No viable grid cells for territory division")
 
     # Calculate geometric centroids for distance calculations
-    # Converts polygon grid cells to representative point locations
-    # Implements spatial geometry simplification for efficient distance computation
     centroids = masked_grided_data.geometry.map(shapely.centroid)
-
-    # Convert centroids to coordinate DataFrame for distance matrix calculation
     nbrs = centroids.to_frame()
-    nbrs["longitude"] = nbrs.geometry.x  # Extract longitude coordinates
-    nbrs["latitude"] = nbrs.geometry.y  # Extract latitude coordinates
+    nbrs["longitude"] = nbrs.geometry.x
+    nbrs["latitude"] = nbrs.geometry.y
 
     logger.info(f"Calculated centroids for {len(nbrs)} grid cells")
-
     # Compute distance matrix between all grid cell centroids
-    # Implements spatial proximity analysis for cluster contiguity constraints
-    # Results in symmetric matrix of inter-centroid distances
-    # Example: 450×450 matrix with distances ranging 0.8-28.5 km between grid centroids
     logger.info("Computing distance matrix between grid centroids...")
+
     matrix = haversine(
         nbrs.latitude.values,
         nbrs.longitude.values,
@@ -1271,14 +1129,11 @@ async def get_clusters_for_sales_man(
     )
 
     # Calculate target market share per salesperson
-    # Implements equitable distribution principle: divide total market equally
-    # Ensures balanced workload assignment across sales territories
-    # Example: 180,000 total customers ÷ 8 salespeople = 22,500 customers per territory
-    total_purchasing_power = masked_grided_data[
-        "population_purchasing_potential"
-    ].sum()
+    total_purchasing_power = masked_grided_data["population_purchasing_potential"].sum()
     equitable_share = total_purchasing_power / req.num_sales_man
 
+    logger.info(f"Total market value:+++ {total_purchasing_power:,.0f}")
+    logger.info(f"Target per territory+++: {equitable_share:,.0f}")
     logger.info("Market distribution analysis:")
     logger.info(
         f"  Total market value: {total_purchasing_power:,.0f}"
@@ -1289,43 +1144,35 @@ async def get_clusters_for_sales_man(
     )
 
     # Initialize clustering data structures
-    used = []  # Track assigned grid cells to prevent overlap
-    groups = {
-        i: [] for i in range(req.num_sales_man)
-    }  # Store cluster assignments
-
-    logger.info("Starting greedy spatial clustering algorithm...")
+    used = []
+    groups = {i: [] for i in range(req.num_sales_man)}
 
     # Greedy spatial clustering algorithm
     j = 0
     clusters_created = 0
 
     for i in range(masked_grided_data.shape[0]):
-
-        # Skip grid cells already assigned to clusters
-        # Maintains partition constraint: each cell belongs to exactly one cluster
         if i in used:
             continue
         else:
             logger.info(f"Creating cluster {j} starting from grid cell {i}")
 
             # Find spatially contiguous neighbors within capacity limit
+            # Find spatially contiguous neighbors within capacity limit
             # Implements greedy nearest-neighbor expansion with load balancing
             # Example: Starting from grid 25, might select [25, 26, 35, 24, 36, 15] totaling 23,100 customers
             nbrs = select_nbrs_with_sum(
-                i,  # Current seed grid cell
-                matrix[i],  # Distances from seed to all other cells
-                equitable_share,  # Maximum market capacity per cluster
-                masked_grided_data[
-                    "population_purchasing_potential"
-                ].values,  # Market values
-                used,  # Already assigned cells to avoid
+                i,
+                matrix[i],
+                equitable_share,
+                masked_grided_data["population_purchasing_potential"].values,
+                used,
             )
 
             # Assign selected neighbors to current cluster
-            groups[j].extend(nbrs)  # Add cells to cluster j
-            used.extend(nbrs)  # Mark cells as assigned
-
+            groups[j].extend(nbrs)
+            used.extend(nbrs)
+            
             cluster_customers = sum(
                 masked_grided_data["population_purchasing_potential"].iloc[idx]
                 for idx in nbrs
@@ -1333,12 +1180,10 @@ async def get_clusters_for_sales_man(
             logger.info(
                 f"Cluster {j} completed: {len(nbrs)} cells, {cluster_customers:,.0f} market value"
             )
-
-            j += 1  # Move to next cluster
+            j += 1
             clusters_created += 1
 
         # Stop when all requested clusters are created
-        # Implements termination condition for clustering algorithm
         if j >= req.num_sales_man:
             logger.info(
                 f"Reached target number of clusters ({req.num_sales_man})"
@@ -1352,8 +1197,8 @@ async def get_clusters_for_sales_man(
     )
     logger.info(f"  Unassigned cells: {len(masked_grided_data) - len(used)}")
 
+
     # Helper function to map grid cell indices to cluster labels
-    # Implements reverse lookup for cluster assignment labeling
     def return_group_number(index: int) -> int:
         """
         Returns back the class/group index for each grid cell based in the `groups` dict
@@ -1363,24 +1208,17 @@ async def get_clusters_for_sales_man(
         for k, v in groups.items():
             if index in v:
                 return k
-        return None  # Return None for unassigned cells
+        return None
 
     # Apply cluster labels to grid data
-    # Implements final data preparation with cluster identification
-    # Creates new column indicating which sales territory each grid cell belongs to
-    # Example: Final output has 'group' column with values 0-7 for 8 sales territories
     masked_grided_data = masked_grided_data.assign(group=lambda x: x.index)
-    masked_grided_data["group"] = masked_grided_data["group"].map(
-        return_group_number
-    )
-
-    # Log final cluster statistics
+    masked_grided_data["group"] = masked_grided_data["group"].map(return_group_number)
+    
     cluster_stats = (
         masked_grided_data.groupby("group")
         .agg({"population_purchasing_potential": ["sum", "count"]})
         .round(0)
     )
-
     logger.info("Final cluster statistics:")
     for group_id in range(req.num_sales_man):
         if group_id in groups:
@@ -1392,15 +1230,15 @@ async def get_clusters_for_sales_man(
                 f"  Cluster {group_id}: {cells} cells, {customers:,.0f} market value ({100*customers/total_purchasing_power:.1f}% of total)"
             )
 
+
     unassigned = len(masked_grided_data[masked_grided_data["group"].isna()])
     if unassigned > 0:
         logger.warning(f"  {unassigned} cells remain unassigned")
-
     logger.info("Sales territory clustering completed successfully")
+    # Create a GeoDataFrame for places with group assignments
     # logger.info("saving file")
     # masked_grided_data.to_file("sales_territories.geojson", driver="GeoJSON")
     # places.to_file("places.geojson", driver="GeoJSON")
-    # Create a GeoDataFrame for places with group assignments
     places["group"] = -1
     for i in masked_grided_data.group.unique():
         cluster = (
@@ -1410,24 +1248,27 @@ async def get_clusters_for_sales_man(
         )
         places.loc[places.geometry.within(cluster), "group"] = i
 
-    # Generate unique request ID for this session
+    # Generate unique request ID
     request_id = uuid.uuid4().hex[:8]
     logger.info(f"Generating plots for request {request_id}")
 
-    # Create territory boundaries using the new function
-    logger.info("Creating territory boundaries...")
+    # Create territory boundaries
     boundaries_gdf, boundaries_geojson = create_territory_boundaries(
         masked_grided_data, req, groups
     )
 
-    # Generate plots and get their URLs (now including boundaries)
-    plot_urls = generate_all_plots(masked_grided_data, places, boundaries_gdf=boundaries_gdf, request_id=request_id)
+    # Generate plots and get their URLs
 
-    logger.info(
-        "Sales territory clustering and plot generation completed successfully"
+    logger.info("Creating territory boundaries...")
+
+    plot_urls = generate_all_plots(
+        masked_grided_data, places, boundaries_gdf=boundaries_gdf, request_id=request_id
     )
 
     # Generate territory-level analytics
+    logger.info(
+        "Sales territory clustering and plot generation completed successfully"
+    )
     territory_analytics = []
     territory_boundaries = []
 
@@ -1462,15 +1303,15 @@ async def get_clusters_for_sales_man(
                     * 100,
                     1,
                 ),
-                "avg_accessibility": round(
+                "avg_market_value_per_grid_cell_SAR": round(
                     territory_data["population_purchasing_power"].mean(), 2
                 ),
-                "population_density": round(
+                "avg_population_per_grid_cell": round(
                     territory_data["number_of_persons"].sum()
                     / len(groups[group_id]),
                     0,
                 ),
-                "facility_density": round(
+                "avg_facilities_per_grid_cell": round(
                     territory_data["number_of_supermarkets"].sum()
                     / len(groups[group_id]),
                     2,
@@ -1482,7 +1323,7 @@ async def get_clusters_for_sales_man(
             territory_boundary = {
                 "territory_id": group_id,
                 "boundary_geometry": territory_data.union_all().convex_hull.__geo_interface__,
-                "centroid": territory_data.geometry.centroid.union_all().__geo_interface__,
+                "centroid": territory_data.geometry.to_crs(epsg=3857).centroid.to_crs(territory_data.geometry.crs).union_all().__geo_interface__,
                 "area_km2": round(
                     territory_data.union_all().area * 111.32**2, 2
                 ),  # Convert to km²
@@ -1534,17 +1375,17 @@ async def get_clusters_for_sales_man(
                 [
                     t
                     for t in territory_analytics
-                    if t["avg_accessibility"]
+                    if t["avg_market_value_per_grid_cell_SAR"]
                     > np.mean(
-                        [t["avg_accessibility"] for t in territory_analytics]
+                        [t["avg_market_value_per_grid_cell_SAR"] for t in territory_analytics]
                     )
                 ]
             ),
             "service_desert_territories": len(
-                [t for t in territory_analytics if t["facility_density"] < 1.0]
+                [t for t in territory_analytics if t["avg_facilities_per_grid_cell"] < 1.0]
             ),
             "well_served_territories": len(
-                [t for t in territory_analytics if t["facility_density"] >= 2.0]
+                [t for t in territory_analytics if t["avg_facilities_per_grid_cell"] >= 2.0]
             ),
         },
         "optimization_recommendations": generate_optimization_recommendations(
@@ -1565,7 +1406,7 @@ async def get_clusters_for_sales_man(
                 / max(t["facility_count"], 1),
             ),
             "most_accessible": max(
-                territory_analytics, key=lambda t: t["avg_accessibility"]
+                territory_analytics, key=lambda t: t["avg_market_value_per_grid_cell_SAR"]
             ),
             "largest_coverage": max(
                 territory_boundaries, key=lambda t: t["area_km2"]
@@ -1610,7 +1451,6 @@ async def get_clusters_for_sales_man(
     print(f"  Grid total: {grid_population:,}")  
     print(f"  Territory total: {territory_population:,}")
     print(f"  Discrepancy: {abs(original_population - territory_population):,}")
-
     # Core response data
     response_data = {
         "success": True,
@@ -1688,7 +1528,7 @@ def generate_optimization_recommendations(territory_analytics, req):
                 f"Territory {territory['territory_id']}: Consider subdividing - above average workload"
             )
 
-        if territory["facility_density"] < 0.5:
+        if territory["avg_facilities_per_grid_cell"] < 0.5:
             recommendations.append(
                 f"Territory {territory['territory_id']}: Service desert - consider additional facilities"
             )
