@@ -1,4 +1,3 @@
-import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -779,7 +778,7 @@ def select_nbrs_with_sum(
     return nbrs
 
 
-def plot_results(
+async def plot_results(
     grided_data: gpd.GeoDataFrame,
     columns: list[str],
     n_cols: int,
@@ -854,7 +853,7 @@ def plot_results(
         return None
 
 
-def plot_facilities_with_territories(places, boundaries_gdf, request_id):
+async def plot_facilities_with_territories(places, boundaries_gdf, request_id):
     """Show actual facility locations with territory assignments"""
 
     fig, ax = plt.subplots(figsize=(12, 10))
@@ -904,7 +903,7 @@ def plot_facilities_with_territories(places, boundaries_gdf, request_id):
     return None
 
 
-def generate_all_plots(
+async def generate_all_plots(
     masked_grided_data: gpd.GeoDataFrame,
     places: gpd.GeoDataFrame,
     boundaries_gdf: gpd.GeoDataFrame = None,
@@ -919,7 +918,7 @@ def generate_all_plots(
     plots = {}
 
     # Cluster of markets plot
-    plots["cluster_markets"] = plot_results(
+    plots["cluster_markets"] = await plot_results(
         places,
         ["group"],
         1,
@@ -939,7 +938,7 @@ def generate_all_plots(
         import matplotlib.pyplot as plt
 
         n_territories = len(boundaries_gdf)
-        plots["territory_boundaries"] = plot_results(
+        plots["territory_boundaries"] = await plot_results(
             boundaries_gdf[["geometry", "group"]],
             ["group"],
             1,
@@ -954,7 +953,7 @@ def generate_all_plots(
             filename=f"{request_id}_territory_boundaries",
         )
     if boundaries_gdf is not None and len(boundaries_gdf) > 0:
-        plots["facilities_with_territories"] = plot_facilities_with_territories(
+        plots["facilities_with_territories"] = await plot_facilities_with_territories(
             places, boundaries_gdf, request_id
         )
 
@@ -976,7 +975,7 @@ def generate_all_plots(
 
     for column, color, title in metrics:
         plot_key = column.replace("_", "-")
-        plots[plot_key] = plot_results(
+        plots[plot_key] = await plot_results(
             masked_grided_data,
             [column],
             1,
@@ -1049,7 +1048,7 @@ async def get_clusters_for_sales_man(
         bounding_box, zoom_level=default_zoom
     )
     logger.info(f"Loaded {len(population_gdf)} population records")
-    logger.info(f"Loaded {len(income_gdf)} income records")
+
     if income_gdf is not None and len(income_gdf) > 0:
         logger.info("Income data diagnostic:")
         for col in income_gdf.columns:
@@ -1078,8 +1077,8 @@ async def get_clusters_for_sales_man(
         full_load=True,
     )
 
-    places = await fetch_dataset(data_load_req)
-    places = filter_data_by_bounding_box(places, bounding_box)
+    places_all = await fetch_dataset(data_load_req)
+    places = filter_data_by_bounding_box(places_all, bounding_box)
     logger.info(f"Filtered to {len(places)} places within study area")
 
     # Remove duplicate facility locations
@@ -1249,11 +1248,24 @@ async def get_clusters_for_sales_man(
         masked_grided_data, req, groups
     )
 
+    # Save geojson files for interactive plots
+    from use_json import use_json
+    #make path of static/data into a global variable
+    STATIC_DATA_DIR = "static/data"
+    # create static data directory if it doesn't exist
+    os.makedirs(STATIC_DATA_DIR, exist_ok=True)
+    grid_geojson_path = os.path.join(STATIC_DATA_DIR, f"{request_id}_grid_data.geojson")
+    await use_json(grid_geojson_path, "w", json_content=masked_grided_data.__geo_interface__)
+    places_geojson_path = os.path.join(STATIC_DATA_DIR, f"{request_id}_places_data.geojson")
+    await use_json(places_geojson_path, "w", json_content=places.__geo_interface__)
+    boundaries_geojson_path = os.path.join(STATIC_DATA_DIR, f"{request_id}_boundaries.geojson")
+    await use_json(boundaries_geojson_path, "w", json_content=boundaries_geojson)
+
     # Generate plots and get their URLs
 
     logger.info("Creating territory boundaries...")
 
-    plot_urls = generate_all_plots(
+    plot_urls = await generate_all_plots(
         masked_grided_data, places, boundaries_gdf=boundaries_gdf, request_id=request_id
     )
 
@@ -1319,8 +1331,7 @@ async def get_clusters_for_sales_man(
     # Generate business intelligence insights
     total_population = sum(t["total_population"] for t in territory_analytics)
     total_facilities = sum(t["facility_count"] for t in territory_analytics)
-    print(f"Territory analytics: {territory_analytics}")
-    total_facilities = sum(t["facility_count"] for t in territory_analytics)
+
     # Market balance analysis
     customer_variance = np.var(
         [t["population_purchasing_power"] for t in territory_analytics]
