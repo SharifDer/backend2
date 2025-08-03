@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1052,7 +1053,7 @@ async def get_clusters_for_sales_man( req: ReqClustersForSalesManData,) -> dict[
         bounding_box, zoom_level=default_zoom
     )
     logger.info(f"Loaded {len(population_gdf)} population records")
-
+    logger.info(f"Loaded {len(income_gdf)} income records")
     if income_gdf is not None and len(income_gdf) > 0:
         logger.info("Income data diagnostic:")
         for col in income_gdf.columns:
@@ -1318,6 +1319,7 @@ async def get_clusters_for_sales_man( req: ReqClustersForSalesManData,) -> dict[
                 ),
             }
             territory_analytics.append(territory_stats)
+            
 
             # Create territory boundary geometry
             territory_boundary = {
@@ -1333,7 +1335,8 @@ async def get_clusters_for_sales_man( req: ReqClustersForSalesManData,) -> dict[
     # Generate business intelligence insights
     total_population = sum(t["total_population"] for t in territory_analytics)
     total_facilities = sum(t["facility_count"] for t in territory_analytics)
-
+    print(f"Territory analytics: {territory_analytics}")
+    total_facilities = sum(t["facility_count"] for t in territory_analytics)
     # Market balance analysis
     customer_variance = np.var(
         [t["population_purchasing_power"] for t in territory_analytics]
