@@ -9,6 +9,8 @@ This guide will help you set up and run the backend server on your Windows compu
 ## Step 1: Project Files
 1. git clone the repo
 2. Extract zip file to root of project
+3. Place the `secrets` and `.vscode` folder (provided in the zip file) at the root of the project directory.  
+
 
 ## Step 2: Install uv (Python Package Manager)
 ### Open PowerShell
@@ -56,11 +58,12 @@ This will install all the required packages for the project.
 3. Choose the interpreter that shows `.venv` in the path (this is the virtual environment uv created)
 
 ## Step 6: Run the Backend Server
-1. Make sure you have the main Python file open (usually something like `main.py` or `app.py`)
+1. Make sure the `launch.json` file (provided in the zip file) is placed inside the `.vscode` folder in your project directory.
+   - If the `.vscode` folder does not exist, create it and move `launch.json` into it.
 2. Press **F5** to start the server
 3. The server should start running and you'll see output in the terminal
 
 ## Troubleshooting
-- If F5 doesn't work, make sure you have a Python file open and selected
+- If F5 doesn't work, make sure you have any Python file from the project open and selected
 - If you can't find the Python interpreter with `.venv`, try running `uv sync` again
 - If you get permission errors, make sure you're running as administrator
