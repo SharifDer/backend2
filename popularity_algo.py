@@ -13,7 +13,7 @@ import pandas as pd
 from logging_wrapper import apply_decorator_to_module
 import logging
 from geopy.distance import geodesic
-
+from backend_common.auth import firebase_db
 import json
 from geopy.distance import geodesic
 
@@ -88,11 +88,27 @@ def add_popularity_score_category(features):
     return features
 
 
+# async def get_plan(plan_name):
+#     file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
+#     # use json file
+#     json_content = await use_json(file_path, "r")
+#     return json_content
+
 async def get_plan(plan_name):
-    file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
-    # use json file
-    json_content = await use_json(file_path, "r")
-    return json_content
+    try:
+        client = firebase_db.get_async_client()
+        doc_ref = client.collection("plan_files").document(plan_name)
+        doc = await doc_ref.get()
+
+        if doc.exists:
+            data = doc.to_dict()
+            return data.get("plan", [])  # return just the list
+        else:
+            print(f"No plan found for: {plan_name}")
+            return []
+    except Exception as e:
+        print(f"Error fetching plan from Firestore: {e}")
+        return []
 
 
 async def process_plan_popularity(plan_name: str):
@@ -519,9 +535,20 @@ async def create_plan(lng, lat, radius, boolean_query):
     return string_list
 
 
+# async def save_plan(plan_name, plan):
+#     file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
+#     await use_json(file_path, "w", plan)
+
 async def save_plan(plan_name, plan):
-    file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
-    await use_json(file_path, "w", plan)
+    print('plan_name',plan_name)
+    print('plan',plan)
+    try:
+        client = firebase_db.get_async_client()
+        doc_ref = client.collection("plan_files").document(plan_name)
+        await doc_ref.set({"plan": plan})
+        print(f"Plan '{plan_name}' saved successfully to Firestore.")
+    except Exception as e:
+        print(f"Error saving plan to Firestore: {e}")
 
 async def process_req_plan(req: ReqFetchDataset):
     action = req.action

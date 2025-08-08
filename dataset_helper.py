@@ -13,13 +13,29 @@ from firebase_admin import firestore
 logger = logging.getLogger(__name__)
 
 
+# async def read_plan_data(plan_name):
+#     file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
+#     try:
+#         with open(file_path, "r") as f:
+#             return json.load(f)
+#     except Exception as e:
+#         print(f"Error reading JSON file: {e}")
+#         return []
+
 async def read_plan_data(plan_name):
-    file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
     try:
-        with open(file_path, "r") as f:
-            return json.load(f)
+        client = firebase_db.get_async_client()
+        doc_ref = client.collection("plan_files").document(plan_name)
+        doc = await doc_ref.get()
+
+        if doc.exists:
+            data = doc.to_dict()
+            return data.get("plan", [])  # return only the list
+        else:
+            print(f"No plan file found for: {plan_name}")
+            return []
     except Exception as e:
-        print(f"Error reading JSON file: {e}")
+        print(f"Error reading from Firestore: {e}")
         return []
 
 

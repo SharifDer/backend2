@@ -15,6 +15,7 @@ class CommonApiConfig:
     firestore_collections: list[str] = field(default_factory=lambda: [
         "all_user_profiles",
         "firebase_stripe_mappings",
+        'plan_files',
         "layer_matchings",
         "ccc"
     ])
