@@ -238,24 +238,24 @@ def haversine(
     lat1_rad, lon1_rad = np.radians(lat1_array), np.radians(lon1_array)
     lat2_rad, lon2_rad = np.radians(lat2_array), np.radians(lon2_array)
 
-    logger.debug("Converted coordinates to radians")
-    logger.debug(
+    logger.info("Converted coordinates to radians")
+    logger.info(
         f"Origin latitude range: {np.min(lat1_rad):.4f} to {np.max(lat1_rad):.4f} radians"
     )
-    logger.debug(
+    logger.info(
         f"Origin longitude range: {np.min(lon1_rad):.4f} to {np.max(lon1_rad):.4f} radians"
     )
     # Reshape origin arrays to enable broadcasting for distance matrix computation
     lat1_rad = lat1_rad[:, np.newaxis]
     lon1_rad = lon1_rad[:, np.newaxis]
 
-    logger.debug(
+    logger.info(
         f"Reshaped arrays for broadcasting: {lat1_rad.shape} × {lat2_rad.shape}"
     )
     # Calculate coordinate differences using broadcasting
     dlat = lat2_rad - lat1_rad
     dlon = lon2_rad - lon1_rad
-    logger.debug(f"Calculated coordinate differences with shape: {dlat.shape}")
+    logger.info(f"Calculated coordinate differences with shape: {dlat.shape}")
 
     # Apply Haversine formula for great-circle distances on a sphere
     # Formula: a = sin²(Δφ/2) + cos φ₁ ⋅ cos φ₂ ⋅ sin²(Δλ/2)
@@ -722,8 +722,8 @@ def select_nbrs_with_sum(
     ------
     a list of neighboring gridcells for origin i that will become of cluster
     """
-    logger.debug(f"Building cluster starting from grid cell {i}")
-    logger.debug(
+    logger.info(f"Building cluster starting from grid cell {i}")
+    logger.info(
         f"Target max share: {max_share:,.0f}, Available unused cells: {len(cost) - len(used)}"
     )
 
@@ -733,7 +733,7 @@ def select_nbrs_with_sum(
     # Example: From grid cell 45, sorted neighbors might be [46, 44, 55, 35, 47, 43, 56, 34...]
     x = np.argsort(cost)  # Returns indices sorted by ascending distance
 
-    logger.debug(f"Sorted {len(x)} neighbors by distance from seed cell {i}")
+    logger.info(f"Sorted {len(x)} neighbors by distance from seed cell {i}")
 
     # Initialize accumulator variables
     value = 0
@@ -755,7 +755,7 @@ def select_nbrs_with_sum(
 
         # Check if cluster has reached target capacity
         if value >= max_share:
-            logger.debug(
+            logger.info(
                 f"  Cluster reached target capacity ({value:,.0f} >= {max_share:,.0f})"
             )
             break

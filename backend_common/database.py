@@ -154,7 +154,7 @@ class Database:
             List[str]: List of command completion tags
         """
         logger.info(f"Executing many queries with template: {query}")
-        logger.debug(f"First few entries: {entries[:3]}")  # Log just first few entries to avoid overwhelming logs
+        logger.info(f"First few entries: {entries[:3]}")  # Log just first few entries to avoid overwhelming logs
         async with cls.connection() as conn:
             return await conn.executemany(query, entries)
 

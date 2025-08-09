@@ -316,7 +316,7 @@ class ConfigTestGenerator:
                 var_name = match.group(1)
                 if var_name in context.variables:
                     replacement = str(context.variables[var_name])
-                    logger.debug(
+                    logger.info(
                         f"🔄 Substituting ${{{var_name}}} -> {replacement}"
                     )
                     return replacement
@@ -814,7 +814,7 @@ class ConfigTestGenerator:
                     f"❌ Min length validation failed at {path}: expected min length {min_length}, got {actual_length}"
                 )
             else:
-                logger.debug(
+                logger.info(
                     f"✅ min_length validation passed at {path}"
                 )
             return is_valid
@@ -842,7 +842,7 @@ class ConfigTestGenerator:
 
         # If expected is None, skip validation
         if expected is None:
-            logger.debug(f"🔄 Skipping validation at {path} (expected is None)")
+            logger.info(f"🔄 Skipping validation at {path} (expected is None)")
             return True
         # ======================
         # GLOBAL FIELD OVERRIDES
@@ -850,7 +850,7 @@ class ConfigTestGenerator:
         # ✅ ADD THIS: Automatically treat any request_id field as "min_length:1"
         if path.endswith(".request_id") or path == "root.request_id":
             # Override: always validate request_id as min_length:1
-            logger.debug(
+            logger.info(
                 f"🔄 Auto-overriding request_id at {path} to use min_length:1 validator"
             )
             return self._validate_min_length(actual, 1, path)
@@ -875,7 +875,7 @@ class ConfigTestGenerator:
                         f"❌ Validation failed at {path}: expected non-empty list, got {type(actual)} with length {len(actual) if isinstance(actual, list) else 'N/A'}"
                     )
                 else:
-                    logger.debug(
+                    logger.info(
                         f"✅ non_empty_list validation passed at {path}"
                     )
                 return is_valid
@@ -888,7 +888,7 @@ class ConfigTestGenerator:
                         f"❌ Validation failed at {path}: expected non-empty dict, got {type(actual)} with length {len(actual) if isinstance(actual, dict) else 'N/A'}"
                     )
                 else:
-                    logger.debug(
+                    logger.info(
                         f"✅ non_empty_dict validation passed at {path}"
                     )
                 return is_valid
@@ -901,7 +901,7 @@ class ConfigTestGenerator:
                         f"❌ Validation failed at {path}: expected value to exist, got None"
                     )
                 else:
-                    logger.debug(f"✅ exists validation passed at {path}")
+                    logger.info(f"✅ exists validation passed at {path}")
                 return is_valid
 
             # Special validator: not_exists
@@ -912,7 +912,7 @@ class ConfigTestGenerator:
                         f"❌ Validation failed at {path}: expected None, got {actual}"
                     )
                 else:
-                    logger.debug(f"✅ not_exists validation passed at {path}")
+                    logger.info(f"✅ not_exists validation passed at {path}")
                 return is_valid
 
             # Special validator: contains:something
@@ -924,7 +924,7 @@ class ConfigTestGenerator:
                         f"❌ Validation failed at {path}: expected string containing '{search_term}', got '{actual}'"
                     )
                 else:
-                    logger.debug(
+                    logger.info(
                         f"✅ contains validation passed at {path}: '{search_term}' found in '{actual}'"
                     )
                 return is_valid
@@ -938,7 +938,7 @@ class ConfigTestGenerator:
                         f"❌ Validation failed at {path}: expected string NOT containing '{search_term}', got '{actual}'"
                     )
                 else:
-                    logger.debug(
+                    logger.info(
                         f"✅ not_contains validation passed at {path}: '{search_term}' not found in '{actual}'"
                     )
                 return is_valid
@@ -952,7 +952,7 @@ class ConfigTestGenerator:
                         f"❌ Validation failed at {path}: expected string starting with '{prefix}', got '{actual}'"
                     )
                 else:
-                    logger.debug(f"✅ starts_with validation passed at {path}")
+                    logger.info(f"✅ starts_with validation passed at {path}")
                 return is_valid
 
             # Special validator: ends_with:something
@@ -964,7 +964,7 @@ class ConfigTestGenerator:
                         f"❌ Validation failed at {path}: expected string ending with '{suffix}', got '{actual}'"
                     )
                 else:
-                    logger.debug(f"✅ ends_with validation passed at {path}")
+                    logger.info(f"✅ ends_with validation passed at {path}")
                 return is_valid
 
             # Special validator: type:int, type:str, etc.
@@ -994,7 +994,7 @@ class ConfigTestGenerator:
                         f"❌ Type validation failed at {path}: expected {expected_type}, got {type(actual).__name__}"
                     )
                 else:
-                    logger.debug(
+                    logger.info(
                         f"✅ type validation passed at {path}: {expected_type}"
                     )
                 return is_valid
@@ -1012,7 +1012,7 @@ class ConfigTestGenerator:
                             f"❌ Regex validation failed at {path}: pattern '{pattern}' did not match '{actual}'"
                         )
                     else:
-                        logger.debug(f"✅ regex validation passed at {path}")
+                        logger.info(f"✅ regex validation passed at {path}")
                     return is_valid
                 except re.error as e:
                     logger.error(
@@ -1032,7 +1032,7 @@ class ConfigTestGenerator:
                                 f"❌ Length validation failed at {path}: expected length {expected_length}, got {actual_length}"
                             )
                         else:
-                            logger.debug(
+                            logger.info(
                                 f"✅ length validation passed at {path}"
                             )
                         return is_valid
@@ -1057,7 +1057,7 @@ class ConfigTestGenerator:
                                 f"❌ Min length validation failed at {path}: expected min length {min_length}, got {actual_length}"
                             )
                         else:
-                            logger.debug(
+                            logger.info(
                                 f"✅ min_length validation passed at {path}"
                             )
                         return is_valid
@@ -1082,7 +1082,7 @@ class ConfigTestGenerator:
                                 f"❌ Max length validation failed at {path}: expected max length {max_length}, got {actual_length}"
                             )
                         else:
-                            logger.debug(
+                            logger.info(
                                 f"✅ max_length validation passed at {path}"
                             )
                         return is_valid
@@ -1108,7 +1108,7 @@ class ConfigTestGenerator:
         # DICTIONARY COMPARISON
         # ======================
         if isinstance(expected, dict):
-            logger.debug(
+            logger.info(
                 f"🔍 Comparing dict at {path} with {len(expected)} expected keys"
             )
 
@@ -1130,14 +1130,14 @@ class ConfigTestGenerator:
                     )
                     return False
 
-            logger.debug(f"✅ Dict comparison passed at {path}")
+            logger.info(f"✅ Dict comparison passed at {path}")
             return True
 
         # ======================
         # LIST COMPARISON
         # ======================
         elif isinstance(expected, list):
-            logger.debug(
+            logger.info(
                 f"🔍 Comparing list at {path} with {len(expected)} expected items"
             )
 
@@ -1157,7 +1157,7 @@ class ConfigTestGenerator:
                     logger.error(f"❌ List item mismatch at {current_path}")
                     return False
 
-            logger.debug(f"✅ List comparison passed at {path}")
+            logger.info(f"✅ List comparison passed at {path}")
             return True
 
         # ======================
@@ -1170,7 +1170,7 @@ class ConfigTestGenerator:
                     f"❌ Value mismatch at {path}: expected {expected}, got {actual}"
                 )
             else:
-                logger.debug(f"✅ Value comparison passed at {path}")
+                logger.info(f"✅ Value comparison passed at {path}")
             return is_valid
 
     def validate_config(self, config: ConfigDrivenTest) -> bool:

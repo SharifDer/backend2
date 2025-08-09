@@ -48,10 +48,10 @@ class TestServerManager:
                 if self._verify_port_really_available(test_port):
                     return test_port
                 else:
-                    logger.debug(f"⚠️ Port {test_port} failed verification, continuing search...")
+                    logger.info(f"⚠️ Port {test_port} failed verification, continuing search...")
                     continue
             else:
-                logger.debug(f"❌ Port {test_port} is occupied, trying next...")
+                logger.info(f"❌ Port {test_port} is occupied, trying next...")
         
         raise RuntimeError(f"❌ Could not find available port after {max_attempts} attempts starting from {start_port}")
 
@@ -65,7 +65,7 @@ class TestServerManager:
             test_socket.bind(('127.0.0.1', port))
             test_socket.close()
         except socket.error:
-            logger.debug(f"Port {port} is not available on IPv4 (127.0.0.1)")
+            logger.info(f"Port {port} is not available on IPv4 (127.0.0.1)")
             return False
         
         # Method 2: Try to bind to all interfaces
@@ -76,7 +76,7 @@ class TestServerManager:
             test_socket.bind(('0.0.0.0', port))
             test_socket.close()
         except socket.error:
-            logger.debug(f"Port {port} is not available on IPv4 (0.0.0.0)")
+            logger.info(f"Port {port} is not available on IPv4 (0.0.0.0)")
             return False
         
         # Method 3: Try to connect to the port (check if something is listening)
@@ -86,7 +86,7 @@ class TestServerManager:
             result = test_socket.connect_ex(('127.0.0.1', port))
             test_socket.close()
             if result == 0:
-                logger.debug(f"Port {port} has a service listening")
+                logger.info(f"Port {port} has a service listening")
                 return False
         except socket.error:
             pass  # Connection failed, which is good - means nothing is listening
@@ -425,7 +425,7 @@ class TestServerManager:
             
             return True
         except socket.error as e:
-            logger.debug(f"Port {port} verification failed: {e}")
+            logger.info(f"Port {port} verification failed: {e}")
             return False
 
 def parse_arguments():

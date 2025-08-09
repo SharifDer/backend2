@@ -22,13 +22,13 @@ def setup_main_logging() -> logging.Logger:
     
     # Configure root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(logging.INFO)
     root_logger.handlers.clear()
     
     # STDERR Handler
     stderr_handler = logging.StreamHandler(sys.stderr)
     stderr_handler.setFormatter(formatter)
-    stderr_handler.setLevel(logging.DEBUG)
+    stderr_handler.setLevel(logging.INFO)
     root_logger.addHandler(stderr_handler)
     
     # Main log file
@@ -40,7 +40,7 @@ def setup_main_logging() -> logging.Logger:
     
     main_file_handler = logging.FileHandler(main_log_file, encoding='utf-8')
     main_file_handler.setFormatter(formatter)
-    main_file_handler.setLevel(logging.DEBUG)
+    main_file_handler.setLevel(logging.INFO)
     root_logger.addHandler(main_file_handler)
     
     # Quiet libraries
@@ -74,7 +74,7 @@ def setup_session_logging(session_id: str, session_dir: Path):
     # Create session file handler
     current_session_handler = logging.FileHandler(session_log_file, encoding='utf-8')
     current_session_handler.setFormatter(formatter)
-    current_session_handler.setLevel(logging.DEBUG)
+    current_session_handler.setLevel(logging.INFO)
     
     # Add to root logger
     root_logger = logging.getLogger()

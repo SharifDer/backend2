@@ -35,13 +35,13 @@ async def _get_test_data_for_get_call(ggl_api_url: str, headers: dict) -> dict:
             FROM schema_marketplace.google_maps_test_raw 
             WHERE filename = $1
         """
-        logger.debug(f"🗄️ Executing query: {query} with filename: {filename}")
+        logger.info(f"🗄️ Executing query: {query} with filename: {filename}")
         
         result = await Database.fetchrow(query, filename)
         
         if result and result["response_data"]:
             logger.info(f"✅ Found test data for GET call: {filename}")
-            logger.debug(f"📦 Raw response data: {result['response_data'][:200]}...")
+            logger.info(f"📦 Raw response data: {result['response_data'][:200]}...")
             response_data = json.loads(result["response_data"])
             logger.info(f"🎯 Returning test data with keys: {list(response_data.keys()) if isinstance(response_data, dict) else 'non-dict response'}")
             return response_data
@@ -68,7 +68,7 @@ async def _get_test_data_for_post_call(
 ) -> list:
     """Get test data for POST API calls (nearby search, text search)"""
     logger.info(f"🔍 Looking for test data for POST call: {ggl_api_url}")
-    logger.debug(f"📦 Request data: {json.dumps(data, indent=2)}")
+    logger.info(f"📦 Request data: {json.dumps(data, indent=2)}")
     
     # Check if we're in test mode
     is_test_mode = os.environ.get("TEST_MODE", "false").lower() == "true"
@@ -134,7 +134,7 @@ async def _get_test_data_for_post_call(
                 FROM schema_marketplace.google_maps_test_raw 
                 WHERE filename = $1
             """
-            logger.debug(f"🗄️ Trying exact match query: {query} with pattern: {filename_pattern}")
+            logger.info(f"🗄️ Trying exact match query: {query} with pattern: {filename_pattern}")
             result = await Database.fetchrow(query, filename_pattern)
             
             if result:
@@ -150,7 +150,7 @@ async def _get_test_data_for_post_call(
                     LIMIT 1
                 """
                 like_pattern = f"{filename_pattern}%"
-                logger.debug(f"🗄️ Trying pattern match query: {pattern_query} with pattern: {like_pattern}")
+                logger.info(f"🗄️ Trying pattern match query: {pattern_query} with pattern: {like_pattern}")
                 result = await Database.fetchrow(pattern_query, like_pattern)
                 
                 if result:
@@ -159,7 +159,7 @@ async def _get_test_data_for_post_call(
 
         if result and result["response_data"]:
             logger.info(f"✅ Found test data for POST call: {filename}")
-            logger.debug(f"📦 Raw response data: {result['response_data'][:200]}...")
+            logger.info(f"📦 Raw response data: {result['response_data'][:200]}...")
             
             response_data = json.loads(result["response_data"])
             logger.info(f"🎯 Parsed response data type: {type(response_data)}")
@@ -174,7 +174,7 @@ async def _get_test_data_for_post_call(
                 # Log first place for debugging
                 if places:
                     first_place = places[0]
-                    logger.debug(f"🏪 First place: {json.dumps(first_place, indent=2)[:300]}...")
+                    logger.info(f"🏪 First place: {json.dumps(first_place, indent=2)[:300]}...")
                 
                 return places
             else:
@@ -213,7 +213,7 @@ async def _get_test_data_for_street_view(req: ReqStreeViewCheck) -> dict:
             FROM schema_marketplace.google_maps_test_raw 
             WHERE filename = $1
         """
-        logger.debug(f"🗄️ Executing Street View query: {query} with filename: {filename}")
+        logger.info(f"🗄️ Executing Street View query: {query} with filename: {filename}")
         
         result = await Database.fetchrow(query, filename)
         
