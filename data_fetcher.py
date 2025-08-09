@@ -37,6 +37,7 @@ from google_api_connector import (
     fetch_ggl_nearby,
     # text_fetch_from_google_maps_api,
     calculate_distance_traffic_route,
+    select_sub_properties,
 )
 from logging_wrapper import (
     apply_decorator_to_module,
@@ -518,12 +519,6 @@ async def fetch_dataset(req: ReqFetchDataset):
                 progress, progress_complete = await fetch_plan_progress(
                     plan_name
                 )
-                # return to the user error that full load is not yet complete
-                if not progress_complete:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Full load is not yet complete please wait 5 minutes"
-                    )
                 progress_check_counts = 0
                 while progress <= 100 and progress_check_counts < 1:
                     if progress == 100:
@@ -534,12 +529,20 @@ async def fetch_dataset(req: ReqFetchDataset):
                         geojson_dataset = await get_full_load_geojson(
                             output_filenames
                         )
+                        if req.include_only_sub_properties:
+                            geojson_dataset = select_sub_properties(geojson_dataset)
 
                         break
                     else:
                         progress = await bkgnd_full_load(
                             req, plan_name, layer_id, next_page_token
                         )
+                        # return to the user error that full load is not yet complete
+                        if not progress_complete:
+                            raise HTTPException(
+                                status_code=400,
+                                detail=f"Full load is not yet complete(currently {progress}%) please wait ~15 minutes"
+                            )
 
                     progress_check_counts += 1
 

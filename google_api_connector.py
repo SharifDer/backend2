@@ -815,7 +815,7 @@ async def fetch_ggl_nearby(req: ReqFetchDataset):
 
     return dataset, bknd_dataset_id, next_page_token, plan_name, next_plan_index
 
-def select_sub_properties(dataset):
+def select_sub_properties(dataset: GeoJson) -> GeoJson:
     fields = [
         "displayName", "rating", "formattedAddress", "internationalPhoneNumber",
         "types", "priceLevel", "primaryType", "userRatingCount", "location",

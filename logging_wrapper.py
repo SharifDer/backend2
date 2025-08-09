@@ -138,6 +138,9 @@ def log_and_validate(
             args_repr = [repr(a)[:500] for a in args]
             kwargs_repr = [f"{k}={v!r}"[:500] for k, v in kwargs.items()]
             signature = ", ".join(args_repr + kwargs_repr)
+            # reduce signature length if necessary
+            if len(signature) > 1000:
+                signature = signature[:1000] + "..."
             logger.info(f"{func.__name__} called with args: {signature}")
             
             pre_exec_time = time.time()
