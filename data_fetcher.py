@@ -518,6 +518,12 @@ async def fetch_dataset(req: ReqFetchDataset):
                 progress, progress_complete = await fetch_plan_progress(
                     plan_name
                 )
+                # return to the user error that full load is not yet complete
+                if not progress_complete:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Full load is not yet complete please wait 5 minutes"
+                    )
                 progress_check_counts = 0
                 while progress <= 100 and progress_check_counts < 1:
                     if progress == 100:
