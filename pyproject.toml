@@ -39,5 +39,6 @@ dependencies = [
     "uvicorn[standard]",
     "fuzzywuzzy[speedup]",
     "py-spy",
+    "SQLAlchemy",
     "psutil>=7.0.0",
 ]
