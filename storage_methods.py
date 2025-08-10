@@ -1057,13 +1057,13 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
 
     # --- Population Layer ---
     if req.population and not req.income:
-        table_name = f"all_v{req.zoom_level}"
+        table_name = f"population_all_features_v{req.zoom_level}"
         sql = f"""
             SELECT ST_AsGeoJSON(t.*)::json AS feature
             FROM (
-                SELECT geom, * 
+                SELECT geometry, * 
                 FROM {table_name}
-                WHERE geom && {envelope_sql}
+                WHERE geometry && {envelope_sql}
             ) AS t;
         """
         rows = await Database.fetch(sql)
@@ -1072,15 +1072,14 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
             "features": [r["feature"] for r in rows]
         }
         layer_type = "population"
-
         # Population centers
         centers_table = f"population_centers_v{req.zoom_level}"
         sql_centers = f"""
             SELECT ST_AsGeoJSON(t.*)::json AS feature
             FROM (
-                SELECT geom, * 
+                SELECT geometry, * 
                 FROM {centers_table}
-                WHERE geom && {envelope_sql}
+                WHERE geometry && {envelope_sql}
             ) AS t;
         """
         center_rows = await Database.fetch(sql_centers)
@@ -1092,13 +1091,13 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
 
     # --- Income Layer ---
     if req.income:
-        table_name = f"area_income_v{req.zoom_level}"
+        table_name = f"area_income_all_features_v{req.zoom_level}"
         sql = f"""
             SELECT ST_AsGeoJSON(t.*)::json AS feature
             FROM (
-                SELECT geom, * 
+                SELECT geometry, * 
                 FROM {table_name}
-                WHERE geom && {envelope_sql}
+                WHERE geometry && {envelope_sql}
             ) AS t;
         """
         rows = await Database.fetch(sql)
@@ -1144,7 +1143,10 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
                 and poly_max_lat >= req.min_lat
             ):
                 properties = feature.get("properties", {})
-
+                if "geometry" in properties:
+                    del properties["geometry"]
+                if "id" in properties:
+                    del properties["id"]
                 if layer_type == "population":
                     filtered_features.append(feature)
 
