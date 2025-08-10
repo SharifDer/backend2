@@ -918,7 +918,7 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
 
     # Build viewport polygon for PostGIS query
     # Using SRID 4326 since your data seems to be in WGS84
-    envelope_sql = f"ST_MakeEnvelope({req.min_lng}, {req.min_lat}, {req.max_lng}, {req.max_lat}, 4326)"
+    envelope_sql = f"ST_MakeEnvelope({req.top_lng}, {req.top_lat}, {req.bottom_lng}, {req.bottom_lat}, 4326)"
 
     # --- Population Layer ---
     if req.population and not req.income:
@@ -1002,10 +1002,10 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
             poly_max_lat = max(lats)
 
             if (
-                poly_min_lng <= req.max_lng
-                and poly_max_lng >= req.min_lng
-                and poly_min_lat <= req.max_lat
-                and poly_max_lat >= req.min_lat
+                poly_min_lng <= req.bottom_lng
+                and poly_max_lng >= req.top_lng
+                and poly_min_lat <= req.bottom_lat
+                and poly_max_lat >= req.top_lat
             ):
                 properties = feature.get("properties", {})
                 if "geometry" in properties:

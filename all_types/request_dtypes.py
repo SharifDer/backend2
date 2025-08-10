@@ -165,10 +165,10 @@ class ReqSrcDistination(BaseModel):
 
 
 class ReqIntelligenceData(BaseModel):
-    min_lng: float
-    min_lat: float
-    max_lng: float
-    max_lat: float
+    top_lng: float
+    top_lat: float
+    bottom_lng: float
+    bottom_lat: float
     zoom_level: int
     user_id: str
     population: Optional[bool]

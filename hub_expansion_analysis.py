@@ -93,17 +93,17 @@ async def fetch_population_centers(
         )
         temp_req = fetch_lat_lng_bounding_box(temp_req)
         bbox_coords = temp_req.bounding_box
-        min_lng = bbox_coords[0]
-        min_lat = bbox_coords[1]
-        max_lng = bbox_coords[2]
-        max_lat = bbox_coords[3]
+        top_lat = bbox_coords[0]
+        bottom_lat = bbox_coords[1]
+        top_lng = bbox_coords[2]
+        bottom_lng = bbox_coords[3]
 
     # Create intelligence data request for population
     intel_req = ReqIntelligenceData(
-        min_lng=min_lng,
-        min_lat=min_lat,
-        max_lng=max_lng,
-        max_lat=max_lat,
+        top_lng=top_lng,
+        top_lat=top_lat,
+        bottom_lng=bottom_lng,
+        bottom_lat=bottom_lat,
         zoom_level=10,  # Appropriate zoom level for city analysis
         user_id=req.user_id,
         population=True,
