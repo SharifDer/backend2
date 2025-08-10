@@ -906,125 +906,139 @@ def combine_income_and_population_data(population_data, income_data):
 
     return combined_data
 
-
-
 async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
     """
-    Fetches population data from local GeoJSON files based on viewport and zoom level.
+    Fetches population or income data from PostGIS tables based on viewport and zoom level.
     """
-    # TODO first check if the user has purchased intelligence
+    # TODO: First check if the user has purchased intelligence
 
     population_centers = None  # Initialize population centers
+    intelligence_geojson_data = None
+    layer_type = None
 
+    # Build viewport polygon for PostGIS query
+    # Using SRID 4326 since your data seems to be in WGS84
+    envelope_sql = f"ST_MakeEnvelope({req.min_lng}, {req.min_lat}, {req.max_lng}, {req.max_lat}, 4326)"
+
+    # --- Population Layer ---
     if req.population and not req.income:
-        base_path = f"Backend/population_json_files/v{req.zoom_level}/" 
-        file_path =  base_path + "all_features.geojson"
-        intelligence_geojson_data = await use_json(file_path, "r")
+        table_name = f"population_all_features_v{req.zoom_level}"
+        sql = f"""
+            SELECT ST_AsGeoJSON(t.*)::json AS feature
+            FROM (
+                SELECT geometry, * 
+                FROM {table_name}
+                WHERE geometry && {envelope_sql}
+            ) AS t;
+        """
+        rows = await Database.fetch(sql)
+        intelligence_geojson_data = {
+            "type": "FeatureCollection",
+            "features": [r["feature"] for r in rows]
+        }
         layer_type = "population"
-        if not intelligence_geojson_data:
-            raise Exception(
-                f"could not find geojson data for zoom level {req.zoom_level}, in folder {file_path}"
-            )
-        
-        # Load population centers when population is requested
-        centers_file_path =  base_path + "population_centers.geojson"
-        population_centers = await use_json(centers_file_path, "r")
-
-        # Filter population centers based on viewport
-        if population_centers and population_centers.get("features"):
-            filtered_centers = []
-            for center in population_centers["features"]:
-                coords = center.get("geometry", {}).get("coordinates", [])
-                lng, lat = coords[1], coords[0]
-                # Check if point is within viewport bounds
-                if (req.min_lng <= lng <= req.max_lng and 
-                    req.min_lat <= lat <= req.max_lat):
-                    filtered_centers.append(center)
-            
-            # Update population_centers with filtered results
+        # Population centers
+        centers_table = f"population_centers_v{req.zoom_level}"
+        sql_centers = f"""
+            SELECT ST_AsGeoJSON(t.*)::json AS feature
+            FROM (
+                SELECT geometry, * 
+                FROM {centers_table}
+                WHERE geometry && {envelope_sql}
+            ) AS t;
+        """
+        center_rows = await Database.fetch(sql_centers)
+        if center_rows:
             population_centers = {
-                **population_centers,
-                "features": filtered_centers
-            } if filtered_centers else None
+                "type": "FeatureCollection",
+                "features": [r["feature"] for r in center_rows]
+            }
 
-    # if income is also true load income
+    # --- Income Layer ---
     if req.income:
-        file_path = f"Backend/area_income_geojson/v{req.zoom_level}/all_features.geojson"
-        intelligence_geojson_data = await use_json(file_path, "r")
+        table_name = f"area_income_all_features_v{req.zoom_level}"
+        sql = f"""
+            SELECT ST_AsGeoJSON(t.*)::json AS feature
+            FROM (
+                SELECT geometry, * 
+                FROM {table_name}
+                WHERE geometry && {envelope_sql}
+            ) AS t;
+        """
+        rows = await Database.fetch(sql)
+        intelligence_geojson_data = {
+            "type": "FeatureCollection",
+            "features": [r["feature"] for r in rows]
+        }
         layer_type = "income"
 
-    if not intelligence_geojson_data:
+    if not intelligence_geojson_data or not intelligence_geojson_data["features"]:
         raise Exception(
-            f"could not find geojson data for zoom level {req.zoom_level}, in folder {file_path}"
+            f"Could not find data for zoom level {req.zoom_level} in table {table_name}"
         )
 
-    # Load only the required portion from the GeoJSON
     filtered_features = []
-    
-    # Only collect density values for income normalization
     density_values = [] if req.income else None
-
     for feature in intelligence_geojson_data.get("features", []):
-        # For polygon features, do a basic bounds check (faster than full intersection)
-        geom_type = feature.get("geometry", {}).get("type")
-        coords = feature.get("geometry", {}).get("coordinates", [])
+        feature=json.loads(feature)
+        geometry_data = feature.get("geometry")
+        if isinstance(geometry_data, str):
+            try:
+                geometry_data = json.loads(geometry_data)
+            except json.JSONDecodeError:
+                # It's probably WKT, handle separately
+                geometry_data = None
+        geom_type = geometry_data.get("type")
+        coords = geometry_data.get("coordinates", [])
 
-        # Simple bounding box check (this is much faster than full geometric operations)
         if geom_type == "Polygon":
-            # Extract the bounds of the polygon (min/max lng/lat)
             flat_coords = [point for ring in coords for point in ring]
             lngs = [p[0] for p in flat_coords]
             lats = [p[1] for p in flat_coords]
 
-            # Check if polygon bbox overlaps viewport
             poly_min_lng = min(lngs)
             poly_max_lng = max(lngs)
             poly_min_lat = min(lats)
             poly_max_lat = max(lats)
 
-            # If polygon bounding box overlaps viewport, include it
             if (
                 poly_min_lng <= req.max_lng
                 and poly_max_lng >= req.min_lng
                 and poly_min_lat <= req.max_lat
                 and poly_max_lat >= req.min_lat
             ):
-
                 properties = feature.get("properties", {})
-
+                if "geometry" in properties:
+                    del properties["geometry"]
+                if "id" in properties:
+                    del properties["id"]
                 if layer_type == "population":
-                    # Density is already pre-calculated in the JSON files
                     filtered_features.append(feature)
-                    
+
                 elif layer_type == "income":
-                    # For income, calculate and collect for normalization
-                    income = properties.get("income", 0)  # Update field name as needed
-                    area_km2 = calculate_polygon_area_km2(coords)  # Keep this function for income
+                    income = properties.get("income", 0)
+                    area_km2 = calculate_polygon_area_km2(coords)
                     raw_density = income / area_km2 if area_km2 > 0 else 0
                     density_values.append(raw_density)
                     filtered_features.append((feature, raw_density))
 
-    # Only normalize for income
     if req.income and density_values:
         min_density = min(density_values)
         max_density = max(density_values)
         density_range = max_density - min_density if max_density > min_density else 1
-        
-        # Process income features with normalization
+
         processed_features = []
         for feature, raw_density in filtered_features:
             normalized_density = ((raw_density - min_density) / density_range) * 100
             feature["properties"]["density"] = round(normalized_density, 6)
             processed_features.append(feature)
-        
+
         filtered_features = processed_features
 
-    # Extract properties from first feature if available
     properties = []
-    if filtered_features and len(filtered_features) > 0:
+    if filtered_features:
         properties = list(filtered_features[0].get("properties", {}).keys())
 
-    # Return raw dictionary
     intelligence_geojson = {
         "type": "FeatureCollection",
         "features": filtered_features,
@@ -1038,155 +1052,8 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
         "properties": properties,
         "records_count": len(filtered_features),
     }
-
+    print('data fetched successfully',intelligence_geojson)
     return intelligence_geojson
-
-# async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
-#     """
-#     Fetches population or income data from PostGIS tables based on viewport and zoom level.
-#     """
-#     # TODO: First check if the user has purchased intelligence
-
-#     population_centers = None  # Initialize population centers
-#     intelligence_geojson_data = None
-#     layer_type = None
-
-#     # Build viewport polygon for PostGIS query
-#     # Using SRID 4326 since your data seems to be in WGS84
-#     envelope_sql = f"ST_MakeEnvelope({req.min_lng}, {req.min_lat}, {req.max_lng}, {req.max_lat}, 4326)"
-
-#     # --- Population Layer ---
-#     if req.population and not req.income:
-#         table_name = f"all_v{req.zoom_level}"
-#         sql = f"""
-#             SELECT ST_AsGeoJSON(t.*)::json AS feature
-#             FROM (
-#                 SELECT geom, * 
-#                 FROM {table_name}
-#                 WHERE geom && {envelope_sql}
-#             ) AS t;
-#         """
-#         rows = await Database.fetch(sql)
-#         intelligence_geojson_data = {
-#             "type": "FeatureCollection",
-#             "features": [r["feature"] for r in rows]
-#         }
-#         layer_type = "population"
-
-#         # Population centers
-#         centers_table = f"population_centers_v{req.zoom_level}"
-#         sql_centers = f"""
-#             SELECT ST_AsGeoJSON(t.*)::json AS feature
-#             FROM (
-#                 SELECT geom, * 
-#                 FROM {centers_table}
-#                 WHERE geom && {envelope_sql}
-#             ) AS t;
-#         """
-#         center_rows = await Database.fetch(sql_centers)
-#         if center_rows:
-#             population_centers = {
-#                 "type": "FeatureCollection",
-#                 "features": [r["feature"] for r in center_rows]
-#             }
-
-#     # --- Income Layer ---
-#     if req.income:
-#         table_name = f"area_income_v{req.zoom_level}"
-#         sql = f"""
-#             SELECT ST_AsGeoJSON(t.*)::json AS feature
-#             FROM (
-#                 SELECT geom, * 
-#                 FROM {table_name}
-#                 WHERE geom && {envelope_sql}
-#             ) AS t;
-#         """
-#         rows = await Database.fetch(sql)
-#         intelligence_geojson_data = {
-#             "type": "FeatureCollection",
-#             "features": [r["feature"] for r in rows]
-#         }
-#         layer_type = "income"
-
-#     if not intelligence_geojson_data or not intelligence_geojson_data["features"]:
-#         raise Exception(
-#             f"Could not find data for zoom level {req.zoom_level} in table {table_name}"
-#         )
-
-#     filtered_features = []
-#     density_values = [] if req.income else None
-#     for feature in intelligence_geojson_data.get("features", []):
-#         feature=json.loads(feature)
-#         geometry_data = feature.get("geometry")
-#         if isinstance(geometry_data, str):
-#             try:
-#                 geometry_data = json.loads(geometry_data)
-#             except json.JSONDecodeError:
-#                 # It's probably WKT, handle separately
-#                 geometry_data = None
-#         geom_type = geometry_data.get("type")
-#         coords = geometry_data.get("coordinates", [])
-
-#         if geom_type == "Polygon":
-#             flat_coords = [point for ring in coords for point in ring]
-#             lngs = [p[0] for p in flat_coords]
-#             lats = [p[1] for p in flat_coords]
-
-#             poly_min_lng = min(lngs)
-#             poly_max_lng = max(lngs)
-#             poly_min_lat = min(lats)
-#             poly_max_lat = max(lats)
-
-#             if (
-#                 poly_min_lng <= req.max_lng
-#                 and poly_max_lng >= req.min_lng
-#                 and poly_min_lat <= req.max_lat
-#                 and poly_max_lat >= req.min_lat
-#             ):
-#                 properties = feature.get("properties", {})
-
-#                 if layer_type == "population":
-#                     filtered_features.append(feature)
-
-#                 elif layer_type == "income":
-#                     income = properties.get("income", 0)
-#                     area_km2 = calculate_polygon_area_km2(coords)
-#                     raw_density = income / area_km2 if area_km2 > 0 else 0
-#                     density_values.append(raw_density)
-#                     filtered_features.append((feature, raw_density))
-
-#     if req.income and density_values:
-#         min_density = min(density_values)
-#         max_density = max(density_values)
-#         density_range = max_density - min_density if max_density > min_density else 1
-
-#         processed_features = []
-#         for feature, raw_density in filtered_features:
-#             normalized_density = ((raw_density - min_density) / density_range) * 100
-#             feature["properties"]["density"] = round(normalized_density, 6)
-#             processed_features.append(feature)
-
-#         filtered_features = processed_features
-
-#     properties = []
-#     if filtered_features:
-#         properties = list(filtered_features[0].get("properties", {}).keys())
-
-#     intelligence_geojson = {
-#         "type": "FeatureCollection",
-#         "features": filtered_features,
-#         "metadata": {
-#             "color": "#e74c3c" if layer_type == "population" else "#3498db",
-#             "name": f"{layer_type.title()} Density Layer",
-#             "layer_type": layer_type,
-#             "zoom_level": req.zoom_level,
-#             "population_centers": population_centers,
-#         },
-#         "properties": properties,
-#         "records_count": len(filtered_features),
-#     }
-#     print('data fetched successfully',intelligence_geojson)
-#     return intelligence_geojson
 
 async def get_full_load_geojson(filenames: list[str]) -> str:
 
