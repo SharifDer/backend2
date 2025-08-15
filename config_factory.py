@@ -83,6 +83,8 @@ class ApiConfig(CommonApiConfig):
         backend_base_uri + "fetch_population_by_viewport"
     )
     temp_sales_man_problem = backend_base_uri + "temp_sales_man_problem"
+    
+    site_suitability_analysis = "/site_suitability_analysis"
 
     @classmethod
     def get_conf(cls):
