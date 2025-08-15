@@ -6,6 +6,12 @@ from all_types.request_dtypes import ReqFetchDataset
 
 T = TypeVar("T")
 
+class ResSiteSuitabilityAnalysis(BaseModel):
+    report_url: str
+    analysis_summary: dict
+    top_properties: list
+    total_properties_analyzed: int
+    report_filename: str
 
 class ResModel(BaseModel, Generic[T]):
     message: str

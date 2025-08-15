@@ -27,6 +27,9 @@ from hub_expansion_analysis import (
 )
 from config_factory import CONF
 
+from site_suitability_analysis import site_analyzer
+from all_types.request_dtypes import ReqSiteSuitabilityAnalysis
+from all_types.response_dtypes import ResSiteSuitabilityAnalysis
 
 analysis_router = APIRouter()
 
@@ -94,6 +97,25 @@ async def ep_hub_expansion_analysis(
         ReqHubExpansion,
         ResModel[ResHubExpansion],
         analyze_hub_expansion,
+        wrap_output=True,
+    )
+    return response
+
+
+@analysis_router.post(
+    "/site_suitability_analysis",
+    response_model=ResModel[ResSiteSuitabilityAnalysis],
+    dependencies=[Depends(JWTBearer())],
+)
+async def ep_site_suitability_analysis(
+    req: ReqModel[ReqSiteSuitabilityAnalysis], 
+    request: Request
+):
+    response = await request_handling(
+        req.request_body,
+        ReqSiteSuitabilityAnalysis,
+        ResModel[ResSiteSuitabilityAnalysis],
+        site_analyzer.analyze_sites,
         wrap_output=True,
     )
     return response

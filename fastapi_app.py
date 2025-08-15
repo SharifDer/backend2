@@ -39,6 +39,7 @@ app.include_router(analysis_router, tags=["Analysis & Intelligence"])
 
 # Create static directory and mount static files
 os.makedirs("static/plots", exist_ok=True)
+os.makedirs("static/reports", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -64,6 +65,31 @@ def cleanup_old_plots(
 
     except Exception as e:
         logger.error(f"Error during plot cleanup: {str(e)}")
+
+def cleanup_old_plots(max_age_hours: int = 24, static_dir: str = "static"):
+    try:
+        pattern = os.path.join(static_dir, "plots", "*.png")
+        current_time = time.time()
+        max_age_seconds = max_age_hours * 3600
+
+        deleted_count = 0
+        for filepath in glob.glob(pattern):
+            file_age = current_time - os.path.getctime(filepath)
+            if file_age > max_age_seconds:
+                os.remove(filepath)
+                deleted_count += 1
+
+        reports_pattern = os.path.join(static_dir, "reports", "*.html")
+        for filepath in glob.glob(reports_pattern):
+            file_age = current_time - os.path.getctime(filepath)
+            if file_age > max_age_seconds * 7:
+                os.remove(filepath)
+                deleted_count += 1
+
+        logger.info(f"Cleaned up {deleted_count} old files")
+
+    except Exception as e:
+        logger.error(f"Error during cleanup: {str(e)}")
 
 
 # Enable CORS

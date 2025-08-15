@@ -3,10 +3,32 @@ from fastapi import UploadFile
 
 from pydantic import BaseModel, Field
 
+from typing import Optional
+
 from all_types.internal_types import CtlgItems, UserId, BooleanQuery
 
 U = TypeVar("U")
 
+
+class ReqSiteSuitabilityAnalysis(BaseModel):
+    country_name: str = "Saudi Arabia"
+    city_name: str = "Riyadh"
+    restaurant_type: str
+    target_age: int = 30
+    user_id: str
+    analysis_radius: int = 1000
+    target_max_speed_kmh: int = 20
+    optimal_nearby_businesses: int = 20
+    max_competitors: int = 3
+
+class ReqIntelligenceDataViewport(BaseModel):
+    country_name: str
+    city_name: str
+    user_id: str
+    north: float = 24.8
+    south: float = 24.6
+    east: float = 46.8
+    west: float = 46.5
 
 class Coordinate(BaseModel):
     lat: Optional[float] = None
