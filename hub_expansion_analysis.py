@@ -1,9 +1,8 @@
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 import json
-import math
-from pydantic import BaseModel, Field
-
+import geopandas as gpd
+from shapely.geometry import Point
 from all_types.request_dtypes import (
     ReqFetchDataset,
     ReqIntelligenceData,
@@ -13,7 +12,6 @@ from all_types.response_dtypes import ResHubExpansion
 from storage_methods import fetch_intelligence_by_viewport
 from data_fetcher import fetch_dataset
 from geo_std_utils import calculate_distance, fetch_lat_lng_bounding_box
-import pandas as pd
 
 
 def estimate_travel_time_minutes(
@@ -73,30 +71,24 @@ def normalize_score(
     return final_score
 
 
-async def fetch_population_centers(
+async def fetch_population_data(
     req: ReqHubExpansion,
 ) -> List[Dict[str, Any]]:
-    """Fetch population center data using the intelligence viewport system with population_centers"""
+    """Fetch population data using the intelligence viewport system with population_centers"""
 
     # Determine bounding box for analysis
-    if req.analysis_bounds:
-        min_lng = req.analysis_bounds.get("min_lng")
-        min_lat = req.analysis_bounds.get("min_lat")
-        max_lng = req.analysis_bounds.get("max_lng")
-        max_lat = req.analysis_bounds.get("max_lat")
-    else:
-        # Create a temporary request to get city bounding box
-        temp_req = ReqFetchDataset(
-            city_name=req.city_name,
-            country_name=req.country_name,
-            user_id=req.user_id,
-        )
-        temp_req = fetch_lat_lng_bounding_box(temp_req)
-        bbox_coords = temp_req.bounding_box
-        top_lat = bbox_coords[0]
-        bottom_lat = bbox_coords[1]
-        top_lng = bbox_coords[2]
-        bottom_lng = bbox_coords[3]
+    # Create a temporary request to get city bounding box
+    temp_req = ReqFetchDataset(
+        city_name=req.city_name,
+        country_name=req.country_name,
+        user_id=req.user_id,
+    )
+    temp_req = fetch_lat_lng_bounding_box(temp_req)
+    bbox_coords = temp_req.bounding_box
+    top_lat = bbox_coords[0]
+    bottom_lat = bbox_coords[1]
+    top_lng = bbox_coords[2]
+    bottom_lng = bbox_coords[3]
 
     # Create intelligence data request for population
     intel_req = ReqIntelligenceData(
@@ -112,6 +104,13 @@ async def fetch_population_centers(
 
     # Fetch population data using the intelligence system
     population_data = await fetch_intelligence_by_viewport(intel_req)
+
+    return population_data
+
+async def fetch_population_centers(req, 
+    population_data,
+) -> List[Dict[str, Any]]:
+    """Get population centers"""
 
     # Extract population centers from the metadata
     population_centers_geojson = population_data.get("metadata", {}).get(
@@ -183,6 +182,38 @@ async def fetch_population_centers(
     return top_centers
 
 
+def assign_nearest_population_grid_cells(target_locations, population_grid_geojson):
+    """Assign each target location to its nearest population grid cell (polygon)."""
+    # Convert population grid GeoJSON to GeoDataFrame
+    population_grid_features = population_grid_geojson.get("features", [])
+    population_grid_gdf = (
+        gpd.GeoDataFrame.from_features(population_grid_features)
+        if population_grid_features
+        else gpd.GeoDataFrame()
+    )
+    population_grid_gdf['centroid'] = population_grid_gdf.geometry.centroid
+    population_grid_gdf['centroid_lat'] = population_grid_gdf.centroid.y
+    population_grid_gdf['centroid_lng'] = population_grid_gdf.centroid.x
+
+    # Create a list to store results
+    assigned_population_grids = []
+    for target in target_locations:
+        target_coords = target.get("geometry", {}).get("coordinates", [])
+        if len(target_coords) >= 2:
+            target_lng, target_lat = target_coords[0], target_coords[1]
+            target_point = Point(target_lng, target_lat)
+            # Calculate distances from target to all population grid centroids
+            population_grid_gdf['distance_to_target'] = population_grid_gdf.centroid.distance(target_point)
+            # Get the nearest grid cell (just 1)
+            nearest_idx = population_grid_gdf['distance_to_target'].idxmin()
+            nearest_grid = population_grid_gdf.loc[nearest_idx].copy()
+            nearest_grid_dict = nearest_grid.to_dict()
+            assigned_population_grids.append(nearest_grid_dict)
+            # Do NOT remove the assigned grid cell; allow multiple targets to be assigned to the same grid cell
+            nearest_grid = None
+    
+    return assigned_population_grids
+
 async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
     """Main function to analyze hub expansion opportunities"""
 
@@ -226,7 +257,8 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
     competitor_data = await fetch_dataset(competitor_req)
 
     # Fetch population centers
-    population_centers = await fetch_population_centers(req)
+    population_data = await fetch_population_data(req)
+    city_pop_centers = await fetch_population_centers(req, population_data)
 
     # Extract features from datasets
     hub_features = hub_data.get("features", [])
@@ -236,6 +268,7 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
     # Filter hubs by requirements
     qualified_hubs = []
     all_rents = []
+    assigned_nearest_pop_grids = assign_nearest_population_grid_cells(target_features, population_data)
 
     for hub in hub_features:
         properties = hub.get("properties", {})
@@ -263,7 +296,7 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
 
     # Score each qualified hub using existing scoring functions
     scored_hubs = []
-
+    #! time: we can do the calculation just for those hub nearest of the target not all of them 
     for hub in qualified_hubs:
         coordinates = hub.get("geometry", {}).get("coordinates", [])
         properties = hub.get("properties", {})
@@ -278,10 +311,10 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
             req.scoring_thresholds.get("target_proximity", {}),
         )
 
-        population_score, population_details = (
-            calculate_population_access_score(
+        city_pop_center_access_score, pop_center_access_metrics = (
+            calculate_city_pop_center_access_score(
                 hub_location,
-                population_centers,
+                city_pop_centers,
                 req.max_population_center_time_minutes,
                 req.scoring_thresholds.get("population_access", {}),
             )
@@ -302,9 +335,9 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
             )
         )
 
-        coverage_score, coverage_details = calculate_population_coverage_score(
+        neighborhood_pop_coverage_score, neighborhood_coverage_details = calculate_neighborhood_pop_coverage_score(
             hub_location,
-            population_centers,
+            assigned_nearest_pop_grids,
             req.density_thresholds,
             req.scoring_thresholds.get("population_coverage", {}),
         )
@@ -313,10 +346,10 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
         weights = req.scoring_weights
         total_score = (
             target_score * weights.get("target_proximity", 0.35)
-            + population_score * weights.get("population_access", 0.30)
+            + city_pop_center_access_score * weights.get("population_access", 0.30)
             + rent_score * weights.get("rent_efficiency", 0.10)
             + competitive_score * weights.get("competitive_advantage", 0.15)
-            + coverage_score * weights.get("population_coverage", 0.10)
+            + neighborhood_pop_coverage_score * weights.get("population_coverage", 0.10)
         )
 
         # Compile hub analysis
@@ -344,16 +377,16 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
                 "total_score": round(total_score, 1),
                 "component_scores": {
                     "target_proximity_score": round(target_score, 1),
-                    "population_access_score": round(population_score, 1),
+                    "city_pop_center_access_score": round(city_pop_center_access_score, 1),
                     "rent_efficiency_score": round(rent_score, 1),
                     "competitive_advantage_score": round(competitive_score, 1),
-                    "population_coverage_score": round(coverage_score, 1),
+                    "neighborhood_pop_coverage_score": round(neighborhood_pop_coverage_score, 1),
                 },
                 "target_access": target_details,
-                "population_access": population_details,
+                "population_access": pop_center_access_metrics,
                 "rent_details": rent_details,
                 "competitive_positioning": competitive_details,
-                "coverage_analysis": coverage_details,
+                "coverage_analysis": neighborhood_coverage_details,
             },
         }
 
@@ -391,7 +424,7 @@ async def analyze_hub_expansion(req: ReqHubExpansion) -> ResHubExpansion:
 
     # Build market analysis
     market_analysis = {
-        "total_population_centers": len(population_centers),
+        "total_population_centers": len(city_pop_centers),
         "total_target_locations": len(target_features),
         "total_competitor_locations": len(competitor_features),
         "coverage_methodology": req.density_thresholds,
@@ -471,6 +504,7 @@ def calculate_target_proximity_score(
         score = max(min_score, 6.0 - (excess_distance * penalty_multiplier))
 
     # Calculate travel time
+    #! mmmm is this a bad estimate?: good use traffic factor and speed limits
     travel_time = estimate_travel_time_minutes(min_distance_km)
 
     details = {
@@ -487,7 +521,7 @@ def calculate_target_proximity_score(
     return final_score, details
 
 
-def calculate_population_access_score(
+def calculate_city_pop_center_access_score(
     hub_location: Dict[str, float],
     population_centers: List[Dict[str, Any]],
     max_time_minutes: int,
@@ -698,7 +732,7 @@ def calculate_competitive_advantage_score(
     return final_score, details
 
 
-def calculate_population_coverage_score(
+def calculate_neighborhood_pop_coverage_score(
     hub_location: Dict[str, float],
     population_centers: List[Dict[str, Any]],
     density_thresholds: Dict[str, Dict[str, float]],
@@ -722,11 +756,20 @@ def calculate_population_coverage_score(
     coverage_breakdown = {}
 
     for center in population_centers:
+
+        #! with the nearest population gride
         center_coords = center.get("coordinates", {})
-        center_lat = center_coords.get("lat", 0.0)
-        center_lng = center_coords.get("lng", 0.0)
-        center_population = center.get("population", 0)
+        center_lat = center.get("centroid_lat", 0.0)
+        center_lng = center.get("centroid_lng", 0.0)
+        center_population = center.get("Population_Count", 0)
         center_density = center.get("density", 0)
+
+        #! the old one of population centers
+        # center_coords = center.get("coordinates", {})
+        # center_lat = center_coords.get("lat", 0.0)
+        # center_lng = center_coords.get("lng", 0.0)
+        # center_population = center.get("population", 0)
+        # center_density = center.get("density", 0)
 
         # Determine coverage radius based on density
         density_class = get_density_classification(

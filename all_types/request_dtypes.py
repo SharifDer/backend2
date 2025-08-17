@@ -183,7 +183,8 @@ class ReqClustersForSalesManData(BooleanQuery, UserId, ReqCityCountry):
 
 class ReqHubExpansion(BaseModel):
     """Default configuration for hub expansion analysis"""
-
+    # User context
+    user_id: str = "default_user"
     # Location context
     city_name: str = "Riyadh"
     country_name: str = "Saudi Arabia"
@@ -271,5 +272,3 @@ class ReqHubExpansion(BaseModel):
     include_market_analysis: bool = True
     include_success_metrics: bool = True
 
-    # User context
-    user_id: str = "default_user"

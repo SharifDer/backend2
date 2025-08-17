@@ -951,7 +951,7 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
         if center_rows:
             population_centers = {
                 "type": "FeatureCollection",
-                "features": [r["feature"] for r in center_rows]
+                "features": [json.loads(r["feature"]) if isinstance(r["feature"], str) else r["feature"] for r in center_rows]
             }
 
     # --- Income Layer ---
