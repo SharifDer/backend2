@@ -98,8 +98,19 @@ class SimpleMCPClient:
         self.tools = await self.client.get_tools()
         print(f"📋 Available tools: {[tool.name for tool in self.tools]}")
         
+        # Load API keys from secrets file
+        secrets_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'secrets', 'secrets_llm.json')
+        with open(secrets_path, 'r') as f:
+            secrets = json.load(f)
+        
+        print(f"🔑 Loaded OpenAI API key: {secrets['openai_api_key'][:20]}...{secrets['openai_api_key'][-4:]}")
+        
         # Initialize LLM and agent with checkpointer
-        llm = ChatOpenAI(model=self.model, temperature=self.temperature)
+        llm = ChatOpenAI(
+            model=self.model, 
+            temperature=self.temperature,
+            openai_api_key=secrets['openai_api_key']
+        )
         self.agent = create_react_agent(
             llm, 
             self.tools, 

@@ -30,7 +30,6 @@ class AgentConfig:
     MCP_TRANSPORT = "stdio"
     
     
-    
     # ===== PROMPT TYPES =====
     PROMPT_TYPES = {
         "comprehensive": "Full academic report with detailed methodology",

@@ -84,9 +84,20 @@ def register_report_analysis_tools(mcp: FastMCP):
             logger.info(f"Analyzing report for user {user_id}: {report_file}")
             logger.info(f"User query: {user_query[:100]}...")
 
-            # Initialize LLM (uses global GEMINI_API_KEY environment variable)
+            # Load API keys from secrets file
+            secrets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'secrets', 'secrets_llm.json')
+            with open(secrets_path, 'r') as f:
+                secrets = json.load(f)
+            
+            print(f"🔑 Loaded OpenAI API key: {secrets['openai_api_key'][:20]}...{secrets['openai_api_key'][-4:]}")
+            
+            # Initialize LLM
             print(f"🔍 [REPORT_ANALYSIS] Initializing LLM with model: {model}")
-            llm = ChatOpenAI(model=model, temperature=temperature)
+            llm = ChatOpenAI(
+                model=model, 
+                temperature=temperature,
+                openai_api_key=secrets['openai_api_key']
+            )
             print("✅ [REPORT_ANALYSIS] LLM initialized successfully")
             
             # Create system prompt for report analysis
