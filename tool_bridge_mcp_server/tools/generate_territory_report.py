@@ -17,7 +17,6 @@ from pydantic import Field
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 from tool_bridge_mcp_server.context import get_app_context
-from .plots_config import PlotsConfig
 
 logger = logging.getLogger(__name__)
 
@@ -276,440 +275,69 @@ def generate_common_sections(metadata: Dict, business_insights: Dict, performanc
     
     return sections
 
-# def generate_methodology_section(metadata: Dict) -> str:
-#     """
-#     Returns the hardcoded methodology section in HTML format with consistent formatting.
-    
-#     Returns:
-#         HTML string with the methodology section
-#     """
-#     distance_limit = safe_get(metadata, 'distance_limit_km', 3.0)
-#     business_type = safe_get(metadata, 'business_type', 'supermarket')
-    
-#     return f"""
-#     <div class="methodology-section">
-#         <style>
-#             .methodology-section {{
-#                 font-family: Arial, sans-serif;
-#                 font-size: 12pt;
-#                 line-height: 1.6;
-#                 color: #000000;
-#             }}
-#             .methodology-section h2 {{
-#                 color: #000000;
-#                 font-size: 16pt;
-#                 font-weight: bold;
-#                 margin: 30px 0 15px 0;
-#                 border-left: 3px solid #000000;
-#                 padding-left: 15px;
-#                 font-family: Arial, sans-serif;
-#             }}
-#             .methodology-section h3 {{
-#                 color: #333333;
-#                 font-size: 14pt;
-#                 font-weight: bold;
-#                 margin: 25px 0 12px 0;
-#                 font-family: Arial, sans-serif;
-#             }}
-#             .methodology-section p {{
-#                 margin: 15px 0;
-#                 text-align: justify;
-#                 font-family: Arial, sans-serif;
-#             }}
-#             .methodology-section ul {{
-#                 margin: 15px 0;
-#                 padding-left: 25px;
-#                 font-family: Arial, sans-serif;
-#             }}
-#             .methodology-section ol {{
-#                 margin: 15px 0;
-#                 padding-left: 25px;
-#                 font-family: Arial, sans-serif;
-#             }}
-#             .methodology-section li {{
-#                 margin: 6px 0;
-#                 line-height: 1.5;
-#                 font-family: Arial, sans-serif;
-#             }}
-#             .methodology-section ul li {{
-#                 list-style-type: square;
-#             }}
-#             .methodology-section .formula {{
-#                 font-size: 1.3em;
-#                 font-weight: normal;
-#                 margin: 1.5em 0;
-#                 text-align: center;
-#                 background: linear-gradient(135deg, #f5f5f5, #e9ecef);
-#                 padding: 20px;
-#                 border-radius: 8px;
-#                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-#                 border: 1px solid #cccccc;
-#                 font-family: Arial, sans-serif;
-#             }}
-#             .methodology-section strong {{
-#                 font-weight: bold;
-#             }}
-#             .methodology-section em {{
-#                 font-style: italic;
-#             }}
-#             .methodology-section sub {{
-#                 font-size: 0.8em;
-#                 vertical-align: sub;
-#             }}
-#         </style>
-        
-#         <h2>Methodology</h2>
-#         <h3>Step 1: Calculate {business_type.title()} Accessibility</h3>
-#         <p>
-#             The first step is to determine how many {business_type}s are accessible from each population center.
-#             We define accessibility based on three distance thresholds:
-#         </p>
-#         <ul>
-#             <li><strong>1 km</strong>: Represents walkable access.</li>
-#             <li><strong>5 km</strong>: Represents short driving access.</li>
-#             <li><strong>10 km</strong>: Represents extended reach.</li>
-#         </ul>
-#         <p>
-#             This requires calculating an <strong>origin-destination distance matrix</strong>, where each origin is a
-#             population center and each destination is a {business_type}. The analysis uses a {distance_limit}km service radius
-#             to ensure optimal accessibility for customers.
-#         </p>
-#         <h3>Step 2: Compute Market Share</h3>
-#         <p>
-#             Once the distance matrix is computed, we invert it to determine how many population centers can
-#             access each {business_type}. Using this data, we calculate the market share of each {business_type}
-#             as follows:
-#         </p>
-#         <h3>Mathematical Formulation</h3>
-#         <p>For a given population center <em>i</em>:</p>
-#         <div class="formula">
-#             e<sub>f<sub>i</sub></sub> = (P<sub>i</sub> × W<sub>i</sub>) / S<sub>i</sub>
-#         </div>
-#         <p><strong>Where:</strong></p>
-#         <ul>
-#             <li><strong>e<sub>f<sub>i</sub></sub></strong>: Effective population for population center <em>i</em></li>
-#             <li><strong>P<sub>i</sub></strong>: Population of center <em>i</em></li>
-#             <li><strong>S<sub>i</sub></strong>: Number of {business_type}s accessible from center <em>i</em></li>
-#             <li><strong>W<sub>i</sub></strong>: Weightage of each population center, for example average income etc.
-#         </ul>
-#         <p>For a given {business_type} <em>j</em>:</p>
-#         <div class="formula">
-#             m<sub>s<sub>j</sub></sub> = ∑ e<sub>f<sub>ij</sub></sub> for all centers that can access {business_type} <em>j</em>
-#         </div>
-#         <p><strong>Where:</strong></p>
-#         <ul>
-#             <li><strong>m<sub>s<sub>j</sub></sub></strong>: Market share of {business_type} <em>j</em></li>
-#             <li><strong>e<sub>f<sub>ij</sub></sub></strong>: Effective population from all population centers <em>i</em> accessing {business_type} <em>j</em></li>
-#         </ul>
-#         <h3>Assumptions</h3>
-#         <p>To simplify the analysis, we make the following assumptions:</p>
-#         <ol>
-#             <li>Consumer demand is evenly distributed across the region. This assumption is considered when <em>W<sub>i</sub></em> is not provided to calculate <em>e<sub>f<sub>i</sub></sub></em>.</li>
-#             <li>All {business_type}s provide the same range of products and services.</li>
-#             <li>Sales representatives cover their designated areas without overlap.</li>
-#         </ol>
-#         <h3>Step 3: Clustering for Equitable Sales Regions</h3>
-#         <p>
-#             Once the market share is computed, we use <strong>clustering algorithms</strong> to divide the city into sales regions.
-#             The key difference in our approach is that <strong>market share</strong>, not population density or geographical area,
-#             is the basis for clustering. This ensures equitable distribution of market potential across all territories.
-#         </p>
-#     </div>
-#     """
-
 def generate_methodology_section(metadata: Dict) -> str:
     """
-    Returns the hardcoded methodology section in HTML format with properly formatted equations.
+    Returns the hardcoded methodology section in markdown format.
     
     Returns:
-        HTML string with the methodology section
+        Markdown string with the methodology section
     """
     distance_limit = safe_get(metadata, 'distance_limit_km', 3.0)
     business_type = safe_get(metadata, 'business_type', 'supermarket')
     
-    return f"""
-    <div class="methodology-section">
-        <style>
-            /* Override any existing styles with !important */
-            .methodology-section {{
-                font-family: Arial, sans-serif !important;
-                font-size: 12pt !important;
-                line-height: 1.6 !important;
-                color: #000000 !important;
-            }}
-            .methodology-section h2 {{
-                color: #000000 !important;
-                font-size: 16pt !important;
-                font-weight: bold !important;
-                margin: 30px 0 15px 0 !important;
-                border-left: 3px solid #000000 !important;
-                padding-left: 15px !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            .methodology-section h3 {{
-                color: #333333 !important;
-                font-size: 14pt !important;
-                font-weight: bold !important;
-                margin: 25px 0 12px 0 !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            .methodology-section p {{
-                margin: 15px 0 !important;
-                text-align: justify !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            .methodology-section ul {{
-                margin: 15px 0 !important;
-                padding-left: 25px !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            .methodology-section ol {{
-                margin: 15px 0 !important;
-                padding-left: 25px !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            .methodology-section li {{
-                margin: 6px 0 !important;
-                line-height: 1.5 !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            .methodology-section ul li {{
-                list-style-type: square !important;
-            }}
-            
-            /* Disable MathJax processing for our custom equations */
-            .custom-equation {{
-                font-family: 'Times New Roman', Times, serif !important;
-                font-size: 18pt !important;
-                color: #000000 !important;
-                display: block !important;
-                text-align: center !important;
-                margin: 25px 0 !important;
-                padding: 20px !important;
-                background: #ffffff !important;
-                border: none !important;
-                box-shadow: none !important;
-                position: relative !important;
-                z-index: 1000 !important;
-            }}
-            
-            .custom-equation .equation-content {{
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                font-family: 'Times New Roman', Times, serif !important;
-            }}
-            
-            .custom-equation .variable {{
-                font-style: italic !important;
-                font-size: 18pt !important;
-                margin: 0 3px !important;
-                font-family: 'Times New Roman', Times, serif !important;
-            }}
-            
-            .custom-equation .subscript {{
-                font-size: 14pt !important;
-                vertical-align: sub !important;
-                margin-left: 1px !important;
-                font-style: italic !important;
-            }}
-            
-            .custom-equation .equals {{
-                font-size: 20pt !important;
-                margin: 0 15px !important;
-                font-weight: normal !important;
-                font-style: normal !important;
-            }}
-            
-            .custom-equation .fraction {{
-                display: inline-flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                margin: 0 5px !important;
-                font-family: 'Times New Roman', Times, serif !important;
-            }}
-            
-            .custom-equation .numerator {{
-                border-bottom: 2px solid #000000 !important;
-                padding: 2px 10px 4px 10px !important;
-                margin-bottom: 2px !important;
-                font-size: 18pt !important;
-                font-style: italic !important;
-                font-family: 'Times New Roman', Times, serif !important;
-            }}
-            
-            .custom-equation .denominator {{
-                padding: 4px 10px 2px 10px !important;
-                font-size: 18pt !important;
-                font-style: italic !important;
-                font-family: 'Times New Roman', Times, serif !important;
-            }}
-            
-            .custom-equation .summation {{
-                font-size: 24pt !important;
-                margin-right: 8px !important;
-                font-style: normal !important;
-                font-family: 'Times New Roman', Times, serif !important;
-            }}
-            
-            .custom-equation .description {{
-                font-size: 12pt !important;
-                margin-left: 15px !important;
-                font-style: normal !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            
-            .where-clause {{
-                margin: 20px 0 10px 0 !important;
-                font-weight: bold !important;
-                color: #000000 !important;
-                font-size: 14pt !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            
-            .math-definitions {{
-                margin: 15px 0 !important;
-                text-align: left !important;
-            }}
-            
-            .math-definitions ul {{
-                list-style-type: disc !important;
-                padding-left: 20px !important;
-                margin: 10px 0 !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            
-            .math-definitions li {{
-                margin: 8px 0 !important;
-                line-height: 1.6 !important;
-                font-family: Arial, sans-serif !important;
-            }}
-            
-            .math-var {{
-                font-style: italic !important;
-                font-weight: normal !important;
-                color: #000000 !important;
-            }}
-            
-            .methodology-section strong {{
-                font-weight: bold !important;
-            }}
-            .methodology-section em {{
-                font-style: italic !important;
-            }}
-            
-            /* Prevent MathJax from processing our equations */
-            .no-mathjax {{
-                font-family: 'Times New Roman', Times, serif !important;
-            }}
-        </style>
-        
-        <h2>Methodology</h2>
-        <h3>Step 1: Calculate {business_type.title()} Accessibility</h3>
-        <p>
-            The first step is to determine how many {business_type}s are accessible from each population center.
-            We define accessibility based on three distance thresholds:
-        </p>
-        <ul>
-            <li><strong>1 km</strong>: Represents walkable access.</li>
-            <li><strong>5 km</strong>: Represents short driving access.</li>
-            <li><strong>10 km</strong>: Represents extended reach.</li>
-        </ul>
-        <p>
-            This requires calculating an <strong>origin-destination distance matrix</strong>, where each origin is a
-            population center and each destination is a {business_type}. The analysis uses a {distance_limit}km service radius
-            to ensure optimal accessibility for customers.
-        </p>
-        
-        <h3>Step 2: Compute Market Share</h3>
-        <p>
-            Once the distance matrix is computed, we invert it to determine how many population centers can
-            access each {business_type}. Using this data, we calculate the market share of each {business_type}
-            as follows:
-        </p>
-        
-        <h3>Mathematical Formulation</h3>
-        <p>For a given population center <em>i</em>:</p>
-        
-        <div class="custom-equation no-mathjax">
-            <div class="equation-content">
-                <span class="variable">ef<span class="subscript">i</span></span>
-                <span class="equals">=</span>
-                <div class="fraction">
-                    <div class="numerator">
-                        <span class="variable">P<span class="subscript">i</span></span>
-                        <span style="margin: 0 4px; font-style: normal;">×</span>
-                        <span class="variable">W<span class="subscript">i</span></span>
-                    </div>
-                    <div class="denominator">
-                        <span class="variable">S<span class="subscript">i</span></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="where-clause"><strong>Where:</strong></div>
-        <div class="math-definitions">
-            <ul>
-                <li><span class="math-var">ef<sub>i</sub></span>: Effective population for population center <em>i</em></li>
-                <li><span class="math-var">P<sub>i</sub></span>: Population of center <em>i</em></li>
-                <li><span class="math-var">S<sub>i</sub></span>: Number of {business_type}s accessible from center <em>i</em></li>
-                <li><span class="math-var">W<sub>i</sub></span>: Weightage of each population center, for example average income etc.</li>
-            </ul>
-        </div>
-        
-        <p>For a given {business_type} <em>j</em>:</p>
-        
-        <div class="custom-equation no-mathjax">
-            <div class="equation-content">
-                <span class="variable">ms<span class="subscript">j</span></span>
-                <span class="equals">=</span>
-                <span class="summation">∑</span>
-                <span class="variable">ef<span class="subscript">ij</span></span>
-                <span class="description">for all centers that can access {business_type} <em>j</em></span>
-            </div>
-        </div>
-        
-        <div class="where-clause"><strong>Where:</strong></div>
-        <div class="math-definitions">
-            <ul>
-                <li><span class="math-var">ms<sub>j</sub></span>: Market share of {business_type} <em>j</em></li>
-                <li><span class="math-var">ef<sub>ij</sub></span>: Effective population from all population centers <em>i</em> accessing {business_type} <em>j</em></li>
-            </ul>
-        </div>
-        
-        <h3>Assumptions</h3>
-        <p>To simplify the analysis, we make the following assumptions:</p>
-        <ol>
-            <li>Consumer demand is evenly distributed across the region. This assumption is considered when <em>W<sub>i</sub></em> is not provided to calculate <em>ef<sub>i</sub></em>.</li>
-            <li>All {business_type}s provide the same range of products and services.</li>
-            <li>Sales representatives cover their designated areas without overlap.</li>
-        </ol>
-        
-        <h3>Step 3: Clustering for Equitable Sales Regions</h3>
-        <p>
-            Once the market share is computed, we use <strong>clustering algorithms</strong> to divide the city into sales regions.
-            The key difference in our approach is that <strong>market share</strong>, not population density or geographical area,
-            is the basis for clustering. This ensures equitable distribution of market potential across all territories.
-        </p>
-    </div>
-    
-    <script>
-        // Prevent MathJax from processing our custom equations
-        if (window.MathJax) {{
-            MathJax.startup.document.state(0);
-            MathJax.startup.document.addRenderAction('find', 'custom-equations', function() {{
-                const equations = document.querySelectorAll('.no-mathjax');
-                equations.forEach(eq => {{
-                    if (eq.innerHTML) {{
-                        // Mark as processed to prevent MathJax interference
-                        eq.setAttribute('data-mathjax-processed', 'true');
-                    }}
-                }});
-            }});
-        }}
-    </script>
-    """
+    return f"""## Methodology
+
+### Step 1: Calculate {business_type.title()} Accessibility
+
+The first step is to determine how many {business_type}s are accessible from each population center. We define accessibility based on three distance thresholds:
+
+- **1 km**: Represents walkable access
+- **5 km**: Represents short driving access  
+- **10 km**: Represents extended reach
+
+This requires calculating an **origin-destination distance matrix**, where each origin is a population center and each destination is a {business_type}. The analysis uses a {distance_limit}km service radius to ensure optimal accessibility for customers.
+
+### Step 2: Compute Market Share
+
+Once the distance matrix is computed, we invert it to determine how many population centers can access each {business_type}. Using this data, we calculate the market share of each {business_type} as follows:
+
+### Mathematical Formulation
+
+For a given population center *i*:
+
+```
+ef_i = (P_i × W_i) / S_i
+```
+
+**Where:**
+- *ef_i*: Effective population for population center *i*
+- *P_i*: Population of center *i*
+- *S_i*: Number of {business_type}s accessible from center *i*
+- *W_i*: Weightage of each population center, for example average income etc.
+
+For a given {business_type} *j*:
+
+```
+ms_j = ∑ ef_ij for all centers that can access {business_type} j
+```
+
+**Where:**
+- *ms_j*: Market share of {business_type} *j*
+- *ef_ij*: Effective population from all population centers *i* accessing {business_type} *j*
+
+### Assumptions
+
+To simplify the analysis, we make the following assumptions:
+
+1. Consumer demand is evenly distributed across the region. This assumption is considered when *W_i* is not provided to calculate *ef_i*
+2. All {business_type}s provide the same range of products and services
+3. Sales representatives cover their designated areas without overlap
+
+### Step 3: Clustering for Equitable Sales Regions
+
+Once the market share is computed, we use **clustering algorithms** to divide the city into sales regions. The key difference in our approach is that **market share**, not population density or geographical area, is the basis for clustering. This ensures equitable distribution of market potential across all territories.
+"""
+
 def generate_report_header(metadata: Dict, report_type: str) -> str:
     """Generate appropriate header based on report type."""
     city_name = safe_get(metadata, 'city_name', 'Unknown City')
@@ -860,30 +488,7 @@ def generate_report_footer(data_handle: str, metadata: Dict, request_id: str) ->
     
     return f"\n\n---\n\n**Analysis Metadata**: Data Handle: `{data_handle}` | Location: {city_name} | Analysis Date: {analysis_date} | Request ID: {request_id} | Generated: {timestamp}"
 
-# def save_report_to_file(report_content: str, metadata: Dict, report_type: str) -> str:
-#     """Save the generated report to a markdown file in the current directory."""
-#     try:
-#         # Get current directory where the script is located
-#         current_dir = os.path.dirname(os.path.abspath(__file__))
-        
-#         # Generate filename
-#         city_name = safe_get(metadata, 'city_name', 'Unknown_City').replace(' ', '_')
-#         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-#         filename = f"{city_name}_territory_report_{report_type}_{timestamp}.md"
-        
-#         # Full file path
-#         file_path = os.path.join(current_dir, filename)
-        
-#         # Write report content to file
-#         with open(file_path, 'w', encoding='utf-8') as f:
-#             f.write(report_content)
-        
-#         return f"✅ Report saved successfully to: {file_path}"
-        
-#     except Exception as e:
-#         return f"❌ Error saving report to file: {str(e)}"
-
-def markdown_to_html(markdown_content: str, metadata: Dict) -> str:
+def markdown_to_html_DEPRECATED(markdown_content: str, metadata: Dict) -> str:
     """Convert markdown report to HTML using the template."""
     try:
         # Get current directory and template path
@@ -1193,29 +798,6 @@ def get_inline_html_template() -> str:
 <body>{{CONTENT}}</body>
 </html>'''
 
-# def save_html_report_to_file(html_content: str, metadata: Dict, report_type: str) -> str:
-#     """Save the generated HTML report to a file in the current directory."""
-#     try:
-#         # Get current directory where the script is located
-#         current_dir = os.path.dirname(os.path.abspath(__file__))
-        
-#         # Generate filename
-#         city_name = safe_get(metadata, 'city_name', 'Unknown_City').replace(' ', '_')
-#         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-#         filename = f"{city_name}_territory_report_{report_type}_{timestamp}.html"
-        
-#         # Full file path
-#         file_path = os.path.join(current_dir, filename)
-        
-#         # Write HTML content to file
-#         with open(file_path, 'w', encoding='utf-8') as f:
-#             f.write(html_content)
-        
-#         return f"✅ HTML report saved successfully to: {file_path}"
-        
-#     except Exception as e:
-#         return f"❌ Error saving HTML report to file: {str(e)}"
-
 # Main Report Generation Functions
 def generate_academic_comprehensive_report(metadata, territory_analytics, business_insights, 
                                          performance_metrics, plots, request_id, 
@@ -1293,7 +875,7 @@ def save_report_to_file(report_content: str, metadata: Dict, report_type: str) -
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(report_content)
         
-        return f"✅ Report saved successfully to: {file_path}"
+        return f"{file_path}"
         
     except Exception as e:
         return f"❌ Error saving report to file: {str(e)}"
@@ -1458,8 +1040,6 @@ def register_territory_report_tools(mcp: FastMCP):
         include_methodology: bool = Field(default=True, description="Include detailed methodology section"),
         include_technical_analysis: bool = Field(default=True, description="Include technical analysis with statistical breakdowns"),
         include_visualizations: bool = Field(default=True, description="Include references to generated maps and visualizations"),
-        save_to_file: bool = Field(default=True, description="Save the generated report as a markdown file in the current directory"),
-        generate_html: bool = Field(default=True, description="Generate and save HTML version of the report"),
     ) -> str:
         """Generate comprehensive territory optimization reports with academic rigor."""
 
@@ -1487,6 +1067,7 @@ def register_territory_report_tools(mcp: FastMCP):
 
             metadata = safe_get(territory_data, "metadata", {})
             plots = safe_get(territory_data, "plots", {})
+            data_files = safe_get(territory_data, "data_files", {})
             request_id = safe_get(territory_data, "request_id", "unknown")
             territory_analytics = safe_get(territory_data, "territory_analytics", [])
             business_insights = safe_get(territory_data, "business_insights", {})
@@ -1513,20 +1094,17 @@ def register_territory_report_tools(mcp: FastMCP):
             if report_type not in report_generators:
                 return f"❌ Error: Unknown report type '{report_type}'. Available types: {', '.join(REPORT_TYPES.keys())}"
 
+            # Generate the report content
             report = report_generators[report_type]()
 
-            # Save to file if requested
-            save_status = ""
-            if save_to_file:
-                save_status = "\n\n" + save_report_to_file(report, metadata, report_type)
-
-            # Generate and save HTML version if requested
-            if generate_html:
-                html_report = markdown_to_html(report, metadata)
-                html_save_status = save_html_report_to_file(html_report, metadata, report_type)
-                save_status += "\n\n" + html_save_status
-
-            return report + save_status
+            # Always save the report to file and return the file path
+            file_path = save_report_to_file(report, metadata, report_type)
+            
+            # Return the file path and data files for Dash app integration
+            return {
+                "report_file": file_path,
+                "data_files": data_files
+            }
 
         except Exception as e:
             logger.exception("Critical error in generate_territory_report")

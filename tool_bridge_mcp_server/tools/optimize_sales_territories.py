@@ -182,6 +182,7 @@ def register_territory_optimization_tools(mcp: FastMCP):
                 "market_balance_score": business_insights.get("market_balance_score", 0),
                 "optimization_date": metadata.get("analysis_date"),
                 "plot_urls": territory_data.get("plots", {}),
+                "data_files": territory_data.get("data_files", {}),  # NEW: Data files for interactive plotting
             }
 
             # Store comprehensive territory analysis data
@@ -208,10 +209,14 @@ def register_territory_optimization_tools(mcp: FastMCP):
             - **Well-Served Areas**: {business_insights.get('accessibility_analysis', {}).get('well_served_territories', 'N/A')} territories
             - **Service Gaps**: {business_insights.get('accessibility_analysis', {}).get('service_desert_territories', 'N/A')} underserved areas
 
-            🗺️ **Visualizations Available**: {len(territory_data.get('plots', {}))} interactive maps generated
+            🗺️ **Visualizations Available**: 
+            - **Static Maps**: {len(territory_data.get('plots', {}))} PNG files for reports
+            - **Interactive Data**: {len(territory_data.get('data_files', {}))} GeoJSON files for DashApp visualization
 
             📋 **Data Handle**: `{handle}`
-            Use this handle with `generate_territory_report` for detailed business intelligence analysis."""
+            Use this handle with:
+            - `generate_territory_report` for detailed business intelligence reports
+            - DashApp MCP client for interactive data visualization"""
 
             return success_msg
 
