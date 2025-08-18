@@ -29,43 +29,7 @@ class AgentConfig:
     MCP_SERVER_NAME = "saudi-location-intelligence"
     MCP_TRANSPORT = "stdio"
     
-    # ===== ANALYSIS SETTINGS =====
-    DEFAULT_ANALYSIS_TYPE = "comprehensive"
-    DEFAULT_NUM_TERRITORIES = 6
-    DEFAULT_DISTANCE_LIMIT = 3.0  # km
     
-    # ===== AUTHENTICATION =====
-    # Default credentials (should be overridden)
-    DEFAULT_EMAIL = "mumerqureshi1994@gmail.com"
-    DEFAULT_PASSWORD = "12345678"
-    
-    # ===== AVAILABLE BUSINESS TYPES =====
-    BUSINESS_TYPES = [
-        "supermarket",
-        "restaurant", 
-        "pharmacy",
-        "gas_station",
-        "retail",
-        "hospital",
-        "bank",
-        "grocery_store",
-        "shopping_mall",
-        "hotel"
-    ]
-    
-    # ===== AVAILABLE LOCATIONS =====
-    SAUDI_CITIES = [
-        "Riyadh",
-        "Jeddah", 
-        "Dammam",
-        "Mecca",
-        "Medina",
-        "Khobar",
-        "Taif",
-        "Buraidah",
-        "Khamis Mushait",
-        "Hail"
-    ]
     
     # ===== PROMPT TYPES =====
     PROMPT_TYPES = {
