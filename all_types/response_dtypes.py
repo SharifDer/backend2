@@ -6,7 +6,7 @@ from all_types.request_dtypes import ReqFetchDataset
 
 T = TypeVar("T")
 
-class ResSiteSuitabilityAnalysis(BaseModel):
+class ResDineInSuitabilityAnalysis(BaseModel):
     report_url: str
     analysis_summary: dict
     top_properties: list
