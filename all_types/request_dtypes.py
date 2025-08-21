@@ -40,14 +40,7 @@ class ReqDineInSuitabilityAnalysis(BaseModel):
     business_penalty_per_missing: int = 4
     competitor_penalty_per_excess: int = 10
 
-class ReqIntelligenceDataViewport(BaseModel):
-    country_name: str
-    city_name: str
-    user_id: str
-    north: float = 24.8
-    south: float = 24.6
-    east: float = 46.8
-    west: float = 46.5
+
 
 class Coordinate(BaseModel):
     lat: Optional[float] = None
