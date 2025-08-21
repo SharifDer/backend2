@@ -43,53 +43,37 @@ os.makedirs("static/reports", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-def cleanup_old_plots(
-    max_age_hours: int = 24, static_dir: str = "static/plots"
-):
+def cleanup_old_files(max_age_hours: int = 24, static_dir: str = "static"):
     """
-    Remove plot files older than specified hours
+    Remove plot and report files older than specified hours
     """
     try:
-        pattern = os.path.join(static_dir, "*.png")
+        # Clean plot files
+        plot_pattern = os.path.join(static_dir, "plots", "*.png")
         current_time = time.time()
         max_age_seconds = max_age_hours * 3600
 
         deleted_count = 0
-        for filepath in glob.glob(pattern):
+        for filepath in glob.glob(plot_pattern):
             file_age = current_time - os.path.getctime(filepath)
             if file_age > max_age_seconds:
                 os.remove(filepath)
                 deleted_count += 1
 
-        logger.info(f"Cleaned up {deleted_count} old plot files")
-
-    except Exception as e:
-        logger.error(f"Error during plot cleanup: {str(e)}")
-
-def cleanup_old_plots(max_age_hours: int = 24, static_dir: str = "static"):
-    try:
-        pattern = os.path.join(static_dir, "plots", "*.png")
-        current_time = time.time()
-        max_age_seconds = max_age_hours * 3600
-
-        deleted_count = 0
-        for filepath in glob.glob(pattern):
+        # Clean report files (keep for 7 days)
+        report_pattern = os.path.join(static_dir, "reports", "*.html")
+        report_max_age = max_age_hours * 7 * 3600  # 7 times longer than plots
+        
+        for filepath in glob.glob(report_pattern):
             file_age = current_time - os.path.getctime(filepath)
-            if file_age > max_age_seconds:
-                os.remove(filepath)
-                deleted_count += 1
-
-        reports_pattern = os.path.join(static_dir, "reports", "*.html")
-        for filepath in glob.glob(reports_pattern):
-            file_age = current_time - os.path.getctime(filepath)
-            if file_age > max_age_seconds * 7:
+            if file_age > report_max_age:
                 os.remove(filepath)
                 deleted_count += 1
 
         logger.info(f"Cleaned up {deleted_count} old files")
 
     except Exception as e:
-        logger.error(f"Error during cleanup: {str(e)}")
+        logger.error(f"Error during file cleanup: {str(e)}")
 
 
 # Enable CORS
@@ -121,7 +105,7 @@ async def startup_event():
     await Database.create_pool()
     await firebase_db.initialize_all()
     # Clean up old plots on startup
-    cleanup_old_plots()
+    cleanup_old_files()
 
 
 @app.on_event("shutdown")

@@ -11,6 +11,7 @@ class ApiConfig(CommonApiConfig):
     nearby_search_url: str = ggl_base_url + "searchNearby"
     search_text_url: str = ggl_base_url + "searchText"
     place_details_url: str = ggl_base_url[0:-1] + "/"
+    here_api_key: str = ""
 
     legacy_nearby_search_url: str = (
         "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
@@ -84,7 +85,7 @@ class ApiConfig(CommonApiConfig):
     )
     temp_sales_man_problem = backend_base_uri + "temp_sales_man_problem"
     
-    site_suitability_analysis = "/site_suitability_analysis"
+    dine_in_suitability_analysis = "/dine-in_suitability_analysis"
 
     @classmethod
     def get_conf(cls):
@@ -117,6 +118,15 @@ class ApiConfig(CommonApiConfig):
                 ) as config_file:
                     data = json.load(config_file)
                     conf.gemini_api_key = data.get("gemini_api_key", "")
+
+            if os.path.exists(f"{conf.secrets_dir}/secrets_here.json"):
+                with open(
+                    f"{conf.secrets_dir}/secrets_here.json",
+                    "r",
+                    encoding="utf-8",
+                ) as config_file:
+                    data = json.load(config_file)
+                    conf.here_api_key = data.get("here_api_key", "")
 
             return conf
         except Exception as e:

@@ -27,9 +27,10 @@ from hub_expansion_analysis import (
 )
 from config_factory import CONF
 
-from site_suitability_analysis import site_analyzer
-from all_types.request_dtypes import ReqSiteSuitabilityAnalysis
-from all_types.response_dtypes import ResSiteSuitabilityAnalysis
+from dine_in_suitability_analysis import analyze_dine_in_sites
+from all_types.request_dtypes import ReqDineInSuitabilityAnalysis
+from all_types.response_dtypes import ResDineInSuitabilityAnalysis
+from all_types.internal_types import UserId
 
 analysis_router = APIRouter()
 
@@ -103,19 +104,19 @@ async def ep_hub_expansion_analysis(
 
 
 @analysis_router.post(
-    "/site_suitability_analysis",
-    response_model=ResModel[ResSiteSuitabilityAnalysis],
+    CONF.dine_in_suitability_analysis,
+    response_model=ResModel[ResDineInSuitabilityAnalysis],
     dependencies=[Depends(JWTBearer())],
 )
-async def ep_site_suitability_analysis(
-    req: ReqModel[ReqSiteSuitabilityAnalysis], 
+async def ep_dine_in_suitability_analysis(
+    req: ReqModel[ReqDineInSuitabilityAnalysis], 
     request: Request
 ):
     response = await request_handling(
         req.request_body,
-        ReqSiteSuitabilityAnalysis,
-        ResModel[ResSiteSuitabilityAnalysis],
-        site_analyzer.analyze_sites,
+        ReqDineInSuitabilityAnalysis,
+        ResModel[ResDineInSuitabilityAnalysis],
+        analyze_dine_in_sites,
         wrap_output=True,
     )
     return response
