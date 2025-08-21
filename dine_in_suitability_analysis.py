@@ -56,7 +56,9 @@ async def analyze_dine_in_sites(request: ReqDineInSuitabilityAnalysis) -> Dict[s
         demographics = get_property_demographics(candidate, demographics_data)
         
         # Get businesses for this property
-        property_businesses = competitors_data.get(f"{candidate['lat']},{candidate['lng']}", [])
+        property_data = competitors_data.get(f"{candidate['lat']},{candidate['lng']}", {'competitors': [], 'businesses': []})
+        property_competitors = property_data['competitors']
+        property_businesses = property_data['businesses']
         
         # Calculate all scores
         traffic_analysis = calculate_traffic_score(
@@ -72,7 +74,7 @@ async def analyze_dine_in_sites(request: ReqDineInSuitabilityAnalysis) -> Dict[s
             request.target_age, request.age_penalty_per_year
         )
         
-        competitor_count = count_competitors(property_businesses, request.dine_in_type)
+        competitor_count = len(property_competitors)  # Direct count since they're already filtered
         competition_score = calculate_competition_score(
             competitor_count, request.max_competitors, request.competitor_penalty_per_excess
         )
@@ -319,47 +321,84 @@ def get_property_demographics(candidate: Dict[str, Any],
     return {'median_age': 30, 'income': 15000}
 
 async def fetch_competitors_and_businesses(request: ReqDineInSuitabilityAnalysis, 
-                                         candidates: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
-    """Fetch competitors and businesses for each candidate using real data"""
+                                         candidates: List[Dict[str, Any]]) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+    """Fetch competitors and general businesses for each candidate using real data"""
     
-    # Get all available categories
-    categories_data = await poi_categories("")
-    food_drink_categories = categories_data.get('Food and Drink', [])
+    competitors_and_businesses_data = {}
     
-    competitors_data = {}
-    
-    # For each candidate, fetch nearby businesses
+    # For each candidate, fetch both competitors and general businesses
     for candidate in candidates:
         key = f"{candidate['lat']},{candidate['lng']}"
         
-        # Fetch businesses in the area around this candidate
-        business_request = ReqFetchDataset(
-            country_name=request.country_name,
-            city_name=request.city_name,
-            boolean_query="restaurant",  # General business query
-            user_id=request.user_id,
-            search_type="category_search",
-            action="full data",
-            layer_name=f"Businesses near {candidate['id']}",
-            page_token="",
-            layerId="",
-            text_search="",
-            zoom_level=16,  # High zoom for local area
-            full_load=True
-        )
+        # Create bounding box around this candidate for analysis_bounds
+        lat_offset = 0.018  # ~2km in degrees
+        lng_offset = 0.018
+        analysis_bounds = {
+            "north": candidate['lat'] + lat_offset,
+            "south": candidate['lat'] - lat_offset,
+            "east": candidate['lng'] + lng_offset,
+            "west": candidate['lng'] - lng_offset
+        }
         
         try:
+            # 1. FETCH COMPETITORS (same category as analysis)
+            competitor_request = ReqFetchDataset(
+                country_name=request.country_name,
+                city_name=request.city_name,
+                boolean_query=request.dine_in_type,  # Specific competitors
+                user_id=request.user_id,
+                search_type="category_search",
+                action="full data",
+                layer_name=f"Competitors near {candidate['id']}",
+                page_token="",
+                layerId="",
+                text_search="",
+                zoom_level=16,
+                full_load=True,
+                analysis_bounds=analysis_bounds
+            )
+            
+            competitor_data = await fetch_dataset(competitor_request)
+            competitors = process_businesses_for_candidate(
+                competitor_data, candidate, request.analysis_radius
+            )
+            
+            # 2. FETCH GENERAL BUSINESSES (all types for business density)
+            business_request = ReqFetchDataset(
+                country_name=request.country_name,
+                city_name=request.city_name,
+                boolean_query="restaurant OR cafe OR bank OR shopping_mall OR hotel OR pharmacy OR gas_station OR grocery_store OR fitness_center OR beauty_salon OR real_estate_agency",
+                user_id=request.user_id,
+                search_type="category_search",
+                action="full data",
+                layer_name=f"Businesses near {candidate['id']}",
+                page_token="",
+                layerId="",
+                text_search="",
+                zoom_level=16,
+                full_load=True,
+                analysis_bounds=analysis_bounds
+            )
+            
             business_data = await fetch_dataset(business_request)
-            businesses = process_businesses_for_candidate(
+            general_businesses = process_businesses_for_candidate(
                 business_data, candidate, request.analysis_radius
             )
-            competitors_data[key] = businesses
+            
+            # Store both competitors and general businesses
+            competitors_and_businesses_data[key] = {
+                'competitors': competitors,
+                'businesses': general_businesses
+            }
             
         except Exception as e:
-            logger.warning(f"Error fetching businesses for {candidate['id']}: {e}")
-            competitors_data[key] = []
+            logger.warning(f"Error fetching data for {candidate['id']}: {e}")
+            competitors_and_businesses_data[key] = {
+                'competitors': [],
+                'businesses': []
+            }
     
-    return competitors_data
+    return competitors_and_businesses_data
 
 def process_businesses_for_candidate(business_data: Dict[str, Any], 
                                    candidate: Dict[str, Any], 
@@ -454,36 +493,6 @@ def normalize_text(text: str) -> str:
         c for c in unicodedata.normalize('NFKD', text)
         if not unicodedata.combining(c)
     )
-
-def count_competitors(businesses: List[Dict[str, Any]], dine_in_type: str) -> int:
-    """Count competitors from business data"""
-    competitor_count = 0
-    
-    # Define competitor keywords based on dine_in_type
-    if 'cafe' in dine_in_type.lower() or 'coffee' in dine_in_type.lower():
-        competitor_keywords = ['cafe', 'coffee', 'espresso', 'starbucks', 'costa', 'caribou']
-    elif 'restaurant' in dine_in_type.lower():
-        competitor_keywords = ['restaurant', 'dining', 'bistro', 'eatery']
-    elif 'fast_food' in dine_in_type.lower():
-        competitor_keywords = ['fast_food', 'burger', 'pizza', 'sandwich', 'quick']
-    else:
-        # General food service competitors
-        competitor_keywords = [dine_in_type.lower(), 'restaurant', 'cafe', 'food']
-    
-    for business in businesses:
-        business_name = normalize_text(business.get('poi', {}).get('name', ''))
-        business_categories = [normalize_text(cat) for cat in business.get('poi', {}).get('categories', [])]
-        
-        # Check if business is a competitor
-        is_competitor = (
-            any(keyword in business_name for keyword in competitor_keywords) or
-            any(keyword in cat for cat in business_categories for keyword in competitor_keywords)
-        )
-        
-        if is_competitor:
-            competitor_count += 1
-    
-    return competitor_count
 
 def calculate_competition_score(competitor_count: int, max_competitors: int, 
                               penalty_per_excess: int) -> float:
