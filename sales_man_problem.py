@@ -54,28 +54,34 @@ async def get_population_and_income(
         Tuple of (population_gdf, income_gdf) GeoDataFrames
     """
     # Calculate bounding box coordinates once
-    min_lng = min(point[0] for point in bounding_box)
-    max_lng = max(point[0] for point in bounding_box)
-    min_lat = min(point[1] for point in bounding_box)
-    max_lat = max(point[1] for point in bounding_box)
+    top_lng = min(point[0] for point in bounding_box)
+    bottom_lng = max(point[0] for point in bounding_box)
+    top_lat = min(point[1] for point in bounding_box)
+    bottom_lat = max(point[1] for point in bounding_box)
 
-    # Create base request object with common parameters
-    base_request = {
-        "min_lng": min_lng,
-        "min_lat": min_lat,
-        "max_lng": max_lng,
-        "max_lat": max_lat,
-        "zoom_level": zoom_level,
-        "user_id": "your_user_id",  # You'll need to provide this
-    }
-
-    # Create population-only request
+    # Create population-only request using ReqIntelligenceData pydantic model
     population_request = ReqIntelligenceData(
-        **base_request, population=True, income=False
+        top_lng=top_lng,
+        top_lat=top_lat,
+        bottom_lng=bottom_lng,
+        bottom_lat=bottom_lat,
+        zoom_level=zoom_level,
+        user_id="your_user_id",  # You'll need to provide this
+        population=True,
+        income=False
     )
 
-    # Create combined population and income request
-    income_request = ReqIntelligenceData(**base_request, population=True, income=True)
+    # Create combined population and income request using ReqIntelligenceData pydantic model
+    income_request = ReqIntelligenceData(
+        top_lng=top_lng,
+        top_lat=top_lat,
+        bottom_lng=bottom_lng,
+        bottom_lat=bottom_lat,
+        zoom_level=zoom_level,
+        user_id="your_user_id",  # You'll need to provide this
+        population=True,
+        income=True
+    )
 
     # Fetch both datasets concurrently
     population_task = fetch_intelligence_by_viewport(population_request)

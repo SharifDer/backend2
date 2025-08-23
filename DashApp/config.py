@@ -10,7 +10,7 @@ class AgentConfig:
     
     # ===== PATHS =====
     # Base project path
-    PROJECT_ROOT = Path("F:/Upwork Projects/backend22")
+    PROJECT_ROOT = Path("F:/git/s_locator/my_middle_API")
     
     # Python executable path
     PYTHON_EXECUTABLE = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
