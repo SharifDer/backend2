@@ -9,39 +9,6 @@ from all_types.internal_types import CtlgItems, UserId, BooleanQuery
 
 U = TypeVar("U")
 
-
-class ReqDineInSuitabilityAnalysis(BaseModel):
-    """Request model for dine-in suitability analysis with default configuration"""
-    
-    # Location context (using existing types)
-    city_name: str = "Riyadh"
-    country_name: str = "Saudi Arabia"
-    
-    # Analysis parameters
-    dine_in_type: str  
-    target_age: int = 30
-    user_id: str  
-    
-    # Analysis configuration with defaults
-    analysis_radius: int = 1000
-    target_max_speed_kmh: int = 20
-    optimal_nearby_businesses: int = 20
-    max_competitors: int = 3
-    
-    # Scoring weights
-    traffic_weight: float = 0.25
-    business_density_weight: float = 0.40
-    demographics_weight: float = 0.20
-    competition_weight: float = 0.15
-    
-    # Scoring parameters
-    speed_penalty_per_2kmh: int = 5
-    age_penalty_per_year: int = 5
-    business_penalty_per_missing: int = 4
-    competitor_penalty_per_excess: int = 10
-
-
-
 class Coordinate(BaseModel):
     lat: Optional[float] = None
     lng: Optional[float] = None
@@ -306,3 +273,34 @@ class ReqHubExpansion(BaseModel):
     include_market_analysis: bool = True
     include_success_metrics: bool = True
 
+    # User context
+    user_id: str = "default_user"
+
+from all_types.internal_types import UserId
+
+class ReqDineInSuitabilityAnalysis(ReqCityCountry, UserId):
+    """Request model for dine-in suitability analysis with default configuration"""
+    
+    # No need for city_name, country_name, user_id - they come from parent classes
+    
+    # Analysis parameters
+    dine_in_type: str  
+    target_age: int = 30
+    
+    # Analysis configuration with defaults
+    analysis_radius: int = 1000
+    target_max_speed_kmh: int = 20
+    optimal_nearby_businesses: int = 20
+    max_competitors: int = 3
+    
+    # Scoring weights
+    traffic_weight: float = 0.25
+    business_density_weight: float = 0.40
+    demographics_weight: float = 0.20
+    competition_weight: float = 0.15
+    
+    # Scoring parameters
+    speed_penalty_per_2kmh: int = 5
+    age_penalty_per_year: int = 5
+    business_penalty_per_missing: int = 4
+    competitor_penalty_per_excess: int = 10
