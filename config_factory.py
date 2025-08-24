@@ -11,6 +11,7 @@ class ApiConfig(CommonApiConfig):
     nearby_search_url: str = ggl_base_url + "searchNearby"
     search_text_url: str = ggl_base_url + "searchText"
     place_details_url: str = ggl_base_url[0:-1] + "/"
+    here_traffic_flow_url: str = "https://data.traffic.hereapi.com/v7/flow"
     here_api_key: str = ""
 
     legacy_nearby_search_url: str = (

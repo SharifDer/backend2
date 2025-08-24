@@ -39,9 +39,13 @@ async def analyze_dine_in_sites(request: ReqDineInSuitabilityAnalysis) -> Dict[s
     # 3. Fetch competitors and businesses for all candidates
     competitors_data = await fetch_competitors_and_businesses(request, candidates)
     
-    # 4. Fetch traffic data
-    traffic_bbox = get_traffic_bbox_for_candidates(candidates)
-    traffic_data = await fetch_here_traffic_flow(traffic_bbox)
+    # 4. Fetch traffic data with error handling
+    try:
+        traffic_bbox = get_traffic_bbox_for_candidates(candidates)
+        traffic_data = await fetch_here_traffic_flow(traffic_bbox)
+    except ValueError as e:
+        # Re-raise the specific error message for traffic API failures
+        raise ValueError(str(e))
     
     # 5. Setup screenshot capability
     driver = setup_webdriver()

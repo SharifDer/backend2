@@ -1,5 +1,4 @@
 import requests
-import random
 import math
 import logging
 from typing import List, Dict, Any, Optional
@@ -23,82 +22,61 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 async def fetch_here_traffic_flow(bbox: str) -> List[Dict[str, Any]]:
     """Fetch traffic flow data from HERE API"""
     if not hasattr(CONF, 'here_api_key') or not CONF.here_api_key or CONF.here_api_key == "Put your api key":
-        logger.warning("HERE API key not configured. Using simulated traffic data.")
-        return create_simulated_traffic()
+        logger.error("HERE API key not configured.")
+        raise ValueError("Failed to get traffic data from API, generate request again")
     
-    url = "https://data.traffic.hereapi.com/v7/flow"
     params = {
         'in': f'bbox:{bbox}',
         'locationReferencing': 'shape',
-        'apikey': CONF.HERE_API_KEY
+        'apikey': CONF.here_api_key
     }
     
     logger.info("Fetching traffic flow data from HERE API...")
     
     try:
-        response = requests.get(url, params=params, timeout=30)
+        response = requests.get(CONF.here_traffic_flow_url, params=params, timeout=30)
         response.raise_for_status()
         
         data = response.json()
         
-        if 'results' in data:
+        if 'results' in data and data['results']:
             logger.info(f"Successfully fetched {len(data['results'])} traffic flow segments")
             return data['results']
         else:
-            logger.warning("No results in HERE API response")
-            return create_simulated_traffic()
+            logger.error("No results in HERE API response")
+            raise ValueError("Failed to get traffic data from API, generate request again")
             
     except requests.exceptions.RequestException as e:
         logger.error(f"Error fetching HERE traffic data: {e}")
-        return create_simulated_traffic()
+        raise ValueError("Failed to get traffic data from API, generate request again")
 
-def create_simulated_traffic() -> List[Dict[str, Any]]:
-    """Create simulated traffic data for testing"""
-    logger.info("Creating simulated traffic data...")
-    
-    traffic_segments = []
-    
-    # Major roads in Riyadh with typical speeds
-    major_roads = [
-        {'lat': 24.7300, 'lng': 46.6800, 'speed': 25, 'name': 'King Fahd Road'},
-        {'lat': 24.7100, 'lng': 46.6900, 'speed': 15, 'name': 'Tahlia Street'},
-        {'lat': 24.7450, 'lng': 46.6300, 'speed': 30, 'name': 'Prince Mohammed Rd'},
-        {'lat': 24.6900, 'lng': 46.7200, 'speed': 18, 'name': 'King Abdullah Road'},
-        {'lat': 24.6500, 'lng': 46.6200, 'speed': 22, 'name': 'Riyadh Front Road'},
-        {'lat': 24.6800, 'lng': 46.6100, 'speed': 20, 'name': 'Diplomatic Quarter'},
-        {'lat': 24.7600, 'lng': 46.6500, 'speed': 28, 'name': 'Al-Nakheel Area'},
-        {'lat': 24.7800, 'lng': 46.7000, 'speed': 35, 'name': 'Airport Road'},
-    ]
-    
-    for road in major_roads:
-        # Create multiple segments for each major road
-        for offset in [0.001, -0.001, 0.002, -0.002, 0.003, -0.003]:
-            traffic_segments.append({
-                'currentFlow': {
-                    'speed': road['speed'] + random.randint(-5, 5),
-                    'jamFactor': random.random() * 0.5
-                },
-                'location': {
-                    'description': road['name'],
-                    'shape': {
-                        'links': [{
-                            'points': [{
-                                'lat': road['lat'] + offset,
-                                'lng': road['lng'] + offset
-                            }]
-                        }]
-                    }
-                }
-            })
-    
-    return traffic_segments
+def calculate_distance_score(min_distance: float) -> float:
+    """Calculate distance score based on proximity to nearest road"""
+    if min_distance <= 50:
+        return 100.0
+    elif min_distance <= 100:
+        return 75.0
+    elif min_distance <= 150:
+        return 25.0
+    else:
+        return 0.0
+
+def calculate_speed_score(avg_speed: float, target_max_speed: int, speed_penalty_per_2kmh: int = 5) -> float:
+    """Calculate speed score based on traffic speed relative to target"""
+    if avg_speed <= target_max_speed:
+        return 100.0
+    else:
+        excess_speed = avg_speed - target_max_speed
+        penalty = (excess_speed / 2) * speed_penalty_per_2kmh
+        return max(0.0, 100.0 - penalty)
 
 def calculate_traffic_score(property_lat: float, property_lng: float, 
                           traffic_data: List[Dict[str, Any]], 
                           target_max_speed: int) -> Dict[str, Any]:
-    """Calculate traffic score based on nearby road speeds"""
+    """Calculate traffic score based on distance to roads and traffic speed"""
     nearby_speeds = []
     nearby_segments = []
+    road_distances = []
     
     for segment in traffic_data:
         try:
@@ -110,7 +88,7 @@ def calculate_traffic_score(property_lat: float, property_lng: float,
             if speed is None:
                 continue
             
-            # Check if traffic segment is near property
+            # Calculate distance to each road segment
             for link in shape:
                 points = link.get('points', [])
                 if points:
@@ -122,8 +100,10 @@ def calculate_traffic_score(property_lat: float, property_lng: float,
                         segment_lat, segment_lng
                     )
                     
+                    # Consider segments within reasonable distance for analysis
                     if distance <= 500:  # Within 500m
                         nearby_speeds.append(speed)
+                        road_distances.append(distance)
                         nearby_segments.append({
                             'speed': speed,
                             'jam_factor': flow.get('jamFactor', 0),
@@ -132,31 +112,37 @@ def calculate_traffic_score(property_lat: float, property_lng: float,
                         })
                         
         except Exception as e:
+            logger.warning(f"Error processing traffic segment: {e}")
             continue
     
-    if not nearby_speeds:
-        # No traffic data available, use neutral score
+    if not nearby_speeds or not road_distances:
+        # No traffic data available within reasonable distance
         return {
-            'score': 50, 
-            'avg_speed': target_max_speed, 
+            'score': 0, 
+            'avg_speed': 0,
+            'min_distance': 999,
+            'distance_score': 0,
+            'speed_score': 0, 
             'segments_count': 0, 
             'details': []
         }
     
+    # Calculate component scores
     avg_speed = sum(nearby_speeds) / len(nearby_speeds)
+    min_distance = min(road_distances)
     
-    # Calculate score based on speed relative to target
-    if avg_speed <= target_max_speed:
-        score = 100
-    else:
-        # Reduce score by penalty for every 2 km/h above target
-        excess_speed = avg_speed - target_max_speed
-        penalty = (excess_speed / 2) * 5  # Default penalty from config
-        score = max(0, 100 - penalty)
+    distance_score = calculate_distance_score(min_distance)
+    speed_score = calculate_speed_score(avg_speed, target_max_speed)
+    
+    # Final combined score: distance × speed ÷ 100
+    final_score = (distance_score * speed_score) / 100
     
     return {
-        'score': score,
+        'score': final_score,
         'avg_speed': avg_speed,
+        'min_distance': min_distance,
+        'distance_score': distance_score,
+        'speed_score': speed_score,
         'segments_count': len(nearby_segments),
         'details': nearby_segments[:3]
     }

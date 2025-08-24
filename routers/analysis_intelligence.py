@@ -4,7 +4,7 @@ Handles analysis operations, intelligence data, sales optimization, and special 
 """
 
 from typing import Any
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from all_types.request_dtypes import (
     ReqModel,
     ReqSrcDistination,
@@ -112,11 +112,16 @@ async def ep_dine_in_suitability_analysis(
     req: ReqModel[ReqDineInSuitabilityAnalysis], 
     request: Request
 ):
-    response = await request_handling(
-        req.request_body,
-        ReqDineInSuitabilityAnalysis,
-        ResModel[ResDineInSuitabilityAnalysis],
-        analyze_dine_in_sites,
-        wrap_output=True,
-    )
-    return response
+    try:
+        response = await request_handling(
+            req.request_body,
+            ReqDineInSuitabilityAnalysis,
+            ResModel[ResDineInSuitabilityAnalysis],
+            analyze_dine_in_sites,
+            wrap_output=True,
+        )
+        return response
+    except ValueError as e:
+        if "Failed to get traffic data from API" in str(e):
+            raise HTTPException(status_code=503, detail=str(e))
+        raise
