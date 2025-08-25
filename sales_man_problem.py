@@ -40,7 +40,7 @@ def define_boundary(bounding_box: list[tuple[float, float]]) -> Polygon:
 
 
 async def get_population_and_income(
-    bounding_box: list[tuple[float, float]], zoom_level: int
+    bounding_box: list[tuple[float, float]], zoom_level: int, user_id: str
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
     Fetch both population and income data for a specific bounding box and zoom level
@@ -66,7 +66,7 @@ async def get_population_and_income(
         bottom_lng=bottom_lng,
         bottom_lat=bottom_lat,
         zoom_level=zoom_level,
-        user_id="your_user_id",  # You'll need to provide this
+        user_id=user_id,
         population=True,
         income=False
     )
@@ -78,7 +78,7 @@ async def get_population_and_income(
         bottom_lng=bottom_lng,
         bottom_lat=bottom_lat,
         zoom_level=zoom_level,
-        user_id="your_user_id",  # You'll need to provide this
+        user_id=user_id,
         population=True,
         income=True
     )
@@ -1051,7 +1051,7 @@ async def get_clusters_for_sales_man(
     # Zoom level controls resolution/granularity of population data
     logger.info("Loading population and income data...")
     population_gdf, income_gdf = await get_population_and_income(
-        bounding_box, zoom_level=default_zoom
+        bounding_box, zoom_level=default_zoom, user_id=req.user_id
     )
     logger.info(f"Loaded {len(population_gdf)} population records")
 
