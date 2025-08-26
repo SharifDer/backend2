@@ -19,13 +19,13 @@ from all_types.internal_types import UserId
 
 logger = logging.getLogger(__name__)
 
-async def analyze_dine_in_sites(request: ReqDineInSuitabilityAnalysis) -> Dict[str, Any]:
+async def analyze_dine_in_sites(req: ReqDineInSuitabilityAnalysis) -> Dict[str, Any]:
     """Main function to analyze dine-in suitability for properties"""
     
-    logger.info(f"Starting dine-in suitability analysis for {request.dine_in_type}")
+    logger.info(f"Starting dine-in suitability analysis for {req.dine_in_type}")
     
     # 1. Fetch candidate properties
-    candidates_data = await fetch_candidates(request)
+    candidates_data = await fetch_candidates(req)
     candidates = process_candidates(candidates_data)
     
     if not candidates:
@@ -34,18 +34,15 @@ async def analyze_dine_in_sites(request: ReqDineInSuitabilityAnalysis) -> Dict[s
     logger.info(f"Processing {len(candidates)} candidate properties")
     
     # 2. Fetch demographics data for all candidates
-    demographics_data = await fetch_demographics_for_candidates(request, candidates)
+    demographics_data = await fetch_demographics_for_candidates(req, candidates)
     
     # 3. Fetch competitors and businesses for all candidates
-    competitors_data = await fetch_competitors_and_businesses(request, candidates)
+    competitors_data = await fetch_competitors_and_businesses(req, candidates)
     
     # 4. Fetch traffic data with error handling
-    try:
-        traffic_bbox = get_traffic_bbox_for_candidates(candidates)
-        traffic_data = await fetch_here_traffic_flow(traffic_bbox)
-    except ValueError as e:
-        # Re-raise the specific error message for traffic API failures
-        raise ValueError(str(e))
+
+    traffic_bbox = get_traffic_bbox_for_candidates(candidates)
+    traffic_data = await fetch_here_traffic_flow(traffic_bbox)
     
     # 5. Setup screenshot capability
     driver = setup_webdriver()
@@ -67,28 +64,28 @@ async def analyze_dine_in_sites(request: ReqDineInSuitabilityAnalysis) -> Dict[s
         # Calculate all scores
         traffic_analysis = calculate_traffic_score(
             candidate['lat'], candidate['lng'], traffic_data, 
-            request.target_max_speed_kmh
+            req.target_max_speed_kmh
         )
         
         business_count = len(property_businesses)
-        business_score = calculate_business_score(business_count, request.optimal_nearby_businesses, request.business_penalty_per_missing)
+        business_score = calculate_business_score(business_count, req.optimal_nearby_businesses, req.business_penalty_per_missing)
         
         demographics_analysis = calculate_demographics_score(
             demographics['median_age'], demographics['income'], 
-            request.target_age, request.age_penalty_per_year
+            req.target_age, req.age_penalty_per_year
         )
         
         competitor_count = len(property_competitors)  # Direct count since they're already filtered
         competition_score = calculate_competition_score(
-            competitor_count, request.max_competitors, request.competitor_penalty_per_excess
+            competitor_count, req.max_competitors, req.competitor_penalty_per_excess
         )
         
         # Calculate final weighted score
         final_score = (
-            traffic_analysis['score'] * request.traffic_weight +
-            business_score * request.business_density_weight +
-            demographics_analysis['total'] * request.demographics_weight +
-            competition_score * request.competition_weight
+            traffic_analysis['score'] * req.traffic_weight +
+            business_score * req.business_density_weight +
+            demographics_analysis['total'] * req.demographics_weight +
+            competition_score * req.competition_weight
         )
         
         # Store comprehensive results
@@ -152,7 +149,7 @@ async def analyze_dine_in_sites(request: ReqDineInSuitabilityAnalysis) -> Dict[s
         }
         
         property_map = create_property_map(
-            property_data, result['businesses'], result['traffic_details'], request.analysis_radius
+            property_data, result['businesses'], result['traffic_details'], req.analysis_radius
         )
         screenshot_path, screenshot_base64 = capture_map_screenshot(
             property_map, f"property_{result['rank']:02d}_map", driver
@@ -173,11 +170,11 @@ async def analyze_dine_in_sites(request: ReqDineInSuitabilityAnalysis) -> Dict[s
     # 10. Generate complete HTML report
     report_filename = await generate_complete_html_report(
         analysis_results, overview_screenshot_base64, {
-            'dine_in_type': request.dine_in_type,
-            'target_age': request.target_age,
-            'target_max_speed_kmh': request.target_max_speed_kmh,
-            'optimal_nearby_businesses': request.optimal_nearby_businesses,
-            'max_competitors': request.max_competitors
+            'dine_in_type': req.dine_in_type,
+            'target_age': req.target_age,
+            'target_max_speed_kmh': req.target_max_speed_kmh,
+            'optimal_nearby_businesses': req.optimal_nearby_businesses,
+            'max_competitors': req.max_competitors
         }
     )
     
@@ -326,81 +323,67 @@ def get_property_demographics(candidate: Dict[str, Any],
 
 async def fetch_competitors_and_businesses(request: ReqDineInSuitabilityAnalysis, 
                                          candidates: List[Dict[str, Any]]) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
-    """Fetch competitors and general businesses for each candidate using real data"""
+    """Fetch competitors and general businesses for the entire city once, then filter for each candidate"""
     
     competitors_and_businesses_data = {}
     
-    # For each candidate, fetch both competitors and general businesses
+    # 1. FETCH ALL COMPETITORS FOR THE ENTIRE CITY (same category as analysis)
+    competitor_request = ReqFetchDataset(
+        country_name=request.country_name,
+        city_name=request.city_name,
+        boolean_query=request.dine_in_type,  # Specific competitors
+        user_id=request.user_id,
+        search_type="category_search",
+        action="full data",
+        page_token="",
+        layerId="",
+        text_search="",
+        zoom_level=12,  # City-wide zoom level
+        full_load=True
+    )
+    
+    logger.info("Fetching all competitors for the city...")
+    all_competitor_data = await fetch_dataset(competitor_request)
+    
+    # 2. FETCH ALL GENERAL BUSINESSES FOR THE ENTIRE CITY
+    business_request = ReqFetchDataset(
+        country_name=request.country_name,
+        city_name=request.city_name,
+        # boolean_query="restaurant OR cafe OR bank OR shopping_mall OR hotel OR pharmacy OR gas_station OR grocery_store OR fitness_center OR beauty_salon",
+        boolean_query="restaurant OR bank OR shopping_mall",
+        user_id=request.user_id,
+        search_type="category_search",
+        action="full data",
+        page_token="",
+        layerId="",
+        text_search="",
+        zoom_level=12,  # City-wide zoom level
+        full_load=True
+    )
+    
+    logger.info("Fetching all general businesses for the city...")
+    all_business_data = await fetch_dataset(business_request)
+    
+    # 3. NOW PROCESS EACH CANDIDATE AGAINST THE CITY-WIDE DATA
     for candidate in candidates:
         key = f"{candidate['lat']},{candidate['lng']}"
         
-        # Create bounding box around this candidate for analysis_bounds
-        lat_offset = 0.018  # ~2km in degrees
-        lng_offset = 0.018
-        analysis_bounds = {
-            "north": candidate['lat'] + lat_offset,
-            "south": candidate['lat'] - lat_offset,
-            "east": candidate['lng'] + lng_offset,
-            "west": candidate['lng'] - lng_offset
-        }
+        # Filter competitors within analysis radius of this candidate
+        competitors = process_businesses_for_candidate(
+            all_competitor_data, candidate, request.analysis_radius
+        )
         
-        try:
-            # 1. FETCH COMPETITORS (same category as analysis)
-            competitor_request = ReqFetchDataset(
-                country_name=request.country_name,
-                city_name=request.city_name,
-                boolean_query=request.dine_in_type,  # Specific competitors
-                user_id=request.user_id,
-                search_type="category_search",
-                action="full data",
-                layer_name=f"Competitors near {candidate['id']}",
-                page_token="",
-                layerId="",
-                text_search="",
-                zoom_level=16,
-                full_load=True,
-                analysis_bounds=analysis_bounds
-            )
-            
-            competitor_data = await fetch_dataset(competitor_request)
-            competitors = process_businesses_for_candidate(
-                competitor_data, candidate, request.analysis_radius
-            )
-            
-            # 2. FETCH GENERAL BUSINESSES (all types for business density)
-            business_request = ReqFetchDataset(
-                country_name=request.country_name,
-                city_name=request.city_name,
-                boolean_query="restaurant OR cafe OR bank OR shopping_mall OR hotel OR pharmacy OR gas_station OR grocery_store OR fitness_center OR beauty_salon OR real_estate_agency",
-                user_id=request.user_id,
-                search_type="category_search",
-                action="full data",
-                layer_name=f"Businesses near {candidate['id']}",
-                page_token="",
-                layerId="",
-                text_search="",
-                zoom_level=16,
-                full_load=True,
-                analysis_bounds=analysis_bounds
-            )
-            
-            business_data = await fetch_dataset(business_request)
-            general_businesses = process_businesses_for_candidate(
-                business_data, candidate, request.analysis_radius
-            )
-            
-            # Store both competitors and general businesses
-            competitors_and_businesses_data[key] = {
-                'competitors': competitors,
-                'businesses': general_businesses
-            }
-            
-        except Exception as e:
-            logger.warning(f"Error fetching data for {candidate['id']}: {e}")
-            competitors_and_businesses_data[key] = {
-                'competitors': [],
-                'businesses': []
-            }
+        # Filter general businesses within analysis radius of this candidate
+        general_businesses = process_businesses_for_candidate(
+            all_business_data, candidate, request.analysis_radius
+        )
+        
+        # Store both competitors and general businesses
+        competitors_and_businesses_data[key] = {
+            'competitors': competitors,
+            'businesses': general_businesses
+        }
+
     
     return competitors_and_businesses_data
 

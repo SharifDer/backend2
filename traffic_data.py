@@ -33,22 +33,18 @@ async def fetch_here_traffic_flow(bbox: str) -> List[Dict[str, Any]]:
     
     logger.info("Fetching traffic flow data from HERE API...")
     
-    try:
-        response = requests.get(CONF.here_traffic_flow_url, params=params, timeout=30)
-        response.raise_for_status()
-        
-        data = response.json()
-        
-        if 'results' in data and data['results']:
-            logger.info(f"Successfully fetched {len(data['results'])} traffic flow segments")
-            return data['results']
-        else:
-            logger.error("No results in HERE API response")
-            raise ValueError("Failed to get traffic data from API, generate request again")
-            
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error fetching HERE traffic data: {e}")
+    response = requests.get(CONF.here_traffic_flow_url, params=params, timeout=30)
+    response.raise_for_status()
+    
+    data = response.json()
+    
+    if 'results' in data and data['results']:
+        logger.info(f"Successfully fetched {len(data['results'])} traffic flow segments")
+        return data['results']
+    else:
+        logger.error("No results in HERE API response")
         raise ValueError("Failed to get traffic data from API, generate request again")
+            
 
 def calculate_distance_score(min_distance: float) -> float:
     """Calculate distance score based on proximity to nearest road"""

@@ -745,7 +745,7 @@ async def fetch_ggl_nearby(req: ReqFetchDataset):
     current_plan_index = 0
 
     # try 30 times to get non empty dataset
-    for _ in range(30):
+    for _ in range(2):
         next_page_token = req.page_token
 
         if req.action == "full data":
