@@ -1,0 +1,40 @@
+{
+  "pay_as_you_go": {
+    "title": "Pay As You Go",
+    "features": [
+      "Up to 5 users",
+      "10 reports/month",
+      "Email support",
+      "Basic analytics"
+    ],
+    "price_per_report": 5
+  },
+  "packages": {
+    "title": "Packages",
+    "sliders": {
+      "users": {
+        "min": 1,
+        "max": 10,
+        "step": 1,
+        "base_price_per_user": 10,
+        "discount_per_user": 0.05
+      },
+      "reports": {
+        "min": 1,
+        "max": 5,
+        "step": 1,
+        "base_price_per_report": 2,
+        "discount_per_report": 0.02
+      }
+    },
+    "initial_discount": 0.1
+  },
+  "enterprise": {
+    "title": "Enterprise Plan",
+    "redirect_url": "/contact"
+  },
+  "signup": {
+    "title": "Sign Up",
+    "redirect_url": "https://your-existing-app.com"
+  }
+}
