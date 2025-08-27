@@ -21,6 +21,67 @@ from tool_bridge_mcp_server.context import get_app_context
 
 logger = logging.getLogger(__name__)
 
+# Module-level cache for secrets to avoid repeated file reads
+_secrets_cache = None
+
+def get_cached_secrets():
+    """Get cached secrets or load them if not cached"""
+    global _secrets_cache
+    if not _secrets_cache:
+        secrets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'secrets', 'secrets_llm.json')
+        with open(secrets_path, 'r') as f:
+            _secrets_cache = json.load(f)
+        print(f"🔑 Loaded and cached Gemini API key: {_secrets_cache['gemini_api_key'][:20]}...{_secrets_cache['gemini_api_key'][-4:]}")
+    return _secrets_cache
+
+def create_fresh_llm(model: str, temperature: float):
+    """Create a fresh LLM instance to avoid event loop issues"""
+    secrets = get_cached_secrets()
+    return ChatGoogleGenerativeAI(
+        model=model, 
+        temperature=temperature,
+        google_api_key=secrets['gemini_api_key']
+    )
+
+def sanitize_content_for_llm(content: str) -> str:
+    """
+    Sanitize report content to handle problematic Unicode characters for LLM processing.
+    
+    Args:
+        content: Raw content from the report file
+        
+    Returns:
+        Sanitized content safe for LLM processing
+    """
+    # Replace common problematic Unicode characters with their ASCII equivalents
+    replacements = {
+        '\u2264': '<=',  # ≤
+        '\u2265': '>=',  # ≥
+        '\u2260': '!=',  # ≠
+        '\u00b1': '+/-', # ±
+        '\u2212': '-',   # − (minus sign)
+        '\u2013': '-',   # – (en dash)
+        '\u2014': '--',  # — (em dash)
+        '\u2018': "'",   # ' (left single quote)
+        '\u2019': "'",   # ' (right single quote)
+        '\u201c': '"',   # " (left double quote)
+        '\u201d': '"',   # " (right double quote)
+        '\u2022': '*',   # • (bullet)
+    }
+    
+    for unicode_char, replacement in replacements.items():
+        content = content.replace(unicode_char, replacement)
+    
+    # Remove any remaining problematic characters by encoding/decoding
+    # NOTE: This is aggressive and removes all non-ASCII characters
+    # Comment out for debugging
+    # try:
+    #     content = content.encode('ascii', 'ignore').decode('ascii')
+    # except:
+    #     pass
+    
+    return content
+
 def register_report_analysis_tools(mcp: FastMCP):
     """Register report analysis tool."""
 
@@ -28,7 +89,7 @@ def register_report_analysis_tools(mcp: FastMCP):
         name="report_analysis",
         description="""Analyze saved reports and answer questions using LLM.
         
-        🔍 Analysis Capabilities:
+        [DEBUG] Analysis Capabilities:
         - Read and understand markdown report content
         - Answer specific questions about the report
         - Provide insights and explanations
@@ -47,24 +108,24 @@ def register_report_analysis_tools(mcp: FastMCP):
     async def report_analysis(
         report_file: str = Field(description="Path to the saved report file (markdown)"),
         user_query: str = Field(description="Question or analysis request about the report"),
-        model: str = Field(default="gpt-4.1", description="LLM model to use for analysis"),
+        model: str = Field(default="gemini-2.5-flash", description="LLM model to use for analysis"),
         temperature: float = Field(default=0.0, description="Temperature for LLM responses (0.0-1.0)")
     ) -> str:
         """Analyze saved reports and answer questions using LLM."""
         
-        print("🔍 [REPORT_ANALYSIS] Starting report analysis...")
-        print(f"🔍 [REPORT_ANALYSIS] Report file: {report_file}")
-        print(f"🔍 [REPORT_ANALYSIS] User query: {user_query}")
-        print(f"🔍 [REPORT_ANALYSIS] Model: {model}, Temperature: {temperature}")
+        print("[DEBUG] [REPORT_ANALYSIS] Starting report analysis...")
+        print(f"[DEBUG] [REPORT_ANALYSIS] Report file: {report_file}")
+        print(f"[DEBUG] [REPORT_ANALYSIS] User query: {user_query}")
+        print(f"[DEBUG] [REPORT_ANALYSIS] Model: {model}, Temperature: {temperature}")
         
         try:
-            print("🔍 [REPORT_ANALYSIS] Getting app context...")
+            print("[DEBUG] [REPORT_ANALYSIS] Getting app context...")
             app_ctx = get_app_context(mcp)
             session_manager = app_ctx.session_manager
             print("✅ [REPORT_ANALYSIS] App context retrieved successfully")
 
             # Authentication check
-            print("🔍 [REPORT_ANALYSIS] Checking authentication...")
+            print("[DEBUG] [REPORT_ANALYSIS] Checking authentication...")
             user_id, id_token = await session_manager.get_valid_id_token()
             if not id_token or not user_id:
                 print("❌ [REPORT_ANALYSIS] Authentication failed - user not logged in")
@@ -72,7 +133,7 @@ def register_report_analysis_tools(mcp: FastMCP):
             print(f"✅ [REPORT_ANALYSIS] Authentication successful for user: {user_id}")
 
             # Read the report file
-            print(f"🔍 [REPORT_ANALYSIS] Reading report file: {report_file}")
+            print(f"[DEBUG] [REPORT_ANALYSIS] Reading report file: {report_file}")
             report_content = read_report_file(report_file)
             if not report_content:
                 print(f"❌ [REPORT_ANALYSIS] Failed to read report file: {report_file}")
@@ -84,24 +145,16 @@ def register_report_analysis_tools(mcp: FastMCP):
             logger.info(f"Analyzing report for user {user_id}: {report_file}")
             logger.info(f"User query: {user_query[:100]}...")
 
-            # Load API keys from secrets file
-            secrets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'secrets', 'secrets_llm.json')
-            with open(secrets_path, 'r') as f:
-                secrets = json.load(f)
-            
-            print(f"🔑 Loaded OpenAI API key: {secrets['openai_api_key'][:20]}...{secrets['openai_api_key'][-4:]}")
-            
-            # Initialize LLM
-            print(f"🔍 [REPORT_ANALYSIS] Initializing LLM with model: {model}")
-            llm = ChatOpenAI(
-                model=model, 
-                temperature=temperature,
-                openai_api_key=secrets['openai_api_key']
-            )
+            # Create fresh LLM instance to avoid event loop issues
+            print(f"[DEBUG] [REPORT_ANALYSIS] Creating fresh LLM instance with model: {model}")
+            llm = create_fresh_llm(model, temperature)
             print("✅ [REPORT_ANALYSIS] LLM initialized successfully")
             
             # Create system prompt for report analysis
-            print("🔍 [REPORT_ANALYSIS] Creating system prompt and messages...")
+            print("[DEBUG] [REPORT_ANALYSIS] Creating system prompt and messages...")
+            print(f"[DEBUG] [REPORT_ANALYSIS] Report content length: {len(report_content)} characters")
+            print(f"[DEBUG] [REPORT_ANALYSIS] First 200 chars of report: {report_content[:200]}...")
+            
             system_prompt = f"""You are an expert analyst reviewing a comprehensive report. 
 Your task is to analyze the provided report content and answer the user's question with accuracy and insight.
 
@@ -124,10 +177,10 @@ Report Content:
             print(f"✅ [REPORT_ANALYSIS] Messages created (system prompt: {len(system_prompt)} chars)")
 
             # Get LLM response
-            print("🔍 [REPORT_ANALYSIS] Calling LLM for analysis...")
+            print("[DEBUG] [REPORT_ANALYSIS] Calling LLM for analysis...")
             response = llm.invoke(messages)
             print("✅ [REPORT_ANALYSIS] LLM response received")
-            print(f"🔍 [REPORT_ANALYSIS] Response length: {len(response.content)} characters")
+            print(f"[DEBUG] [REPORT_ANALYSIS] Response length: {len(response.content)} characters")
             
             logger.info(f"Successfully generated analysis for report: {report_file}")
             print("✅ [REPORT_ANALYSIS] Analysis completed successfully")
@@ -151,39 +204,42 @@ def read_report_file(file_path: str) -> Optional[str]:
     Returns:
         Content of the report file or None if error
     """
-    print(f"🔍 [READ_REPORT] Starting to read file: {file_path}")
+    print(f"[DEBUG] [READ_REPORT] Starting to read file: {file_path}")
     
     try:
         original_path = file_path
         
         # Handle both absolute paths and relative paths
         if not os.path.isabs(file_path):
-            print(f"🔍 [READ_REPORT] File path is relative, converting to absolute...")
+            print(f"[DEBUG] [READ_REPORT] File path is relative, converting to absolute...")
             # If relative path, assume it's in the reports directory
             current_dir = os.path.dirname(os.path.abspath(__file__))
             project_root = os.path.dirname(os.path.dirname(current_dir))
             file_path = os.path.join(project_root, "reports", file_path)
-            print(f"🔍 [READ_REPORT] Converted path: {file_path}")
+            print(f"[DEBUG] [READ_REPORT] Converted path: {file_path}")
         else:
-            print(f"🔍 [READ_REPORT] File path is already absolute")
+            print(f"[DEBUG] [READ_REPORT] File path is already absolute")
         
-        print(f"🔍 [READ_REPORT] Checking if file exists: {file_path}")
+        print(f"[DEBUG] [READ_REPORT] Checking if file exists: {file_path}")
         if not os.path.exists(file_path):
             print(f"❌ [READ_REPORT] File not found: {file_path}")
             logger.error(f"Report file not found: {file_path}")
             return None
         print(f"✅ [READ_REPORT] File exists")
             
-        print(f"🔍 [READ_REPORT] Checking file extension...")
+        print(f"[DEBUG] [READ_REPORT] Checking file extension...")
         if not file_path.endswith('.md'):
             print(f"❌ [READ_REPORT] File is not markdown: {file_path}")
             logger.error(f"File is not a markdown file: {file_path}")
             return None
         print(f"✅ [READ_REPORT] File has .md extension")
             
-        print(f"🔍 [READ_REPORT] Opening and reading file content...")
+        print(f"[DEBUG] [READ_REPORT] Opening and reading file content...")
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
+            
+        # Sanitize content to handle problematic Unicode characters
+        content = sanitize_content_for_llm(content)
             
         content_length = len(content)
         print(f"✅ [READ_REPORT] Successfully read file ({content_length} characters)")

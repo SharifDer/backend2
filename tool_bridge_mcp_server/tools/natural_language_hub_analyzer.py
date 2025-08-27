@@ -84,21 +84,21 @@ def register_natural_language_hub_analyzer_tools(mcp: FastMCP):
         Format the hub expansion analysis response in a readable way
         """
         if "error" in response_data:
-            return f"❌ Error: {response_data['error']}\nDetails: {response_data.get('details', 'No details')}"
+            return f" Error: {response_data['error']}\nDetails: {response_data.get('details', 'No details')}"
         
         if "data" not in response_data:
-            return f"⚠️ Unexpected response format: {json.dumps(response_data, indent=2, ensure_ascii=False)}"
+            return f" Unexpected response format: {json.dumps(response_data, indent=2, ensure_ascii=False)}"
         
         data = response_data["data"]
         
         # Format the main sections
-        result = "🎯 **HUB EXPANSION ANALYSIS RESULTS**\n"
+        result = " **HUB EXPANSION ANALYSIS RESULTS**\n"
         result += "=" * 50 + "\n\n"
         
         # Analysis Summary
         if "analysis_summary" in data:
             summary = data["analysis_summary"]
-            result += "📋 **ANALYSIS SUMMARY**\n"
+            result += " **ANALYSIS SUMMARY**\n"
             result += f"• Scope: {summary.get('scope', 'N/A')}\n"
             result += f"• Methodology: {summary.get('methodology', 'N/A')}\n"
             result += f"• Qualified Locations: {summary.get('total_qualified_locations', 0)}\n"
@@ -110,7 +110,7 @@ def register_natural_language_hub_analyzer_tools(mcp: FastMCP):
             primary = data["primary_recommendation"]
             if "hub_details" in primary:
                 hub = primary["hub_details"]
-                result += "🏆 **PRIMARY RECOMMENDATION**\n"
+                result += " **PRIMARY RECOMMENDATION**\n"
                 result += f"• Hub ID: {hub.get('hub_id', 'N/A')}\n"
                 
                 location = hub.get('location', {})
@@ -149,7 +149,7 @@ def register_natural_language_hub_analyzer_tools(mcp: FastMCP):
         # Market Analysis Summary
         if "market_competitive_analysis" in data:
             market = data["market_competitive_analysis"]
-            result += "📈 **MARKET ANALYSIS**\n"
+            result += " **MARKET ANALYSIS**\n"
             result += f"• Population Centers: {market.get('total_population_centers', 0)}\n"
             result += f"• Target Locations: {market.get('total_target_locations', 0)}\n"
             result += f"• Competitor Locations: {market.get('total_competitor_locations', 0)}\n"
@@ -449,10 +449,10 @@ Our scatter plot analysis of 200+ available warehouses reveals optimal positioni
 This comprehensive analysis demonstrates that strategic positioning at {hub_id} in {district} provides optimal balance of market access and operational efficiency. The recommended location offers superior {target_display} proximity, excellent population center access, and significant competitive advantages in underserved market segments.
 
 **Success Metrics**:
-- ✅ Market equity achieved across service territories
-- ✅ Service accessibility optimized within {request_params.get('max_target_distance_km', 5)}km constraints  
-- ✅ Computational efficiency suitable for operational deployment
-- ✅ Spatial quality maintaining geographic coherence
+-  Market equity achieved across service territories
+-  Service accessibility optimized within {request_params.get('max_target_distance_km', 5)}km constraints  
+-  Computational efficiency suitable for operational deployment
+-  Spatial quality maintaining geographic coherence
 
 ---
 
@@ -497,16 +497,16 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
             # Verify the file was written successfully
             if os.path.exists(file_path):
                 file_size = os.path.getsize(file_path)
-                return file_path, f"✅ Report saved successfully to: {file_path} ({file_size:,} bytes)"
+                return file_path, f" Report saved successfully to: {file_path} ({file_size:,} bytes)"
             else:
-                return "", f"❌ Error: File was not created at {file_path}"
+                return "", f"Error: File was not created at {file_path}"
                 
         except UnicodeEncodeError as e:
-            return "", f"❌ Unicode encoding error saving report: {str(e)}"
+            return "", f"Unicode encoding error saving report: {str(e)}"
         except PermissionError as e:
-            return "", f"❌ Permission error saving report: {str(e)} - Check write permissions for {current_dir}"
+            return "", f"Permission error saving report: {str(e)} - Check write permissions for {current_dir}"
         except Exception as e:
-            return "", f"❌ Error saving report to file: {str(e)}"
+            return "", f"Error saving report to file: {str(e)}"
 
     
     @mcp.tool(
@@ -514,31 +514,31 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
         description="""
         Analyze potential hub locations for business expansion with comprehensive scoring.
         
-        🎯 Analysis Capabilities:
+         Analysis Capabilities:
         - Multi-criteria location scoring and ranking
         - Target destination proximity analysis (supermarkets, الحلقه)
         - Competitor positioning and market gaps
         - Population accessibility and demographics
         - Cost efficiency and ROI calculations
         
-        📊 Scoring Factors:
+         Scoring Factors:
         - Target proximity (35%): Distance to key destinations
         - Population access (30%): Accessibility to customer base
         - Rent efficiency (10%): Cost per square meter analysis
         - Competitive advantage (15%): Positioning vs competitors
         - Population coverage (10%): Demographic reach
         
-        🏙️ Geographic Coverage:
+         Geographic Coverage:
         - Saudi Arabian cities: Riyadh, Jeddah, Dammam, Mecca, Medina
         - Supports Arabic search terms: الحلقه, نينجا
         - Density-adjusted coverage zones
         
-        🔗 Data Persistence:
+         Data Persistence:
         - Always stores analysis data for follow-up tools
         - Returns both formatted results and data handle
         - Enables tool chaining and comparative analysis
         
-        ⚡ Returns comprehensive analysis with location rankings, scores, market intelligence,
+        Returns comprehensive analysis with location rankings, scores, market intelligence,
         and a data handle for follow-up analysis and report generation.
         """,
     )
@@ -600,7 +600,7 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
             user_id, id_token = await session_manager.get_valid_id_token()
 
             if not id_token or not user_id:
-                return "❌ Error: You are not logged in. Please use the `user_login` tool first."
+                return "Error: You are not logged in. Please use the `user_login` tool first."
 
             logger.info(f"Processing hub expansion analysis for {city_name}, {country_name} for user: {user_id}")
 
@@ -703,17 +703,17 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
                     report_generation_info = f"Error generating report: {str(e)}"
             
             # Build comprehensive response text
-            analysis_summary = f"🔍 **Analysis Parameters**:\n"
-            analysis_summary += f"🏙️ **Location**: {city_name}, {country_name}\n"
-            analysis_summary += f"🎯 **Target**: {target_search}\n"
-            analysis_summary += f"🏢 **Hub Type**: {hub_type}\n"
-            analysis_summary += f"⚡ **Competitor**: {competitor_name}\n"
-            analysis_summary += f"📊 **Results**: Top {top_results_count} locations\n\n"
+            analysis_summary = f" **Analysis Parameters**:\n"
+            analysis_summary += f" **Location**: {city_name}, {country_name}\n"
+            analysis_summary += f" **Target**: {target_search}\n"
+            analysis_summary += f" **Hub Type**: {hub_type}\n"
+            analysis_summary += f" **Competitor**: {competitor_name}\n"
+            analysis_summary += f" **Results**: Top {top_results_count} locations\n\n"
             analysis_summary += formatted_response
-            analysis_summary += f"\n📋 **Data Handle**: `{handle}` (for follow-up analysis, reports, and comparisons)"
+            analysis_summary += f"\n **Data Handle**: `{handle}` (for follow-up analysis, reports, and comparisons)"
             
             if generate_report:
-                analysis_summary += f"\n\n📄 **Report Generation**: {report_generation_info}"
+                analysis_summary += f"\n\n**Report Generation**: {report_generation_info}"
             
             # Return structured JSON format
             return {
@@ -738,7 +738,7 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
             return {
                 "report_file": "",
                 "data_files": {},
-                "response": f"❌ Error processing analysis: {str(e)}",
+                "response": f" Error processing analysis: {str(e)}",
                 "metadata": {
                     "error": True,
                     "analysis_type": "hub_expansion",

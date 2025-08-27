@@ -10,7 +10,7 @@ class AgentConfig:
     
     # ===== PATHS =====
     # Base project path
-    PROJECT_ROOT = Path("F:/git/s_locator/my_middle_API")
+    PROJECT_ROOT = Path("F:/Upwork Projects/backend2-1")
     
     # Python executable path
     PYTHON_EXECUTABLE = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
@@ -22,7 +22,7 @@ class AgentConfig:
     REPORTS_DIR = PROJECT_ROOT / "reports"
     
     # ===== MODEL SETTINGS =====
-    DEFAULT_MODEL = "gpt-4o"
+    DEFAULT_MODEL = "gemini-2.5-flash"
     DEFAULT_TEMPERATURE = 0
     
     # ===== MCP SETTINGS =====
@@ -30,12 +30,6 @@ class AgentConfig:
     MCP_TRANSPORT = "stdio"
     
     
-    # ===== PROMPT TYPES =====
-    PROMPT_TYPES = {
-        "comprehensive": "Full academic report with detailed methodology",
-        "simple": "Basic analysis without detailed methodology",
-        "executive": "High-level business insights and strategic recommendations"
-    }
     
     # ===== REPORT SETTINGS =====
     SUPPORTED_REPORT_FORMATS = ['.md', '.html']
@@ -94,36 +88,7 @@ class AgentConfig:
         """Check if filename has a valid report format"""
         return any(filename.endswith(ext) for ext in cls.SUPPORTED_REPORT_FORMATS)
     
-    @classmethod
-    def get_example_queries(cls) -> list:
-        """Get example queries for different business types and locations"""
-        return [
-            "Create 6 sales territories for restaurants in Jeddah",
-            "Optimize supermarket territories in Riyadh with 8 regions", 
-            "Analyze pharmacy distribution in Dammam for 5 sales teams",
-            "Generate territory plan for gas stations in Mecca",
-            "Create 4 balanced territories for retail stores in Khobar",
-            "Optimize hospital coverage in Medina with 3 service areas"
-        ]
 
 # Environment-specific configurations
-class DevelopmentConfig(AgentConfig):
-    """Development environment configuration"""
-    DEBUG = True
-    VERBOSE_LOGGING = True
-
-class ProductionConfig(AgentConfig):
-    """Production environment configuration"""
-    DEBUG = False
-    VERBOSE_LOGGING = False
-    
-    # Override with production paths if needed
-    # PROJECT_ROOT = Path("/opt/geospatial-agent")
-
-# Select configuration based on environment
-ENV = os.getenv("AGENT_ENV", "development").lower()
-
-if ENV == "production":
-    Config = ProductionConfig
-else:
-    Config = DevelopmentConfig
+# Use AgentConfig directly as Config
+Config = AgentConfig

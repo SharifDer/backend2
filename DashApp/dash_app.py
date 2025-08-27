@@ -272,7 +272,7 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                 # Try to extract file handle from structured output and display report
                 structured_output = result.get('structured_output')
                 if structured_output:
-                    print(f"🔍 Processing structured output for file handle extraction...")
+                    print(f"[DEBUG] Processing structured output for file handle extraction...")
                     file_handle = report_handler.parse_file_handle_from_response(structured_output)
                     if file_handle:
                         print(f"📄 Found file handle: {file_handle}")
@@ -287,10 +287,10 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                             
                             # Check for interactive data files
                             data_files = report_handler.get_data_files(structured_output)
-                            print(f"🔍 Checking for data files from report handler: {len(data_files)} files found")
+                            print(f"[DEBUG] Checking for data files from report handler: {len(data_files)} files found")
                             
                             if data_files:
-                                print(f"🔍 Found data files for interactive plotting: {list(data_files.keys())}")
+                                print(f"[DEBUG] Found data files for interactive plotting: {list(data_files.keys())}")
                                 success, plot_info = load_and_create_plots(data_files)
                                 if success:
                                     interactive_plots_content = report_display.create_interactive_plots_layout(
@@ -303,13 +303,13 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                                     print(f"❌ Failed to load interactive plots: {plot_info.get('error', 'Unknown error')}")
                             else:
                                 # FALLBACK: Try to find data files in the MCP client session
-                                print("🔍 No data files from report handler, trying fallback method...")
+                                print("[DEBUG] No data files from report handler, trying fallback method...")
                                 try:
                                     # Get the MCP client to check for recent territory data
                                     client = ensure_client_connected()
                                     if client and hasattr(client, 'session_manager'):
                                         # This is a more advanced fallback - we could implement this later
-                                        print("🔍 Could implement session-based data file retrieval here")
+                                        print("[DEBUG] Could implement session-based data file retrieval here")
                                     
                                     # For now, let's try to construct expected file paths based on recent session data
                                     # Check if there are recent GeoJSON files in static/data
@@ -340,7 +340,7 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                                                         'places_data': files['places_data'],
                                                         'boundaries': files['boundaries']
                                                     }
-                                                    print(f"🔍 Found fallback data files: {list(fallback_data_files.keys())}")
+                                                    print(f"[DEBUG] Found fallback data files: {list(fallback_data_files.keys())}")
                                                     success, plot_info = load_and_create_plots(fallback_data_files)
                                                     if success:
                                                         interactive_plots_content = report_display.create_interactive_plots_layout(

@@ -30,16 +30,16 @@ class ReportHandler:
         Returns:
             Dictionary containing data file paths for interactive plotting
         """
-        print(f"🔍 [ReportHandler] Getting data files...")
+        print(f"[ReportHandler] Getting data files...")
         
         if structured_output and hasattr(structured_output, 'data_files'):
-            print(f"🔍 [ReportHandler] Using structured output data files")
+            print(f"[ReportHandler] Using structured output data files")
             data_files = structured_output.data_files or {}
-            print(f"🔍 [ReportHandler] Found {len(data_files)} data files: {list(data_files.keys())}")
+            print(f"[ReportHandler] Found {len(data_files)} data files: {list(data_files.keys())}")
             return data_files
         else:
-            print(f"🔍 [ReportHandler] No structured output provided, using cached data files")
-            print(f"🔍 [ReportHandler] Cached data files: {len(self.last_data_files)} files: {list(self.last_data_files.keys())}")
+            print(f"[ReportHandler] No structured output provided, using cached data files")
+            print(f"[ReportHandler] Cached data files: {len(self.last_data_files)} files: {list(self.last_data_files.keys())}")
             return self.last_data_files.copy()
     
     def read_md_report(self, file_handle: str) -> Optional[str]:
@@ -60,20 +60,20 @@ class ReportHandler:
                 file_path = self.reports_dir / file_handle
             
             if not file_path.exists():
-                print(f"❌ Report file not found: {file_path}")
+                print(f" Report file not found: {file_path}")
                 return None
             
             if not file_path.suffix == '.md':
-                print(f"❌ File is not a markdown file: {file_path}")
+                print(f" File is not a markdown file: {file_path}")
                 return None
             
             with open(file_path, 'r', encoding='utf-8') as file:
                 content = file.read()
-                print(f"✅ Successfully read report: {file_path.name}")
+                print(f" Successfully read report: {file_path.name}")
                 return content
                 
         except Exception as e:
-            print(f"❌ Error reading report file {file_handle}: {str(e)}")
+            print(f" Error reading report file {file_handle}: {str(e)}")
             return None
     
     def validate_report_exists(self, file_path: str) -> bool:
@@ -95,7 +95,7 @@ class ReportHandler:
             return path.exists() and path.is_file()
             
         except Exception as e:
-            print(f"❌ Error validating report path {file_path}: {str(e)}")
+            print(f" Error validating report path {file_path}: {str(e)}")
             return False
     
     def extract_report_metadata(self, file_path: str) -> Dict[str, Any]:
@@ -156,7 +156,7 @@ class ReportHandler:
             return metadata
             
         except Exception as e:
-            print(f"❌ Error extracting metadata from {file_path}: {str(e)}")
+            print(f" Error extracting metadata from {file_path}: {str(e)}")
             return {}
     
     def list_available_reports(self, report_type: str = None) -> List[Dict[str, Any]]:
@@ -194,7 +194,7 @@ class ReportHandler:
             return reports
             
         except Exception as e:
-            print(f"❌ Error listing reports: {str(e)}")
+            print(f" Error listing reports: {str(e)}")
             return []
     
     def get_latest_report(self, report_type: str = None) -> Optional[Dict[str, Any]]:
@@ -223,31 +223,31 @@ class ReportHandler:
         Returns:
             File handle/path if found, None otherwise
         """
-        print(f"🔍 [ReportHandler] Parsing file handle from structured output...")
+        print(f" [ReportHandler] Parsing file handle from structured output...")
         
         if structured_output is None:
-            print(f"❌ [ReportHandler] No structured output provided - report not found")
+            print(f" [ReportHandler] No structured output provided - report not found")
             return None
         
         if not hasattr(structured_output, 'report_file'):
-            print(f"❌ [ReportHandler] Structured output missing 'report_file' attribute - report not found")
+            print(f" [ReportHandler] Structured output missing 'report_file' attribute - report not found")
             return None
         
         report_file = structured_output.report_file
         
         if not report_file:
-            print(f"❌ [ReportHandler] Empty report_file in structured output - report not found")
+            print(f" [ReportHandler] Empty report_file in structured output - report not found")
             return None
         
-        print(f"✅ [ReportHandler] Found report file: {report_file}")
+        print(f" [ReportHandler] Found report file: {report_file}")
         
         # Store data files for backward compatibility
         if hasattr(structured_output, 'data_files') and structured_output.data_files:
             self.last_data_files = structured_output.data_files
-            print(f"🔍 [ReportHandler] Cached {len(self.last_data_files)} data files: {list(self.last_data_files.keys())}")
+            print(f" [ReportHandler] Cached {len(self.last_data_files)} data files: {list(self.last_data_files.keys())}")
         else:
             self.last_data_files = {}
-            print(f"🔍 [ReportHandler] No data files found in structured output")
+            print(f" [ReportHandler] No data files found in structured output")
         
         return report_file
 

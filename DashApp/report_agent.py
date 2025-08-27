@@ -81,6 +81,7 @@ class SimpleMCPClient:
         self.client = None
         self.agent = None
         self.tools = None
+        self.secrets = None
         
         # Initialize Pydantic output parser
         self.parser = PydanticOutputParser(pydantic_object=AnalysisOutput)
@@ -98,19 +99,21 @@ class SimpleMCPClient:
         self.tools = await self.client.get_tools()
         print(f"📋 Available tools: {[tool.name for tool in self.tools]}")
         
-        # Load API keys from secrets file
-        secrets_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'secrets', 'secrets_llm.json')
-        with open(secrets_path, 'r') as f:
-            secrets = json.load(f)
+        # Load API keys from secrets file (cache for reuse)
+        if not self.secrets:
+            secrets_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'secrets', 'secrets_llm.json')
+            with open(secrets_path, 'r') as f:
+                self.secrets = json.load(f)
+            print(f"🔑 Loaded Gemini API key: {self.secrets['gemini_api_key'][:20]}...{self.secrets['gemini_api_key'][-4:]}")
         
-        print(f"🔑 Loaded OpenAI API key: {secrets['openai_api_key'][:20]}...{secrets['openai_api_key'][-4:]}")
-        
-        # Initialize LLM and agent with checkpointer
-        llm = ChatOpenAI(
+        # Create fresh LLM instance to avoid event loop issues
+        llm = ChatGoogleGenerativeAI(
             model=self.model, 
             temperature=self.temperature,
-            openai_api_key=secrets['openai_api_key']
+            google_api_key=self.secrets['gemini_api_key']
         )
+        
+        # Create fresh agent with preserved checkpointer (maintains conversation memory)
         self.agent = create_react_agent(
             llm, 
             self.tools, 
@@ -118,6 +121,25 @@ class SimpleMCPClient:
         )
         
         print("✅ MCP client successfully connected with memory!")
+    
+    def _refresh_agent(self):
+        """Refresh the agent with a new LLM instance to avoid event loop issues while preserving memory"""
+        if not self.tools or not self.secrets:
+            raise ValueError("MCP client must be connected first. Call connect() method.")
+        
+        # Create fresh LLM instance
+        llm = ChatGoogleGenerativeAI(
+            model=self.model, 
+            temperature=self.temperature,
+            google_api_key=self.secrets['gemini_api_key']
+        )
+        
+        # Create fresh agent with same checkpointer (preserves conversation memory)
+        self.agent = create_react_agent(
+            llm, 
+            self.tools, 
+            checkpointer=self.checkpointer
+        )
         
     async def analyze_territories(self, user_query: str, thread_id: str = None) -> str:
         """
@@ -131,8 +153,11 @@ class SimpleMCPClient:
         Returns:
             Final response from the agent
         """
-        if not self.agent:
+        if not self.tools or not self.secrets:
             raise ValueError("Agent not connected. Please call connect() first.")
+        
+        # Refresh agent to avoid event loop issues while preserving memory
+        self._refresh_agent()
         
         # Use provided thread_id or default
         current_thread_id = thread_id or self.default_thread_id
@@ -167,8 +192,11 @@ class SimpleMCPClient:
         Returns:
             Dictionary with 'response' and 'structured_output' keys
         """
-        if not self.agent:
+        if not self.tools or not self.secrets:
             raise ValueError("Agent not connected. Please call connect() first.")
+        
+        # Refresh agent to avoid event loop issues while preserving memory
+        self._refresh_agent()
         
         # Use provided thread_id or default
         current_thread_id = thread_id or self.default_thread_id
@@ -208,8 +236,8 @@ Make sure to include:
         raw_response = self._extract_final_response(response)
         
         # Debug print to check response type
-        print(f"🔍 Response type: {type(raw_response)}")
-        print(f"🔍 Response is dict: {isinstance(raw_response, dict)}")
+        print(f"[DEBUG] Response type: {type(raw_response)}")
+        print(f"[DEBUG] Response is dict: {isinstance(raw_response, dict)}")
         
         try:
             # Parse the structured output

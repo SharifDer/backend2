@@ -31,7 +31,7 @@ class InteractivePlotter:
             True if data loaded successfully, False otherwise
         """
         try:
-            print(f"🔍 Loading data files for interactive plotting...")
+            print(f"[DEBUG] Loading data files for interactive plotting...")
             
             # Load grid data GeoJSON
             grid_path = data_files.get('grid_data')
