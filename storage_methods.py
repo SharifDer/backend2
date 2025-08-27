@@ -992,35 +992,20 @@ async def fetch_intelligence_by_viewport(req: ReqIntelligenceData) -> Dict:
         coords = geometry_data.get("coordinates", [])
 
         if geom_type == "Polygon":
-            flat_coords = [point for ring in coords for point in ring]
-            lngs = [p[0] for p in flat_coords]
-            lats = [p[1] for p in flat_coords]
+            properties = feature.get("properties", {})
+            if "geometry" in properties:
+                del properties["geometry"]
+            if "id" in properties:
+                del properties["id"]
+            if layer_type == "population":
+                filtered_features.append(feature)
 
-            poly_min_lng = min(lngs)
-            poly_max_lng = max(lngs)
-            poly_min_lat = min(lats)
-            poly_max_lat = max(lats)
-
-            if (
-                poly_min_lng <= req.bottom_lng
-                and poly_max_lng >= req.top_lng
-                and poly_min_lat <= req.bottom_lat
-                and poly_max_lat >= req.top_lat
-            ):
-                properties = feature.get("properties", {})
-                if "geometry" in properties:
-                    del properties["geometry"]
-                if "id" in properties:
-                    del properties["id"]
-                if layer_type == "population":
-                    filtered_features.append(feature)
-
-                elif layer_type == "income":
-                    income = properties.get("income", 0)
-                    area_km2 = calculate_polygon_area_km2(coords)
-                    raw_density = income / area_km2 if area_km2 > 0 else 0
-                    density_values.append(raw_density)
-                    filtered_features.append((feature, raw_density))
+            elif layer_type == "income":
+                income = properties.get("income", 0)
+                area_km2 = calculate_polygon_area_km2(coords)
+                raw_density = income / area_km2 if area_km2 > 0 else 0
+                density_values.append(raw_density)
+                filtered_features.append((feature, raw_density))
 
     if req.income and density_values:
         min_density = min(density_values)
