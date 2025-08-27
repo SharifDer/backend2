@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1,
+    "title": "Dine-in Cafe/Restaurant",
+    "description": "I am looking for best location to open dine in cafe/resturant in Riyad (Free Sample)",
+    "bgImage": "http://localhost:8000/static/cafe-analysis.png",
+    "options": {
+      "free_redirect": "https://example.com/cafe",
+      "custom_redirect": {
+        "has_account": "https://newapp.com",
+        "no_account": "http://localhost:3000/plans"
+      }
+    }
+  },
+  {
+    "id": 2,
+    "title": "Warehouse Delivery",
+    "description": "I am looking for a location to open a warehouse for my delivery service where I take goods from and deliver it to majority of people in Riyad in less than 25 mins (Free Sample)",
+    "bgImage": "http://localhost:8000/static/warehouse-analysis.png",
+    "options": {
+      "free_redirect": "https://example.com/warehouse",
+      "custom_redirect": {
+        "has_account": "https://newapp.com",
+        "no_account": "http://localhost:3000/plans"
+      }
+    }
+  },
+  {
+    "id": 3,
+    "title": "Retail Store/Pharmacy",
+    "description": "I am looking for best location to open a retail store/pharmacy in Riyad (Free Sample)",
+    "bgImage": "http://localhost:8000/static/pharmacy-analysis.png",
+    "options": {
+      "free_redirect": "https://example.com/pharmacy",
+      "custom_redirect": {
+        "has_account": "https://newapp.com",
+        "no_account": "http://localhost:3000/plans"
+      }
+    }
+  },
+  {
+    "id": 4,
+    "title": "Try Something Else",
+    "description": "Try something else",
+    "bgImage": "http://localhost:8000/static/custom-analysis.png",
+    "options": {
+      "free_redirect": "https://example.com/custom",
+      "custom_redirect": {
+        "has_account": "https://newapp.com",
+        "no_account": "http://localhost:3000/plans"
+      }
+    }
+  }
+]
