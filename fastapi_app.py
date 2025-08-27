@@ -21,7 +21,8 @@ from routers.data_layers import data_layers_router
 from routers.catalogs import catalogs_router
 from routers.stripe_payments import stripe_router
 from routers.analysis_intelligence import analysis_router
-
+from routers.campaign import campaign_router
+from routers.plans import plans_router
 # TODO: Add stripe secret key
 
 stripe.api_key = CONF.stripe_api_key
@@ -36,6 +37,8 @@ app.include_router(data_layers_router, tags=["Data & Layers"])
 app.include_router(catalogs_router, tags=["Catalogs"])
 app.include_router(stripe_router, tags=["Stripe"])
 app.include_router(analysis_router, tags=["Analysis & Intelligence"])
+app.include_router(campaign_router, prefix="", tags=["Campaign"])
+app.include_router(plans_router, prefix="", tags=["Plans"])
 
 # Create static directory and mount static files
 os.makedirs("static/plots", exist_ok=True)
