@@ -10,10 +10,12 @@ from all_types.request_dtypes import (
     ReqSrcDistination,
     ReqIntelligenceData,
     ReqClustersForSalesManData,
+    Reqsmartreport
 )
 from all_types.response_dtypes import (
     ResModel,
     ResSrcDistination,
+    ResIntelligenceData
 )
 from backend_common.request_processor import request_handling
 from backend_common.auth import JWTBearer
@@ -31,6 +33,7 @@ from dine_in_suitability_analysis import analyze_dine_in_sites
 from all_types.request_dtypes import ReqDineInSuitabilityAnalysis
 from all_types.response_dtypes import ResDineInSuitabilityAnalysis
 from all_types.internal_types import UserId
+from smart_reports.reports import generate_pharmacy_report
 
 analysis_router = APIRouter()
 
@@ -125,3 +128,20 @@ async def ep_dine_in_suitability_analysis(
         if "Failed to get traffic data from API" in str(e):
             raise HTTPException(status_code=503, detail=str(e))
         raise
+
+@analysis_router.post(
+    CONF.smart_pharmacy_report,   # <-- add a new path constant in CONF
+    response_model=ResModel[ResIntelligenceData],   # assuming your function returns a file path (string)
+    dependencies=[Depends(JWTBearer())],
+)
+async def ep_pharmacy_site_selection(
+    req: ReqModel[Reqsmartreport], request: Request
+):
+    response = await request_handling(
+        req.request_body,
+        Reqsmartreport,         # request schema
+        ResModel[ResIntelligenceData],          # response schema, path string wrapped
+        generate_pharmacy_report,  # your core analysis function
+        wrap_output=True,
+    )
+    return response
