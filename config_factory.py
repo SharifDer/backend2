@@ -14,6 +14,7 @@ class ApiConfig(CommonApiConfig):
     here_traffic_flow_url: str = "https://data.traffic.hereapi.com/v7/flow"
     here_api_key: str = ""
 
+    tomtom_api_url : str = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json"
     legacy_nearby_search_url: str = (
         "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
     )
@@ -48,6 +49,7 @@ class ApiConfig(CommonApiConfig):
     cost_calculator: str = backend_base_uri + "cost_calculator"
     check_street_view: str = backend_base_uri + "check_street_view"
     hub_expansion_analysis: str = backend_base_uri + "hub_expansion_analysis"
+    smart_pharmacy_report : str = backend_base_uri + "smart_pharmacy_report"
     ggl_nearby_pro_sku_fields: str = (
         "places.accessibilityOptions,places.addressComponents,places.addressDescriptor,places.adrFormatAddress,places.attributions,places.businessStatus,places.containingPlaces,places.displayName,places.formattedAddress,places.googleMapsLinks,places.googleMapsUri,places.iconBackgroundColor,places.iconMaskBaseUri,places.id,places.location,places.name,places.photos,places.plusCode,places.postalAddress,places.primaryType,places.primaryTypeDisplayName,places.pureServiceAreaBusiness,places.shortFormattedAddress,places.subDestinations,places.types,places.utcOffsetMinutes,places.viewport"
     )
@@ -88,6 +90,7 @@ class ApiConfig(CommonApiConfig):
     
     dine_in_suitability_analysis = "/dine-in_suitability_analysis"
 
+    tomtom_api_key : str = ""
     @classmethod
     def get_conf(cls):
         common_conf = CommonApiConfig.get_common_conf()
@@ -129,6 +132,11 @@ class ApiConfig(CommonApiConfig):
                     data = json.load(config_file)
                     conf.here_api_key = data.get("here_api_key", "")
 
+            tomtom_secret = f"{conf.secrets_dir}/secret_tomtom.json"
+            if os.path.exists(tomtom_secret):
+                with open(tomtom_secret , "r" , encoding="utf-8") as config_file :
+                    data = json.load(config_file) 
+                    conf.tomtom_api_key = data.get("tomtom_api" , "")
             return conf
         except Exception as e:
             return conf
