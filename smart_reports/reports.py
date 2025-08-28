@@ -140,7 +140,7 @@ async def generate_pharmacy_report(req : Reqsmartreport):
 
     criterion_weights = req.evaluation_metrics.dict()
     max_total = sum(criterion_weights.values())
-    report_data = await generate_report_from_data(results , criterion_weights , max_total , top_n=2) 
+    report_data = await generate_report_from_data(results , criterion_weights , max_total) 
     return report_data
 
 
