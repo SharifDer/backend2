@@ -209,3 +209,15 @@ class ResHubExpansion(BaseModel):
     primary_recommendation: Dict[str, Any]
     alternative_locations: List[Dict[str, Any]]
     market_competitive_analysis: Dict[str, Any]
+class ResIntelligenceData(BaseModel):
+    title: str
+    description: str
+    summary_metrics: Dict[str, Any]  # key metrics like total locations and average score
+    executive_summary: Dict[str, Any]  # top recommendation and evaluation overview
+    key_investment_insights: List[Dict[str, Any]]  # main insights per category
+    rankings: List[Dict[str, Any]]  # site rankings and scores
+    detailed_analysis: List[Dict[str, Any]]  # full analysis per site
+    visual_analysis: Dict[str, List[Dict[str, Any]]]  # charts and maps
+    methodology: Dict[str, Any]  # scoring method and criteria
+    statistical_insights: List[Dict[str, Any]]  # statistical observations
+    metadata: Dict[str, Any]  # report info like generation method and file path
