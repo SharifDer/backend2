@@ -304,3 +304,16 @@ class ReqDineInSuitabilityAnalysis(ReqCityCountry, UserId):
     age_penalty_per_year: int = 5
     business_penalty_per_missing: int = 4
     competitor_penalty_per_excess: int = 10
+
+class EvaluationMetrics(BaseModel):
+    traffic: float = 25.0
+    demographics: float = 30.0
+    competition: float = 15.0
+    healthcare: float = 20.0
+    complementary: float = 10.0
+
+class Reqsmartreport(UserId, BaseModel):
+    city_name: str = "Riyadh"
+    country_name: str = "Saudi Arabia"
+    Type: str = "Pharmacy"
+    evaluation_metrics: EvaluationMetrics = EvaluationMetrics() 
