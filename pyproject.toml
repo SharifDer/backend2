@@ -49,4 +49,5 @@ dependencies = [
     "langchain-openai>=0.3.30",
     "folium>=0.20.0",
     "selenium>=4.35.0",
+    "debugpy"
 ]

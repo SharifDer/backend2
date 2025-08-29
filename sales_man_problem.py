@@ -79,7 +79,7 @@ async def get_population_and_income(
         bottom_lat=bottom_lat,
         zoom_level=zoom_level,
         user_id=user_id,
-        population=True,
+        population=False,
         income=True
     )
 
@@ -295,7 +295,7 @@ def haversine(
 def get_grids_of_data(
     population_gdf: gpd.GeoDataFrame,
     places: gpd.GeoDataFrame,
-    weights: gpd.GeoDataFrame,
+    income_gdf: gpd.GeoDataFrame,
     distanace_limit: float,
 ) -> gpd.GeoDataFrame:
     """
@@ -322,7 +322,7 @@ def get_grids_of_data(
     logger.info(
         f"Distance limit for accessibility: {distanace_limit:.1f}km (typical walking/driving threshold)"
     )
-    logger.info(f"Income weights provided: {weights is not None}")
+    logger.info(f"Income weights provided: {income_gdf is not None}")
 
     population_gdf = population_gdf.set_crs("EPSG:4326")
     places = places.set_crs("EPSG:4326")
@@ -425,21 +425,21 @@ def get_grids_of_data(
     # Areas with fewer accessible services get higher population effective purchasing power weights
     #! Compute population effective purchasing power
     #! The effective market value of a population center
-    if weights is None:
+    if income_gdf is None:
         origins["population_purchasing_power"] = (
             origins["population"] / origins["number_of_accessibile_markets"]
         )
         logger.info("Using simple accessibility weighting (no income data)")
     else:
         # Handle NaN values in income data
-        income_values = weights["income"].values.copy()
+        income_values = income_gdf["income"].values.copy()
 
         logger.info(f"STEP 1 - Original income sample: {income_values[:5]}")
         logger.info(
             f"STEP 1 - Original income NaN count: {np.isnan(income_values).sum()}"
         )
 
-        income_values = weights["income"].values.copy()  # Make a copy
+        income_values = income_gdf["income"].values.copy()  # Make a copy
         logger.info(f"STEP 2 - Copied income sample: {income_values[:5]}")
 
         # Log income data quality
