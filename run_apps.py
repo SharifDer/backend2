@@ -7,6 +7,7 @@ import os
 
 def start_dash_app():
     """Start the Dash app in a separate process"""
+    print("Starting Dash app...")
     dash_script = os.path.join(os.path.dirname(__file__), "DashApp", "dash_app.py")
     subprocess.run([sys.executable, dash_script])
 

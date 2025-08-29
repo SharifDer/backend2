@@ -4,7 +4,6 @@ from typing import List
 from geo_std_utils import cover_circle_with_seven_circles_helper
 from parrallel_create_duplicate_rules import create_duplicate_rules
 from naming_strings import get_plan_name_and_index, make_dataset_filename, TOKEN_SEPARATOR, make_next_page_token_name, make_plan_name
-from use_json import use_json
 import asyncio
 from backend_common.database import Database
 import json
@@ -87,12 +86,6 @@ def add_popularity_score_category(features):
 
     return features
 
-
-# async def get_plan(plan_name):
-#     file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
-#     # use json file
-#     json_content = await use_json(file_path, "r")
-#     return json_content
 
 async def get_plan(plan_name):
     try:
@@ -534,10 +527,6 @@ async def create_plan(lng, lat, radius, boolean_query):
     string_list.append("end of search plan")
     return string_list
 
-
-# async def save_plan(plan_name, plan):
-#     file_path = f"Backend/layer_category_country_city_matching/full_data_plans/{plan_name}.json"
-#     await use_json(file_path, "w", plan)
 
 async def save_plan(plan_name, plan):
     print('plan_name',plan_name)
