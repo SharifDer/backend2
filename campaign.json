@@ -8,7 +8,7 @@
       "free_redirect": "https://example.com/cafe",
       "custom_redirect": {
         "has_account": "https://newapp.com",
-        "no_account": "http://37.27.195.216:3000/plans"
+        "no_account": "/plans"
       }
     }
   },
@@ -21,7 +21,7 @@
       "free_redirect": "https://example.com/warehouse",
       "custom_redirect": {
         "has_account": "https://newapp.com",
-        "no_account": "http://37.27.195.216:3000/plans"
+        "no_account": "/plans"
       }
     }
   },
@@ -34,7 +34,7 @@
       "free_redirect": "https://example.com/pharmacy",
       "custom_redirect": {
         "has_account": "https://newapp.com",
-        "no_account": "http://37.27.195.216:3000/plans"
+        "no_account": "/plans"
       }
     }
   },
@@ -47,7 +47,7 @@
       "free_redirect": "https://example.com/custom",
       "custom_redirect": {
         "has_account": "https://newapp.com",
-        "no_account": "http://37.27.195.216:3000/plans"
+        "no_account": "/plans"
       }
     }
   }

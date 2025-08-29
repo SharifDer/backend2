@@ -13,7 +13,7 @@ campaign_router = APIRouter()
 CAMPAIGN_FILE = Path(__file__).resolve().parent.parent / "campaign.json"
 
 
-@campaign_router.get("/campaign-details")
+@campaign_router.get("/fastapi/campaign-details")
 async def get_campaign():
     """Fetch campaign details from JSON file"""
     with open(CAMPAIGN_FILE, "r", encoding="utf-8") as f:
