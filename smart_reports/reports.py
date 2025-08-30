@@ -7,7 +7,8 @@ from smart_reports.healthcare_system import get_healthcare_data
 from smart_reports.complementary_businesses import get_other_businesses_data
 from smart_reports.scoring import *
 from smart_reports.report_generation.pharmacy_report_final import generate_report_from_data
-
+import logging
+logger = logging.getLogger(__name__)
 async def generate_pharmacy_report(req : Reqsmartreport):
     req_dataset = ReqFetchDataset(user_id=req.user_id , city_name=req.city_name,
                                   country_name=req.country_name,
@@ -79,8 +80,8 @@ async def generate_pharmacy_report(req : Reqsmartreport):
             place_url=extracted_part,
             place_price=price
         )
-
-        all_shops_data.append(shop_data)
+        if shop_data is not None:
+            all_shops_data.append(shop_data)
    
     # in this part we process all candidates locations data
     results = {}
@@ -163,48 +164,52 @@ async def fetch_all_criterions_data(
     Fetch all relevant criterion data for evaluating a shop location.
     Combines traffic, households, demographics, healthcare, and other businesses.
     """
-    bbox = generate_bbox(lat , lng)
-    area_polygon = bbox_to_polygon(bbox=bbox)
-    traffic = await fetch_traffic_data(lat, lng)
-    households = await fetch_household_sizes(bbox)
-    demographics = await fetch_demographics(bbox, Userid)
-    healthcare = await get_healthcare_data(area_polygon, lat, lng, hospital, dentists, pharmacies)
-    other_businesses = await get_other_businesses_data(
-        area_polygon,
-        lat,
-        lng,
-        grocery_store_data=grocery_store,
-        supermarket_data=supermarket,
-        restaurant_data=restaurant,
-        bank_data=bank,
-        atm_data=atm)
-    total_population = demographics.get("total_population") if demographics else None
-    num_pharmacies = (
-            healthcare.get("healthcare", {})
-                            .get("pharmacy", {})
-                            .get("num_of_pharmacies")
-            if healthcare else None
-        )
-    # Calculate pharmacies per 10k population
-    pharmacies_per_10k = (num_pharmacies / total_population * 10000) if total_population and total_population > 0 else 0
+    try :
+        bbox = generate_bbox(lat , lng)
+        area_polygon = bbox_to_polygon(bbox=bbox)
+        traffic = await fetch_traffic_data(lat, lng)
+        households = await fetch_household_sizes(bbox)
+        demographics = await fetch_demographics(bbox, Userid)
+        healthcare = await get_healthcare_data(area_polygon, lat, lng, hospital, dentists, pharmacies)
+        other_businesses = await get_other_businesses_data(
+            area_polygon,
+            lat,
+            lng,
+            grocery_store_data=grocery_store,
+            supermarket_data=supermarket,
+            restaurant_data=restaurant,
+            bank_data=bank,
+            atm_data=atm)
+        total_population = demographics.get("total_population") if demographics else None
+        num_pharmacies = (
+                healthcare.get("healthcare", {})
+                                .get("pharmacy", {})
+                                .get("num_of_pharmacies")
+                if healthcare else None
+            )
+        # Calculate pharmacies per 10k population
+        pharmacies_per_10k = (num_pharmacies / total_population * 10000) if total_population and total_population > 0 else 0
 
-    # Add the new key right under num_of_pharmacies
-    healthcare["healthcare"]["pharmacy"]["pharmacies_per_10k_population"] = pharmacies_per_10k
-    return {
-        "place name" : place_url ,
-        "lat": lat,
-        "lng": lng ,
-        "price" : place_price,
-        "location_data": {
-            "traffic": traffic,
-            "pop_data" : {
-                **households,
-                **demographics
-            },
-        **healthcare,
-        **other_businesses
+        # Add the new key right under num_of_pharmacies
+        healthcare["healthcare"]["pharmacy"]["pharmacies_per_10k_population"] = pharmacies_per_10k
+        return {
+            "place name" : place_url ,
+            "lat": lat,
+            "lng": lng ,
+            "price" : place_price,
+            "location_data": {
+                "traffic": traffic,
+                "pop_data" : {
+                    **households,
+                    **demographics
+                },
+            **healthcare,
+            **other_businesses
+            }
         }
-    }
+    except Exception as e:
+        logger.error(f"Error in fetch_all_criterions_data: {e} location {lat} {lng} ", exc_info=True)
+        return None
 
 
     
