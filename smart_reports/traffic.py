@@ -21,6 +21,8 @@ async def fetch_traffic_data(lat : float , lng : float ,  target_time_utc: datet
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json().get("flowSegmentData")
+    if not data:
+        raise ValueError("No 'flowSegmentData' in API response")
     current_speed = data['currentSpeed']
     frc = data['frc']
     return {
