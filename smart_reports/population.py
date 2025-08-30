@@ -14,7 +14,6 @@ async def fetch_demographics(bbox : dict , user_id : str):
         population=True
     )
     data = await fetch_intelligence_by_viewport(req_bbox)
-    print("data pop " , data)
     features = data["features"]
     if not features:
         return None
