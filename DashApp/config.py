@@ -14,7 +14,8 @@ class AgentConfig:
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
     # Python executable path
-    PYTHON_EXECUTABLE = PROJECT_ROOT / ".venv" / "bin" / "python"
+    PYTHON_EXECUTABLE = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
+
     # MCP Server path
     MCP_SERVER_PATH = PROJECT_ROOT / "tool_bridge_mcp_server" / "mcp_server.py"
     
