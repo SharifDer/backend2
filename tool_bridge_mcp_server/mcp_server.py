@@ -817,8 +817,12 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
             )
 
 
+# ===== Initialize Global Managers =====
+session_manager = SessionManager()
+handle_manager = HandleManager(session_manager)
+
 # ===== FastMCP Server =====
-mcp = FastMCP("saudi-location-intelligence", lifespan=app_lifespan)
+mcp = FastMCP("saudi-location-intelligence")
 
 # Register all tools
 # --- NEW REGISTRATION CALL ---

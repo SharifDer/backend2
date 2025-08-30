@@ -28,11 +28,10 @@ class AppContext:
 
 def get_app_context(mcp: "FastMCP") -> AppContext:
     """
-    A typed helper to retrieve the specific AppContext from the generic MCP context.
+    A typed helper to retrieve the specific AppContext from the global managers.
     This provides full IntelliSense for session_manager and handle_manager.
     """
-    ctx = mcp.get_context()
-    # This cast is the key: it tells the type checker what to expect.
-    return cast(AppContext, ctx.request_context.lifespan_context)
+    from .mcp_server import session_manager, handle_manager
+    return AppContext(session_manager=session_manager, handle_manager=handle_manager)
 
 # --- END OF FILE tool_bridge_mcp_server/context.py ---

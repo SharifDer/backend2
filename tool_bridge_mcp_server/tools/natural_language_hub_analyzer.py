@@ -640,7 +640,8 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
             # Check for API errors
             if "error" in response_data:
                 error_response = format_hub_analysis_response(response_data)
-                return {
+                import json
+                error_result = {
                     "report_file": "",
                     "data_files": {},
                     "response": error_response,
@@ -651,6 +652,7 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
                         "target": target_search
                     }
                 }
+                return json.dumps(error_result, ensure_ascii=False, indent=2)
             
             # Store the analysis data for future use
             logger.info("Storing hub expansion analysis data")
@@ -715,8 +717,9 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
             if generate_report:
                 analysis_summary += f"\n\n**Report Generation**: {report_generation_info}"
             
-            # Return structured JSON format
-            return {
+            # Return structured JSON format as string
+            import json
+            result = {
                 "report_file": saved_report_file,
                 "data_files": {},  # Hub expansion doesn't generate data files
                 "response": analysis_summary,
@@ -732,10 +735,12 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
                     "report_generated": bool(saved_report_file)
                 }
             }
+            return json.dumps(result, ensure_ascii=False, indent=2)
 
         except Exception as e:
             logger.exception("Critical error in hub_expansion_analyzer")
-            return {
+            import json
+            error_result = {
                 "report_file": "",
                 "data_files": {},
                 "response": f" Error processing analysis: {str(e)}",
@@ -746,4 +751,5 @@ This comprehensive analysis demonstrates that strategic positioning at {hub_id} 
                     "error_type": "critical_error"
                 }
             }
+            return json.dumps(error_result, ensure_ascii=False, indent=2)
 

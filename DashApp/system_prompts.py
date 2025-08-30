@@ -35,13 +35,20 @@ TERRITORY_OPTIMIZATION_PROMPT = """You are a Geospatial Intelligence Analyst. Yo
 
 **Response Format:**
 
+**CRITICAL: File Path Requirements:**
+- Always return COMPLETE, ABSOLUTE file paths (e.g., "F:/backend2/reports/filename.md")
+- Never return just filenames or relative paths
+- Preserve the exact "report_file" value returned by tools
+
 **For Hub Expansion Analysis (using `hub_expansion_analyzer` tool):**
 - If tool returns a dictionary with "report_file" and "data_files", return it exactly as-is as JSON
-- If tool returns a simple file path (.md/.html/.pdf), return only that path
+- The "report_file" field must contain the full absolute path to the report file
+- If tool returns a simple file path, ensure it's the complete absolute path
 
 **For Territory Analysis (using `generate_territory_report` tool):**
-- If tool returns a dictionary with "report_file" and "data_files", return it exactly as-is as JSON  
-- If tool returns a simple file path (.md/.html/.pdf), return only that path
+- If tool returns a dictionary with "report_file" and "data_files", return it exactly as-is as JSON
+- The "report_file" field must contain the full absolute path to the report file  
+- If tool returns a simple file path, ensure it's the complete absolute path
 
 **For All Other Cases (report analysis, general queries, etc.):**
 - Do NOT return JSON format

@@ -1100,11 +1100,13 @@ def register_territory_report_tools(mcp: FastMCP):
             # Always save the report to file and return the file path
             file_path = save_report_to_file(report, metadata, report_type)
             
-            # Return the file path and data files for Dash app integration
-            return {
+            # Return the file path and data files for Dash app integration as JSON string
+            import json
+            result = {
                 "report_file": file_path,
                 "data_files": data_files
             }
+            return json.dumps(result, ensure_ascii=False, indent=2)
 
         except Exception as e:
             logger.exception("Critical error in generate_territory_report")

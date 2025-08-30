@@ -2,12 +2,21 @@ import dash
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 import asyncio
+import aiohttp
+import json
+from datetime import datetime, timedelta
 from langchain_core.messages import HumanMessage
 
 # Import our custom modules
-from report_handler import report_handler
-from report_display import report_display
+from ReportDataManager import report_handler
+from ReportAppUIBuilder import report_display
 from interactive_plots import plotter, load_and_create_plots
+
+# Import configuration for FastAPI endpoints
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from backend_common.common_config import CONF
 
 # Initialize the Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -54,8 +63,240 @@ async def ensure_client_connected():
         print("✅ MCP client connected with memory!")
     return client
 
+# Authentication functions
+async def authenticate_user_direct(email: str, password: str) -> dict:
+    """
+    Call FastAPI /login endpoint directly and return authentication result
+    
+    Returns:
+        dict with 'success', 'data' (if success), 'error' (if failure)
+    """
+    try:
+        endpoint_url = "http://localhost:8000" + CONF.login
+        payload = {
+            "message": "login request from dash app",
+            "request_info": {},
+            "request_body": {"email": email, "password": password},
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(endpoint_url, json=payload) as response:
+                if response.status == 200:
+                    response_json = await response.json()
+                    login_data = response_json.get("data")
+                    if login_data:
+                        return {
+                            "success": True,
+                            "data": login_data,
+                            "user_email": email
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "error": "Invalid response format from server"
+                        }
+                else:
+                    error_text = await response.text()
+                    return {
+                        "success": False,
+                        "error": f"Login failed: {error_text}"
+                    }
+                    
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Network error: {str(e)}"
+        }
+
+async def update_mcp_session_auth(user_id: str, id_token: str, refresh_token: str, expires_in: int) -> bool:
+    """
+    Update MCP session manager with authentication tokens
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Get MCP client and access its session manager
+        client = get_or_create_client()
+        await ensure_client_connected()
+        
+        # Access the MCP server's session manager through the client
+        # The MCP client connects to the server which has the session manager
+        # We need to use the session_id that matches our MCP client
+        session_id = "dash_session"  # This matches line 44 where we create the client
+        
+        # We'll need to call the MCP server's session manager directly
+        # Since we can't access it directly from the client, we'll use the MCP client's
+        # session manager if available, or we can call the server endpoint
+        
+        # For now, let's use a direct approach by calling the server's context
+        # This is a bit of a workaround, but it should work
+        print(f"🔐 Updating MCP session auth for user {user_id}")
+        
+        # Since we can't directly access the MCP server's session manager from here,
+        # we'll store the tokens in a way the MCP client can access them
+        # The most direct approach is to save them to the session directory
+        
+        # Get the session path (this should match the MCP server's session path)
+        from pathlib import Path
+        session_base_path = Path(__file__).parent.parent / "tool_bridge_mcp_server" / "sessions"
+        session_path = session_base_path / session_id
+        session_path.mkdir(parents=True, exist_ok=True)
+        
+        metadata_path = session_path / "session_metadata.json"
+        
+        # Read existing metadata or create new
+        metadata = {}
+        if metadata_path.exists():
+            with open(metadata_path, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+        
+        # Update with auth data
+        metadata.update({
+            "session_id": session_id,
+            "user_id": user_id,
+            "id_token": id_token,
+            "refresh_token": refresh_token,
+            "token_expires_at": (datetime.now() + timedelta(seconds=expires_in - 60)).isoformat(),
+            "created_at": metadata.get("created_at", datetime.now().isoformat()),
+            "expires_at": (datetime.now() + timedelta(hours=8)).isoformat()  # Match server default
+        })
+        
+        # Save updated metadata
+        with open(metadata_path, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2)
+        
+        print(f"✅ Successfully updated MCP session auth for user {user_id}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Failed to update MCP session auth: {str(e)}")
+        return False
+
+async def logout_user() -> bool:
+    """
+    Clear authentication tokens from MCP session
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        session_id = "dash_session"
+        
+        # Get the session path
+        from pathlib import Path
+        session_base_path = Path(__file__).parent.parent / "tool_bridge_mcp_server" / "sessions"
+        session_path = session_base_path / session_id
+        metadata_path = session_path / "session_metadata.json"
+        
+        if metadata_path.exists():
+            with open(metadata_path, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+            
+            # Remove auth tokens but keep session
+            metadata.pop("user_id", None)
+            metadata.pop("id_token", None)
+            metadata.pop("refresh_token", None)
+            metadata.pop("token_expires_at", None)
+            
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, indent=2)
+        
+        print("🚪 Successfully logged out user")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Failed to logout user: {str(e)}")
+        return False
+
+def get_current_auth_status() -> dict:
+    """
+    Get current authentication status from session
+    
+    Returns:
+        dict with 'authenticated', 'user_id', 'email', etc.
+    """
+    try:
+        session_id = "dash_session"
+        
+        # Get the session path
+        from pathlib import Path
+        session_base_path = Path(__file__).parent.parent / "tool_bridge_mcp_server" / "sessions"
+        session_path = session_base_path / session_id
+        metadata_path = session_path / "session_metadata.json"
+        
+        if not metadata_path.exists():
+            return {"authenticated": False}
+        
+        with open(metadata_path, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+        
+        # Check if user is authenticated and token is not expired
+        user_id = metadata.get("user_id")
+        token_expires_at = metadata.get("token_expires_at")
+        
+        if user_id and token_expires_at:
+            expiry_time = datetime.fromisoformat(token_expires_at)
+            if datetime.now() < expiry_time:
+                return {
+                    "authenticated": True,
+                    "user_id": user_id,
+                    "expires_at": token_expires_at
+                }
+        
+        return {"authenticated": False}
+        
+    except Exception as e:
+        print(f"❌ Failed to get auth status: {str(e)}")
+        return {"authenticated": False}
+
 # Define the layout (following original pattern exactly)
 app.layout = html.Div([
+    # Store components for authentication state
+    dcc.Store(id="auth-state-store", data={"authenticated": False}),
+    dcc.Store(id="user-data-store", data={}),
+    
+    # Login Modal
+    dbc.Modal([
+        dbc.ModalHeader(dbc.ModalTitle("Login to Access AI Assistant")),
+        dbc.ModalBody([
+            dbc.Form([
+                dbc.Row([
+                    dbc.Label("Email", html_for="login-email", width=2),
+                    dbc.Col([
+                        dbc.Input(
+                            type="email", 
+                            id="login-email", 
+                            placeholder="Enter your email",
+                            required=True
+                        ),
+                    ], width=10),
+                ], className="mb-3"),
+                dbc.Row([
+                    dbc.Label("Password", html_for="login-password", width=2),
+                    dbc.Col([
+                        dbc.Input(
+                            type="password", 
+                            id="login-password", 
+                            placeholder="Enter your password",
+                            required=True
+                        ),
+                    ], width=10),
+                ], className="mb-3"),
+            ]),
+            html.Div(id="login-error-message", style={'color': 'red', 'margin-top': '10px'}),
+        ]),
+        dbc.ModalFooter([
+            dbc.Button("Cancel", id="login-cancel-btn", className="me-2", color="secondary"),
+            dbc.Button("Login", id="login-submit-btn", color="primary", type="submit"),
+        ]),
+    ],
+    id="login-modal",
+    is_open=False,
+    backdrop="static",  # Prevent closing by clicking outside
+    keyboard=False,  # Prevent closing with escape key
+    ),
+    
     dbc.Row([
         # Left column (70% width) - Report display area
         dbc.Col([
@@ -76,19 +317,26 @@ app.layout = html.Div([
         # Right column (30% width) - Chat interface
         dbc.Col([
             html.Div([
-                # Header with memory indicator
+                # Header with authentication status
                 html.Div([
                     html.H4("AI Assistant", style={'margin': '0', 'text-align': 'center'}),
-                    # Memory status indicator
-                    html.Div([
-                        html.Small("🧠 Memory: Active", 
-                                  style={'color': '#28a745', 'font-weight': 'bold'}),
-                        html.Br(),
-                        html.Small(f"Thread: {DASH_THREAD_ID}", 
-                                  style={'color': '#6c757d', 'font-size': '0.8em'})
-                    ], style={'margin-top': '10px', 'padding': '8px', 
-                             'background-color': '#f8f9fa', 'border-radius': '5px',
-                             'text-align': 'center'})
+                    # Authentication status indicator
+                    html.Div(
+                        id="auth-status-indicator",
+                        children=[
+                            html.Small("🔒 Not logged in", 
+                                      style={'color': '#dc3545', 'font-weight': 'bold'}),
+                            html.Br(),
+                            dbc.ButtonGroup([
+                                dbc.Button("Login", id="login-btn", size="sm", color="primary"),
+                                dbc.Button("Logout", id="logout-btn", size="sm", color="secondary", 
+                                         style={'display': 'none'})
+                            ], size="sm", style={'margin-top': '5px'})
+                        ], 
+                        style={'margin-top': '10px', 'padding': '8px', 
+                               'background-color': '#f8f9fa', 'border-radius': '5px',
+                               'text-align': 'center'}
+                    )
                 ], style={'margin-bottom': '20px'}),
                 
                 # Results area (scrollable)
@@ -161,6 +409,177 @@ app.layout = html.Div([
     )
 ], style={'height': '100vh', 'overflow': 'hidden'})
 
+# Authentication callbacks
+@app.callback(
+    Output('login-modal', 'is_open'),
+    [Input('login-btn', 'n_clicks'), Input('login-cancel-btn', 'n_clicks')],
+    [State('login-modal', 'is_open')]
+)
+def toggle_login_modal(login_clicks, cancel_clicks, is_open):
+    """Toggle login modal visibility"""
+    if login_clicks or cancel_clicks:
+        return not is_open
+    return is_open
+
+@app.callback(
+    [Output('auth-state-store', 'data'),
+     Output('user-data-store', 'data'),
+     Output('login-error-message', 'children'),
+     Output('login-email', 'value'),
+     Output('login-password', 'value')],
+    [Input('login-submit-btn', 'n_clicks')],
+    [State('login-email', 'value'),
+     State('login-password', 'value')]
+)
+def handle_login(n_clicks, email, password):
+    """Handle login form submission"""
+    if n_clicks and email and password:
+        try:
+            # Create event loop if needed
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            # Authenticate user
+            auth_result = loop.run_until_complete(authenticate_user_direct(email, password))
+            
+            if auth_result["success"]:
+                # Update MCP session with auth tokens
+                login_data = auth_result["data"]
+                success = loop.run_until_complete(update_mcp_session_auth(
+                    login_data["localId"],
+                    login_data["idToken"],
+                    login_data["refreshToken"],
+                    int(login_data["expiresIn"])
+                ))
+                
+                if success:
+                    # Return success state
+                    return (
+                        {"authenticated": True}, 
+                        {"user_id": login_data["localId"], "email": email},
+                        "",  # Clear error message
+                        "",  # Clear email field
+                        ""   # Clear password field
+                    )
+                else:
+                    return (
+                        {"authenticated": False}, 
+                        {},
+                        "Failed to update session. Please try again.",
+                        email, 
+                        ""
+                    )
+            else:
+                return (
+                    {"authenticated": False}, 
+                    {},
+                    f"Login failed: {auth_result['error']}",
+                    email, 
+                    ""
+                )
+                
+        except Exception as e:
+            return (
+                {"authenticated": False}, 
+                {},
+                f"An error occurred: {str(e)}",
+                email, 
+                ""
+            )
+    
+    # No change if button not clicked or missing credentials
+    return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+@app.callback(
+    [Output('auth-state-store', 'data', allow_duplicate=True),
+     Output('user-data-store', 'data', allow_duplicate=True)],
+    [Input('logout-btn', 'n_clicks')],
+    prevent_initial_call=True
+)
+def handle_logout(n_clicks):
+    """Handle logout button click"""
+    if n_clicks:
+        try:
+            # Create event loop if needed
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            # Clear authentication
+            success = loop.run_until_complete(logout_user())
+            
+            if success:
+                return {"authenticated": False}, {}
+            else:
+                # Even if logout failed, clear the UI state
+                return {"authenticated": False}, {}
+                
+        except Exception as e:
+            print(f"Logout error: {str(e)}")
+            return {"authenticated": False}, {}
+    
+    return dash.no_update, dash.no_update
+
+@app.callback(
+    [Output('auth-status-indicator', 'children'),
+     Output('login-modal', 'is_open', allow_duplicate=True)],
+    [Input('auth-state-store', 'data'),
+     Input('user-data-store', 'data')],
+    prevent_initial_call=True
+)
+def update_auth_status_display(auth_state, user_data):
+    """Update the authentication status display"""
+    if auth_state.get("authenticated", False):
+        user_email = user_data.get("email", "Unknown User")
+        return [
+            html.Small(f"✅ Logged in as {user_email}", 
+                      style={'color': '#28a745', 'font-weight': 'bold'}),
+            html.Br(),
+            dbc.ButtonGroup([
+                dbc.Button("Login", id="login-btn", size="sm", color="primary", 
+                         style={'display': 'none'}),
+                dbc.Button("Logout", id="logout-btn", size="sm", color="secondary")
+            ], size="sm", style={'margin-top': '5px'})
+        ], False  # Close login modal
+    else:
+        return [
+            html.Small("🔒 Not logged in", 
+                      style={'color': '#dc3545', 'font-weight': 'bold'}),
+            html.Br(),
+            dbc.ButtonGroup([
+                dbc.Button("Login", id="login-btn", size="sm", color="primary"),
+                dbc.Button("Logout", id="logout-btn", size="sm", color="secondary", 
+                         style={'display': 'none'})
+            ], size="sm", style={'margin-top': '5px'})
+        ], dash.no_update  # Don't change modal state
+
+# Callback to check authentication status on page load
+@app.callback(
+    [Output('auth-state-store', 'data', allow_duplicate=True),
+     Output('user-data-store', 'data', allow_duplicate=True)],
+    [Input('auth-state-store', 'id')],  # Trigger on page load
+    prevent_initial_call='initial_duplicate'
+)
+def check_auth_on_load(_):
+    """Check authentication status when page loads"""
+    try:
+        auth_status = get_current_auth_status()
+        if auth_status.get("authenticated", False):
+            return (
+                {"authenticated": True}, 
+                {"user_id": auth_status.get("user_id", ""), "email": ""}  # We don't store email in session metadata
+            )
+        else:
+            return {"authenticated": False}, {}
+    except Exception as e:
+        print(f"Auth check error: {str(e)}")
+        return {"authenticated": False}, {}
+
 
 # Callback for minimize/expand functionality (unchanged)
 @app.callback(
@@ -195,6 +614,51 @@ def toggle_right_panel(n_clicks):
 def process_query(n_clicks, n_submit, query, current_conversation, current_report_content, current_report_status, current_interactive_plots, current_data_available):
     if (n_clicks and n_clicks > 0) or n_submit:
         if query and query.strip():
+            # Check authentication status first
+            auth_status = get_current_auth_status()
+            if not auth_status.get("authenticated", False):
+                # Add authentication error message to conversation
+                auth_error_message = html.Div([
+                    html.Div("System:", style={
+                        'font-weight': 'bold', 
+                        'color': '#dc3545',
+                        'margin-bottom': '5px'
+                    }),
+                    html.Div("🔒 Please log in first to use the AI assistant.", style={
+                        'background-color': '#f8d7da',
+                        'padding': '10px',
+                        'border-radius': '10px',
+                        'color': '#721c24'
+                    })
+                ], style={'margin-bottom': '15px'})
+                
+                user_message = html.Div([
+                    html.Div("Me:", style={
+                        'font-weight': 'bold', 
+                        'color': '#007bff',
+                        'margin-bottom': '5px'
+                    }),
+                    html.Div(query, style={
+                        'background-color': '#e3f2fd',
+                        'padding': '10px',
+                        'border-radius': '10px',
+                        'margin-bottom': '10px'
+                    })
+                ], style={'margin-bottom': '15px'})
+                
+                if current_conversation is None:
+                    current_conversation = []
+                
+                updated_conversation = [auth_error_message, user_message] + current_conversation
+                
+                # Return current state with auth error
+                preserved_report = current_report_content if current_report_content is not None else report_display._create_empty_state()
+                preserved_status = current_report_status if current_report_status is not None else report_display.create_report_status_indicator('empty')
+                preserved_interactive_plots = current_interactive_plots if current_interactive_plots is not None else report_display._create_interactive_plots_placeholder()
+                preserved_data_available = current_data_available if current_data_available is not None else False
+                
+                return updated_conversation, "", preserved_report, preserved_status, preserved_interactive_plots, preserved_data_available
+                
             try:
                 # Add user message to conversation
                 user_message = html.Div([

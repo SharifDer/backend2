@@ -75,7 +75,7 @@ async def use_json(
             try:
                 # --- MODIFIED: Writes compact JSON for speed ---
                 content_to_write = await to_json_string_async(json_content)
-                async with aiofiles.open(file_path, mode="w") as file:
+                async with aiofiles.open(file_path, mode="w", encoding="utf-8") as file:
                     await file.write(content_to_write)
             except IOError:
                 raise HTTPException(
@@ -86,7 +86,7 @@ async def use_json(
         elif mode == "r":
             try:
                 if os.path.exists(file_path):
-                    async with aiofiles.open(file_path, mode="r") as file:
+                    async with aiofiles.open(file_path, mode="r", encoding="utf-8") as file:
                         content = await file.read()
                         return json.loads(content)
                 return None
