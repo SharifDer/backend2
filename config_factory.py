@@ -89,6 +89,7 @@ class ApiConfig(CommonApiConfig):
     temp_sales_man_problem = backend_base_uri + "temp_sales_man_problem"
     
     dine_in_suitability_analysis = "/dine-in_suitability_analysis"
+    point_traffic_score = backend_base_uri + "temp_point_traffic_score"
 
     tomtom_api_key : str = ""
     @classmethod

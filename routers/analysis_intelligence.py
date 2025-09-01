@@ -3,7 +3,7 @@ Analysis & Intelligence router module
 Handles analysis operations, intelligence data, sales optimization, and special features
 """
 
-from typing import Any
+from typing import Any, Optional
 from fastapi import APIRouter, Request, Depends, HTTPException
 from all_types.request_dtypes import (
     ReqModel,
@@ -34,6 +34,9 @@ from all_types.request_dtypes import ReqDineInSuitabilityAnalysis
 from all_types.response_dtypes import ResDineInSuitabilityAnalysis
 from all_types.internal_types import UserId
 from smart_reports.reports import generate_pharmacy_report
+from traffic_data import get_here_traffic_score
+from standalone_google_maps_traffic import analyze_traffic_at_location
+from pydantic import BaseModel
 
 analysis_router = APIRouter()
 
@@ -145,3 +148,54 @@ async def ep_pharmacy_site_selection(
         wrap_output=True,
     )
     return response
+
+# New data models for traffic analysis
+class ReqPointTrafficScore(BaseModel):
+    lat: float
+    lng: float
+    target_max_speed: int = 50
+    method: str = "google_maps"  # "here" or "google_maps"
+
+class ResPointTrafficScore(BaseModel):
+    score: float
+    method: str
+    coordinates: dict
+    details: dict = {}
+    image_id: Optional[str] = None  # ID to access the screenshot via static URL
+
+@analysis_router.post(CONF.point_traffic_score, 
+response_model=ResPointTrafficScore, 
+dependencies=[Depends(JWTBearer())])
+async def analyze_traffic_endpoint(request: ReqPointTrafficScore):
+    """
+    Analyze traffic conditions at a specific location using HERE API or Google Maps
+    
+    Args:
+        request: TrafficAnalysisRequest containing coordinates and method preference
+        
+    Returns:
+        Traffic analysis results with score and detailed breakdown
+    """
+    if request.method.lower() == "google_maps":
+        # Use Google Maps screenshot method and save to static folder
+        result = analyze_traffic_at_location(
+            lat=request.lat,
+            lng=request.lng,
+            cleanup_screenshots=False,  # Don't cleanup when saving to static
+            save_to_static=True  # Save to static folder for web access
+        )
+    else:
+        # Use HERE API method (default)
+        result = await get_here_traffic_score(
+            property_lat=request.lat,
+            property_lng=request.lng,
+            target_max_speed=request.target_max_speed
+        )
+    
+    return ResPointTrafficScore(
+        score=result.get('score', 0),
+        method=result.get('method', 'unknown'),
+        coordinates=result.get('coordinates', {'lat': request.lat, 'lng': request.lng}),
+        details=result,
+        image_id=result.get('image_id')  # Include image ID for Google Maps method
+    )

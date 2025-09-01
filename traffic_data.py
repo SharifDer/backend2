@@ -44,6 +44,40 @@ async def fetch_here_traffic_flow(bbox: str) -> List[Dict[str, Any]]:
     else:
         logger.error("No results in HERE API response")
         raise ValueError("Failed to get traffic data from API, generate request again")
+
+async def get_here_traffic_score(property_lat: float, property_lng: float, 
+                               target_max_speed: int = 50) -> Dict[str, Any]:
+    """
+    Get traffic score using HERE API
+    
+    Args:
+        property_lat: Latitude of the property
+        property_lng: Longitude of the property  
+        target_max_speed: Maximum desired speed for scoring
+        
+    Returns:
+        Dict containing traffic analysis results from HERE API
+    """
+    try:
+        # Generate bbox for single point
+        buffer = 0.01  # ~1km buffer
+        bbox = f"{property_lng - buffer},{property_lat - buffer},{property_lng + buffer},{property_lat + buffer}"
+        
+        traffic_data = await fetch_here_traffic_flow(bbox)
+        result = calculate_traffic_score(property_lat, property_lng, traffic_data, target_max_speed)
+        result['method'] = 'here_api'
+        
+        logger.info(f"HERE API traffic analysis successful: Score {result['score']}")
+        return result
+            
+    except Exception as e:
+        logger.error(f"HERE API traffic analysis failed: {e}")
+        return {
+            'score': 0,
+            'method': 'here_api_failed',
+            'error': str(e),
+            'coordinates': {'lat': property_lat, 'lng': property_lng}
+        }
             
 
 def calculate_distance_score(min_distance: float) -> float:
