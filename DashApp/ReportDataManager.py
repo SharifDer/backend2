@@ -11,7 +11,7 @@ import re
 
 from config import Config
 
-class ReportHandler:
+class ReportDataManager:
     """Handle report file operations and metadata extraction"""
     
     def __init__(self):
@@ -252,4 +252,4 @@ class ReportHandler:
         return report_file
 
 # Global instance for easy import
-report_handler = ReportHandler()
+ReportDataManager = ReportDataManager()

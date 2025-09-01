@@ -24,8 +24,8 @@ all_types/__pycache__/**
 # user files
 docker-compose.yml
 
-
-static/*
+static/plots/*
+static/reports/*
 tool_bridge_mcp_server/sessions/*
 tool_bridge_mcp_server/logs/*
 

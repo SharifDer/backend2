@@ -8,8 +8,8 @@ from datetime import datetime, timedelta
 from langchain_core.messages import HumanMessage
 
 # Import our custom modules
-from ReportDataManager import report_handler
-from ReportAppUIBuilder import report_display
+from ReportDataManager import ReportDataManager
+from ReportAppUIBuilder import ReportAppUIBuilder
 from interactive_plots import plotter, load_and_create_plots
 
 # Import configuration for FastAPI endpoints
@@ -303,7 +303,7 @@ app.layout = html.Div([
             html.Div(
                 id="left-column-content",
                 children=[
-                    report_display.create_report_layout()
+                    ReportAppUIBuilder.create_report_layout()
                 ],
                 style={
                     'height': '100vh',
@@ -652,9 +652,9 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                 updated_conversation = [auth_error_message, user_message] + current_conversation
                 
                 # Return current state with auth error
-                preserved_report = current_report_content if current_report_content is not None else report_display._create_empty_state()
-                preserved_status = current_report_status if current_report_status is not None else report_display.create_report_status_indicator('empty')
-                preserved_interactive_plots = current_interactive_plots if current_interactive_plots is not None else report_display._create_interactive_plots_placeholder()
+                preserved_report = current_report_content if current_report_content is not None else ReportAppUIBuilder._create_empty_state()
+                preserved_status = current_report_status if current_report_status is not None else ReportAppUIBuilder.create_report_status_indicator('empty')
+                preserved_interactive_plots = current_interactive_plots if current_interactive_plots is not None else ReportAppUIBuilder._create_interactive_plots_placeholder()
                 preserved_data_available = current_data_available if current_data_available is not None else False
                 
                 return updated_conversation, "", preserved_report, preserved_status, preserved_interactive_plots, preserved_data_available
@@ -728,36 +728,36 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                 updated_conversation = [agent_message, user_message] + current_conversation
                 
                 # Handle report display - Start with current report state (preserve existing reports)
-                report_content = current_report_content if current_report_content is not None else report_display._create_empty_state()
-                report_status = current_report_status if current_report_status is not None else report_display.create_report_status_indicator('empty')
-                interactive_plots_content = current_interactive_plots if current_interactive_plots is not None else report_display._create_interactive_plots_placeholder()
+                report_content = current_report_content if current_report_content is not None else ReportAppUIBuilder._create_empty_state()
+                report_status = current_report_status if current_report_status is not None else ReportAppUIBuilder.create_report_status_indicator('empty')
+                interactive_plots_content = current_interactive_plots if current_interactive_plots is not None else ReportAppUIBuilder._create_interactive_plots_placeholder()
                 interactive_data_available = current_data_available if current_data_available is not None else False
                 
                 # Try to extract file handle from structured output and display report
                 structured_output = result.get('structured_output')
                 if structured_output:
                     print(f"[DEBUG] Processing structured output for file handle extraction...")
-                    file_handle = report_handler.parse_file_handle_from_response(structured_output)
+                    file_handle = ReportDataManager.parse_file_handle_from_response(structured_output)
                     if file_handle:
                         print(f"📄 Found file handle: {file_handle}")
                         # Try to read the report
-                        md_content = report_handler.read_md_report(file_handle)
+                        md_content = ReportDataManager.read_md_report(file_handle)
                         if md_content:
-                            report_content = report_display.format_markdown_for_dash(md_content)
+                            report_content = ReportAppUIBuilder.format_markdown_for_dash(md_content)
                             # Get report metadata
-                            metadata = report_handler.extract_report_metadata(file_handle)
-                            report_status = report_display.create_report_status_indicator('loaded', metadata)
+                            metadata = ReportDataManager.extract_report_metadata(file_handle)
+                            report_status = ReportAppUIBuilder.create_report_status_indicator('loaded', metadata)
                             print(f"✅ Report loaded and displayed")
                             
                             # Check for interactive data files
-                            data_files = report_handler.get_data_files(structured_output)
+                            data_files = ReportDataManager.get_data_files(structured_output)
                             print(f"[DEBUG] Checking for data files from report handler: {len(data_files)} files found")
                             
                             if data_files:
                                 print(f"[DEBUG] Found data files for interactive plotting: {list(data_files.keys())}")
                                 success, plot_info = load_and_create_plots(data_files)
                                 if success:
-                                    interactive_plots_content = report_display.create_interactive_plots_layout(
+                                    interactive_plots_content = ReportAppUIBuilder.create_interactive_plots_layout(
                                         plot_info['variables'], 
                                         plot_info['default_variable']
                                     )
@@ -807,7 +807,7 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                                                     print(f"[DEBUG] Found fallback data files: {list(fallback_data_files.keys())}")
                                                     success, plot_info = load_and_create_plots(fallback_data_files)
                                                     if success:
-                                                        interactive_plots_content = report_display.create_interactive_plots_layout(
+                                                        interactive_plots_content = ReportAppUIBuilder.create_interactive_plots_layout(
                                                             plot_info['variables'], 
                                                             plot_info['default_variable']
                                                         )
@@ -821,7 +821,7 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                                     traceback.print_exc()
                         else:
                             print(f"❌ Could not read report from handle: {file_handle}")
-                            report_status = report_display.create_report_status_indicator('error')
+                            report_status = ReportAppUIBuilder.create_report_status_indicator('error')
                     else:
                         print("ℹ️ No file handle found in response")
                 
@@ -863,16 +863,16 @@ def process_query(n_clicks, n_submit, query, current_conversation, current_repor
                 updated_conversation = [error_message, user_message] + current_conversation
                 
                 # Return error state for report display
-                error_report_content = report_display.create_error_display(str(e))
-                error_report_status = report_display.create_report_status_indicator('error')
-                error_interactive_plots = report_display._create_interactive_plots_placeholder()
+                error_report_content = ReportAppUIBuilder.create_error_display(str(e))
+                error_report_status = ReportAppUIBuilder.create_report_status_indicator('error')
+                error_interactive_plots = ReportAppUIBuilder._create_interactive_plots_placeholder()
                 
                 return updated_conversation, "", error_report_content, error_report_status, error_interactive_plots, False
     
     # Return current state if no valid input - preserve existing reports
-    preserved_report = current_report_content if current_report_content is not None else report_display._create_empty_state()
-    preserved_status = current_report_status if current_report_status is not None else report_display.create_report_status_indicator('empty')
-    preserved_interactive_plots = current_interactive_plots if current_interactive_plots is not None else report_display._create_interactive_plots_placeholder()
+    preserved_report = current_report_content if current_report_content is not None else ReportAppUIBuilder._create_empty_state()
+    preserved_status = current_report_status if current_report_status is not None else ReportAppUIBuilder.create_report_status_indicator('empty')
+    preserved_interactive_plots = current_interactive_plots if current_interactive_plots is not None else ReportAppUIBuilder._create_interactive_plots_placeholder()
     preserved_data_available = current_data_available if current_data_available is not None else False
     return current_conversation or [], query or "", preserved_report, preserved_status, preserved_interactive_plots, preserved_data_available
 

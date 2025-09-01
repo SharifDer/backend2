@@ -8,7 +8,7 @@ import markdown
 from typing import Optional, List, Dict, Any
 import re
 
-class ReportDisplay:
+class ReportAppUIBuilder:
     """Handle report display components and formatting for Dash"""
     
     def __init__(self):
@@ -387,4 +387,4 @@ class ReportDisplay:
         ], style={'margin': '20px'})
 
 # Global instance for easy import
-report_display = ReportDisplay()
+ReportAppUIBuilder = ReportAppUIBuilder()
