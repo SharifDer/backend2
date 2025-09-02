@@ -69,7 +69,6 @@ async def generate_pharmacy_report(req : Reqsmartreport):
     ## in this part For Each location (shop for rent), 
     # we fetch all the details of that specific locations
     all_shops_data = []
-    i = 0
     for shop in shops_for_rent:
         price = shop["properties"]['price'] or 0
         geometry = shop['geometry']
@@ -96,11 +95,6 @@ async def generate_pharmacy_report(req : Reqsmartreport):
         )
 
         all_shops_data.append(shop_data)
-        i += 1
-        if i == 150 :
-            print("locations have been fetched " , i)
-            break
-    
     # --- Step 2: process custom_locations (if any) ---
     if req.custom_locations:
         for i , coord in enumerate(req.custom_locations , start=1):
@@ -373,10 +367,9 @@ async def generate_html_pharmacy_report_file(req: Reqsmartreport = None, report_
 
 async def loading_category_dataset(req: ReqFetchDataset):
 
+    data = await fetch_dataset(req)   
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        features = data.get("features", [])
+        features = data.get("features", []) 
         return features
     except Exception as e:
         print("Error fetching features:", e)
