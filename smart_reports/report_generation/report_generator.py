@@ -360,7 +360,7 @@ def generate_enhanced_table(sites: List[Dict], top_n: int , MAX_TOTAL : float , 
             CRITERION_WEIGHTS['demographics']
         )
         competitive_100 = normalize_score_to_100(
-            site.get('scores', {}).get('competitive_score', 0), 
+            site.get('scores', {}).get('competition_score', 0), 
             CRITERION_WEIGHTS['competition']
         )
         healthcare_100 = normalize_score_to_100(
