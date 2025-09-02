@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from all_types.request_dtypes import Reqsmartreport, ReqFetchDataset
 from smart_reports.utils import generate_bbox,bbox_to_polygon
 from data_fetcher import fetch_dataset
@@ -7,8 +9,17 @@ from smart_reports.healthcare_system import get_healthcare_data
 from smart_reports.complementary_businesses import get_other_businesses_data
 from smart_reports.scoring import *
 from smart_reports.report_generation.pharmacy_report_final import generate_report_from_data
+from typing import Dict, Any
+
+from .config import USE_MOCK_DATA
 
 async def generate_pharmacy_report(req : Reqsmartreport):
+    # Check if we should use mock data
+    if USE_MOCK_DATA:
+        from .mock_data import get_mock_data
+        return get_mock_data(req.city_name)
+    
+    # Original logic continues below
     req_dataset = ReqFetchDataset(user_id=req.user_id , city_name=req.city_name,
                                   country_name=req.country_name,
                                 boolean_query="shop_for_rent",
@@ -92,7 +103,7 @@ async def generate_pharmacy_report(req : Reqsmartreport):
         # Compose key
         loc_key = f"{lat},{lng}"
         location_data = shop.get("location_data", {})
-        num_of_businesses_around = location_data["num of business around"]
+        num_of_businesses_around = location_data.get("num of business around", 0)
         traffic_data = location_data.get("traffic", {})
         healthcare_data = location_data.get("healthcare", {})
         amenities_data = location_data.get("nearest_businessess", {})
@@ -106,6 +117,15 @@ async def generate_pharmacy_report(req : Reqsmartreport):
                 frc=traffic_data.get("Functional Road Class", ""),
                 traffic_score=traffic_score_weight
             )
+        else:
+            # Default traffic score when no traffic data is available
+            traffic_score = {
+                "overall_score": 0.0,
+                "details": {
+                    "Average Viechle Speed": 0.0,
+                    "highway score": 0.0,
+                }
+            }
         
         demographics_score = score_demographics(pop_data, req.evaluation_metrics.demographics)
         healthcare_score = score_healthcare_ecosystem(healthcare_data, req.evaluation_metrics.healthcare)
@@ -131,10 +151,10 @@ async def generate_pharmacy_report(req : Reqsmartreport):
                 'nearby Businesses within 500 meters' : num_of_businesses_around,
                **(traffic_data or {}),
                 **(pop_data or {}),
-                'competing_pharmacies' : healthcare_data.get("pharmacy" , 0).get("num_of_pharmacies" , 0),
-                "pharmacies_per_10k_population" : healthcare_data.get("pharmacy").get("pharmacies_per_10k_population" ),
-                "number of hospitals around" : healthcare_data.get("num_of_hospitals"),
-                "number of dentists around" : healthcare_data.get("num_of_dentists") 
+                'competing_pharmacies' : healthcare_data.get("pharmacy", {}).get("num_of_pharmacies", 0),
+                "pharmacies_per_10k_population" : healthcare_data.get("pharmacy", {}).get("pharmacies_per_10k_population", 0),
+                "number of hospitals around" : healthcare_data.get("num_of_hospitals", 0),
+                "number of dentists around" : healthcare_data.get("num_of_dentists", 0) 
             }
         }
 
@@ -198,16 +218,106 @@ async def fetch_all_criterions_data(
         "location_data": {
             "traffic": traffic,
             "pop_data" : {
-                **households,
-                **demographics
+                **(households or {}),
+                **(demographics or {})
             },
-        **healthcare,
-        **other_businesses
+        **(healthcare or {}),
+        **(other_businesses or {})
+        }
+    }
+
+async def generate_html_pharmacy_report(req: Reqsmartreport = None, report_data: Reqsmartreport = None) -> Dict[str, Any]:
+    """
+    Generate a comprehensive pharmacy report and return structured data.
+    
+    Creates a multi-page HTML report with executive summary, methodology,
+    detailed analysis, and visual components following the specified structure.
+    
+    Args:
+        req (Reqsmartreport): Report data containing pharmacy analysis results (for router compatibility)
+        report_data (Reqsmartreport): Report data containing pharmacy analysis results (for direct calls)
+        
+    Returns:
+        Dict[str, Any]: Structured report data matching ResIntelligenceData format
+    """
+    
+    # Handle both parameter names for compatibility
+    data = req if req is not None else report_data
+    if data is None:
+        raise ValueError("Either req or report_data parameter must be provided")
+    
+    # Generate the processed report data
+    processed_report_data = await generate_pharmacy_report(data)
+    
+    # Import the modular generator
+    from .html_generator import PharmacyReportGenerator
+    
+    # Create the generator instance
+    generator = PharmacyReportGenerator()
+    
+    # Generate the HTML report file
+    html_file_path = generator.generate_report({
+        'report_data': data,
+        'processed_report_data': processed_report_data
+    })
+    
+    # Return structured data matching ResIntelligenceData format
+    return {
+        "title": processed_report_data.get("title", f"{data.city_name} Pharmacy Site Analysis Report"),
+        "description": processed_report_data.get("description", "Comprehensive Location Intelligence & Investment Recommendations"),
+        "summary_metrics": processed_report_data.get("summary_metrics", {}),
+        "executive_summary": processed_report_data.get("executive_summary", {}),
+        "key_investment_insights": processed_report_data.get("key_investment_insights", []),
+        "rankings": processed_report_data.get("rankings", []),
+        "detailed_analysis": processed_report_data.get("detailed_analysis", []),
+        "visual_analysis": processed_report_data.get("visual_analysis", {}),
+        "methodology": processed_report_data.get("methodology", {}),
+        "statistical_insights": processed_report_data.get("statistical_insights", []),
+        "metadata": {
+            **processed_report_data.get("metadata", {}),
+            "html_file_path": html_file_path,
+            "generation_method": "HTML Report Generator",
+            "report_type": "pharmacy_site_selection"
         }
     }
 
 
+async def generate_html_pharmacy_report_file(req: Reqsmartreport = None, report_data: Reqsmartreport = None) -> str:
+    """
+    Generate a comprehensive HTML pharmacy report file.
     
+    Creates a multi-page HTML report with executive summary, methodology,
+    detailed analysis, and visual components following the specified structure.
+    
+    Args:
+        req (Reqsmartreport): Report data containing pharmacy analysis results (for router compatibility)
+        report_data (Reqsmartreport): Report data containing pharmacy analysis results (for direct calls)
+        
+    Returns:
+        str: Absolute path to the generated index.html file
+    """
+    
+    # Handle both parameter names for compatibility
+    data = req if req is not None else report_data
+    if data is None:
+        raise ValueError("Either req or report_data parameter must be provided")
+    
+    # Import the modular generator
+    from .html_generator import PharmacyReportGenerator
+    
+    # Generate the processed report data
+    processed_report_data = await generate_pharmacy_report(data)
+    
+    # Create the generator instance
+    generator = PharmacyReportGenerator()
+    
+    # Generate the report using the modular system
+    return generator.generate_report({
+        'report_data': data,
+        'processed_report_data': processed_report_data
+    })
+
+
 async def loading_category_dataset(req: ReqFetchDataset):
 
     data = await fetch_dataset(req)   

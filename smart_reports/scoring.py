@@ -5,6 +5,12 @@ def score_traffic_for_retail(average_speed : float, frc : str,traffic_score):
     
     Returns a dict with weighted overall score and details of sub-scores.
     """
+    # Ensure average_speed is a float
+    try:
+        average_speed = float(average_speed)
+    except (ValueError, TypeError):
+        average_speed = 50.0  # Default value if conversion fails
+    
    #highway evaluation
     frc_weights = {
         "FRC" : {
@@ -54,16 +60,38 @@ def score_demographics(pop_data: dict, weight_score: float) -> dict:
     
     Returns dict with weighted overall score and detailed scores.
     """
+    # Ensure pop_data is not None
+    if not pop_data:
+        return {
+            "overall_score": 0.0,
+            "details": {
+                " Residential density within 3km driving radius": 0.0,
+                "Age distribution above 35": 0.0,
+                "Income levels": 0.0,
+                "Household composition": 0.0
+            }
+        }
 
     MAX_DENSITY = 6000    # people per sq km (adjust as max observed)
     MAX_INCOME = 11000     # SAR monthly (approximate upper bound)
     MAX_HOUSEHOLD_SIZE = 4 # large families in area
- 
-    density_score = min(pop_data.get("avg_density", 0) / MAX_DENSITY, 1.0)
-    age_score = min(pop_data.get("percentage_age_above_35", 0) / 60, 1.0)
-    income_score = min(pop_data.get("avg_income", 0) / MAX_INCOME, 1.0)
     
-    household_size = pop_data.get("Household_Median_Size", pop_data.get("Household_Average_Size", 1))
+    # Ensure all values are floats to prevent type comparison errors
+    def safe_float(value, default=0.0):
+        try:
+            return float(value) if value is not None else default
+        except (ValueError, TypeError):
+            return default
+    
+    avg_density = safe_float(pop_data.get("avg_density", 0))
+    percentage_age_above_35 = safe_float(pop_data.get("percentage_age_above_35", 0))
+    avg_income = safe_float(pop_data.get("avg_income", 0))
+    
+    density_score = min(avg_density / MAX_DENSITY, 1.0)
+    age_score = min(percentage_age_above_35 / 60, 1.0)
+    income_score = min(avg_income / MAX_INCOME, 1.0)
+    
+    household_size = safe_float(pop_data.get("Household_Median_Size", pop_data.get("Household_Average_Size", 1)))
     household_score = min(household_size / MAX_HOUSEHOLD_SIZE, 1.0)
 
     average_score = (density_score + age_score + income_score + household_score) / 4
@@ -79,11 +107,31 @@ def score_demographics(pop_data: dict, weight_score: float) -> dict:
     }
 
 def score_competitive(healthcare_data, weight_score):
+    # Ensure healthcare_data has the expected structure
+    if not healthcare_data or 'pharmacy' not in healthcare_data:
+        return {
+            "overall_score": 0.0,
+            "details": {
+                "Distance to nearest pharmacy": 0.0,
+                "Market saturation": 0.0,
+                "competeing pharmacies around": 0
+            }
+        }
+    
     nearby_pharmacies = healthcare_data['pharmacy'].get('nearby_pharmacy', [])
-    pharmacies_per_10k = healthcare_data['pharmacy'].get('pharmacies_per_10k_population', 0) / 100
+    
+    # Ensure pharmacies_per_10k is a float
+    try:
+        pharmacies_per_10k = float(healthcare_data['pharmacy'].get('pharmacies_per_10k_population', 0)) / 100
+    except (ValueError, TypeError):
+        pharmacies_per_10k = 0.0
 
     if nearby_pharmacies:
-        nearest_distance = min(p['est_driving_distance_meters'] for p in nearby_pharmacies)
+        # Ensure distance values are floats
+        try:
+            nearest_distance = min(float(p['est_driving_distance_meters']) for p in nearby_pharmacies)
+        except (ValueError, TypeError):
+            nearest_distance = 3000
     else:
         nearest_distance = 3000  # large distance, underserved
     # Normalize distance score: farther is better, capped at 5 km
@@ -101,22 +149,41 @@ def score_competitive(healthcare_data, weight_score):
             "Distance to nearest pharmacy": distance_score * 100,
             "Market saturation": saturation_score * 100,
             # "Underserved population pockets" : "N/A",
-            "competeing pharmacies around" : healthcare_data["pharmacy"]["num_of_pharmacies"]
+            "competeing pharmacies around" : healthcare_data.get("pharmacy", {}).get("num_of_pharmacies", 0)
         }
     }
 
 
 def score_healthcare_ecosystem(healthcare_data, weight_score):
+    # Ensure healthcare_data is not None
+    if not healthcare_data:
+        return {
+            "overall_score": 0.0,
+            "details": {
+                "Proximity to hospitals": 0.0,
+                " Proximity to dentists": 0.0
+            }
+        }
+    
     def score_proximity(places):
         if not places:
             return 0.0
         max_distance = 1500  # meters
-        within_3km = [p for p in places if p['est_driving_distance_meters'] <= max_distance]
+        
+        # Ensure distance values are floats
+        try:
+            within_3km = [p for p in places if float(p['est_driving_distance_meters']) <= max_distance]
+        except (ValueError, TypeError):
+            return 0.0
+            
         if not within_3km:
             return 0.0
 
-        avg_distance = sum(p['est_driving_distance_meters'] for p in within_3km) / len(within_3km)
-        avg_distance_score = 1 - min(1, avg_distance / max_distance)
+        try:
+            avg_distance = sum(float(p['est_driving_distance_meters']) for p in within_3km) / len(within_3km)
+            avg_distance_score = 1 - min(1, avg_distance / max_distance)
+        except (ValueError, TypeError):
+            return 0.0
         count_score = min(len(within_3km), 5) / 5
         return avg_distance_score * count_score
 
@@ -134,15 +201,31 @@ def score_healthcare_ecosystem(healthcare_data, weight_score):
 
 
 def score_complementary_businesses(amenities_data, weight_score):
+    # Ensure amenities_data is not None
+    if not amenities_data:
+        return {
+            "overall_score": 0.0,
+            "details": {
+                "grocery_store": 0.0,
+                "supermarkets": 0.0,
+                "restaurants": 0.0,
+                "ATMs": 0.0,
+                "Banks": 0.0
+            }
+        }
+    
     MAX_DISTANCE = 1000  # meters, max cutoff for proximity scoring
 
     def proximity_score(places):
         if not places:
             return 0.0
         # Score for each place: 1 - (distance / MAX_DISTANCE), clipped to [0,1]
-        scores = [max(0, 1 - (p['est_distance_meters'] / (MAX_DISTANCE * 2))) for p in places]
-        # Average score for all places of this type
-        return min(1, (sum(scores) / len(scores)) + (len(places) * 0.05))
+        try:
+            scores = [max(0, 1 - (float(p['est_distance_meters']) / (MAX_DISTANCE * 2))) for p in places]
+            # Average score for all places of this type
+            return min(1, (sum(scores) / len(scores)) + (len(places) * 0.05))
+        except (ValueError, TypeError):
+            return 0.0
 
     grocery_score = proximity_score(amenities_data.get('grocery_store', {}).get('nearby_grocery_store', []))
     supermarket_score = proximity_score(amenities_data.get('supermarket', {}).get('nearby_supermarket', []))
