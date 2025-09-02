@@ -7,7 +7,7 @@ from typing import List, Dict, Optional, Any
 from .map_generator import generate_site_map_image   
 from typing import Dict, List, Any, Optional
 from .report_config import source_current_location, source_custom_locations, source_shop_for_rent
-from .data_processor import relpath_for_md, google_maps_link,normalize_score_to_100
+from .data_processor import google_maps_link,normalize_score_to_100
 from .report_object import generate_detailed_insights_dict, generate_insights_dict, generate_rankings_dict, generate_rankings_dict_with_current_comparison
 
 def generate_detailed_insights(site: Dict) -> str:
@@ -198,36 +198,88 @@ def generate_enhanced_table(sites: List[Dict],  MAX_TOTAL : float , CRITERION_WE
         )
     return header + "".join(rows) + "\n"
 
-def generate_rankings_dict(sites: List[Dict], top_n: int, MAX_TOTAL: float, CRITERION_WEIGHTS: Dict[str, float]) -> List[Dict[str, Any]]:
-    """Generate rankings as structured data."""
-    top_sites = sorted(sites, key=lambda s: s.get('total_score', 0), reverse=True)[:top_n]
+def write_detailed_analysis(
+    md, sites, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, section_title: str, category: str = "Shop For Rent"
+) -> List[Dict[str, Any]]:
+    """Write detailed site analysis for a given set of sites and return structured data."""
     
-    rankings = []
-    for i, site in enumerate(top_sites, start=1):
-        # Convert all scores to 100 scale for display
-        final_score_100 = (site['total_score'] / MAX_TOTAL) * 100
-        traffic_100 = normalize_score_to_100(
-            site.get('scores', {}).get('traffic_score', 0), 
-            CRITERION_WEIGHTS['traffic']
-        )
-        demographics_100 = normalize_score_to_100(
-            site.get('scores', {}).get('demographics_score', 0), 
-            CRITERION_WEIGHTS['demographics']
-        )
-        competitive_100 = normalize_score_to_100(
-            site.get('scores', {}).get('competitive_score', 0), 
-            CRITERION_WEIGHTS['competition']
-        )
-        healthcare_100 = normalize_score_to_100(
-            site.get('scores', {}).get('healthcare_score', 0), 
-            CRITERION_WEIGHTS['healthcare']
-        )
-        complementary_100 = normalize_score_to_100(
-            site.get('scores', {}).get('complementary_score', 0), 
-            CRITERION_WEIGHTS['complementary']
-        )
+    if not sites:
+        return []
+
+    md.write(f"## {section_title}\n\n")
+    
+    detailed_analysis = []
+    for i, s in enumerate(sites, start=1):
+        final_score_100 = (s['total_score'] / MAX_TOTAL) * 100
+        md.write(f"### {i}. {s['display_name']} (Score: {final_score_100:.1f}/100)\n\n")
         
-        rankings.append({
+        coords_text = (
+            f"**Location:** {s['lat']:.6f}, {s['lng']:.6f}"
+            if (s['lat'] is not None and s['lng'] is not None)
+            else f"**Location:** {s.get('raw_place') or 'N/A'}"
+        )
+        price_text = f"**Price:** {s.get('price', 0):,} SAR" if s.get('price') else "**Price:** Not specified"
+        
+        md.write(f"{coords_text} | {price_text} | Category: {category} \n\n")
+        
+        # Generate insights
+        md.write(generate_detailed_insights(s))
+        md.write(f"**[🗺️ View on Google Maps]({google_maps_link(s)})**\n\n")
+        
+        # Maps
+        map_image, html_map = generate_site_map_image(s, maps_dir, MAX_TOTAL)
+        map_image_rel = map_image.replace("\\", "/") if map_image else None
+        html_map_rel = html_map.replace("\\", "/") if html_map else None
+        if map_image_rel:
+            md.write(f"![Site Map]({map_image_rel})\n\n")
+        if html_map_rel:
+            md.write(f"[Open interactive map]({html_map_rel})\n\n")
+        
+        # Scoring breakdown
+        md.write('| Criterion | Sub-factor | Raw Score | Weighted Points |\n')
+        md.write('|-----------|------------|-----------|----------------|\n')
+
+        scoring_breakdown = []
+        for c in CRITERION_WEIGHTS.keys():
+            dkeys = [k for k in s['details'].keys() if k.startswith(f"{c}__") and not k.endswith('_weighted')]
+            if dkeys and any(not math.isnan(s['details'].get(k, float('nan'))) for k in dkeys):
+                sub_weight = CRITERION_WEIGHTS[c] / max(1, len(dkeys))
+                crit_total = 0.0
+                for dk in dkeys:
+                    raw = s['details'].get(dk, float('nan'))
+                    weighted = (raw / 100.0) * sub_weight if not math.isnan(raw) else float('nan')
+                    crit_total += 0.0 if math.isnan(weighted) else weighted
+                    sub_name = dk.replace(f"{c}__", '').replace('_', ' ')
+                    raw_display = f'{raw:.1f}' if not math.isnan(raw) else 'N/A'
+                    weighted_display = f'{weighted:.2f}' if not math.isnan(weighted) else 'N/A'
+                    md.write(f"| {c.capitalize()} | {sub_name} | {raw_display} | {weighted_display} |\n")
+                    
+                    scoring_breakdown.append({
+                        "criterion": c.capitalize(),
+                        "sub_factor": sub_name,
+                        "raw_score": raw if not math.isnan(raw) else None,
+                        "weighted_points": weighted if not math.isnan(weighted) else None
+                    })
+                
+                md.write(f"| **{c.capitalize()} Total** | | | **{crit_total:.2f}** |\n")
+                scoring_breakdown.append({
+                    "criterion": f"{c.capitalize()} Total",
+                    "sub_factor": "",
+                    "raw_score": None,
+                    "weighted_points": crit_total
+                })
+            else:
+                overall = s.get('scores', {}).get(f'{c}_score', 0.0)
+                md.write(f"| {c.capitalize()} | No detailed data | N/A | **{overall:.2f}** |\n")
+                scoring_breakdown.append({
+                    "criterion": c.capitalize(),
+                    "sub_factor": "No detailed data",
+                    "raw_score": None,
+                    "weighted_points": overall
+                })
+        md.write("\n")
+        
+        detailed_analysis.append({
             "rank": i,
             "site_name": s['display_name'],
             "final_score": round(final_score_100, 1),
@@ -368,7 +420,6 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             md.write(table_md)
             md.write("\n\n")
             md.write("\n\n")
-            
         else :
             md.write(f"## {rankings_title}\n\n")
             table_md = generate_enhanced_table(top_sites,MAX_TOTAL, CRITERION_WEIGHTS)
@@ -392,7 +443,7 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             md, top_sites, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Site Analysis"
         )
 
-# If you want also for custom/current
+
         if custom_locations :
             report_data["custom_detailed_analysis"] = write_detailed_analysis(
                 md, custom_locations, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Custom Locations"
@@ -706,9 +757,9 @@ def generate_table_with_current_comparison(
             return f"{top_val:.1f} ({curr_val:.0f}, N/A)"
         diff_pct = abs(top_val - curr_val) 
         if top_val > curr_val:
-            result = f"{top_val:.0f} ({curr_val:.0f}, {diff_pct:.0f}% improvement)"
+            result = f"{top_val:.0f} ({curr_val:.0f}, {diff_pct:.0f}% 📈)"
         elif top_val < curr_val:
-            result = f"{top_val:.0f} ({curr_val:.0f}, {diff_pct:.0f}% disadvantage)"
+            result = f"{top_val:.0f} ({curr_val:.0f}, {diff_pct:.0f}% 📉)"
         else:
             result = f"{top_val:.0f} ({curr_val:.0f}, 0% difference)"
         return f"&lrm;{result}"
