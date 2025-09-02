@@ -4,6 +4,8 @@ Data processing utilities for pharmacy site selection analysis.
 import json
 import math
 from typing import List, Dict, Any, Tuple, Optional
+import os 
+from urllib.parse import quote_plus
 
 def to_num(x: Any) -> float:
     """Convert value to float, handling N/A and empty values."""
@@ -60,9 +62,11 @@ def _process_single_site(
     lat = rec.get('lat')
     lng = rec.get('lng')
     price = rec.get('price', 0)
+    source = rec.get("source")
 
     site = {
         'id': key,
+        "source" : source,
         'display_name': place or key,
         'raw_place': place,
         'lat': None,
@@ -154,3 +158,30 @@ def calculate_statistics(sites: List[Dict]) -> Dict[str, float]:
         'sites_with_coordinates': len([s for s in sites if s['lat'] and s['lng']]),
         'total_sites': len(sites)
     }
+
+def relpath_for_md(target: Optional[str], md_path: str) -> Optional[str]:
+    """Calculate relative path for markdown links."""
+    if not target:
+        return None
+    if not os.path.exists(target):
+        return None
+    md_dir = os.path.dirname(md_path) or os.getcwd()
+    try:
+        return os.path.relpath(target, start=md_dir)
+    except Exception:
+        return target
+
+
+def google_maps_link(site: Dict) -> str:
+    """Generate Google Maps link for a site."""
+    if site.get('lat') is not None and site.get('lng') is not None:
+        return f"https://www.google.com/maps/search/?api=1&query={site['lat']},{site['lng']}"
+    q = site.get('raw_place') or site.get('display_name') or site['id']
+    return f"https://www.google.com/maps/search/?api=1&query={quote_plus(q)}"
+
+
+def normalize_score_to_100(weighted_score: float, criterion_weight: float) -> float:
+    """Convert weighted score back to 0-100 scale for display."""
+    if criterion_weight == 0:
+        return 0.0
+    return (weighted_score / criterion_weight) * 100.0

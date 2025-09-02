@@ -12,7 +12,10 @@ from smart_reports.report_generation.pharmacy_report_final import generate_repor
 from typing import Dict, Any
 
 from .config import USE_MOCK_DATA
-
+from typing import Optional
+from .report_generation.report_config import source_current_location, source_custom_locations , source_shop_for_rent
+import json
+import os
 async def generate_pharmacy_report(req : Reqsmartreport):
     # Check if we should use mock data
     if USE_MOCK_DATA:
@@ -66,6 +69,7 @@ async def generate_pharmacy_report(req : Reqsmartreport):
     ## in this part For Each location (shop for rent), 
     # we fetch all the details of that specific locations
     all_shops_data = []
+    i = 0
     for shop in shops_for_rent:
         price = shop["properties"]['price'] or 0
         geometry = shop['geometry']
@@ -87,15 +91,61 @@ async def generate_pharmacy_report(req : Reqsmartreport):
             restaurant=restaurant,
             atm=atm,
             bank=bank,
-            place_url=extracted_part,
+            place_name=extracted_part,
             place_price=price
         )
 
         all_shops_data.append(shop_data)
-   
+        i += 1
+        if i == 150 :
+            print("locations have been fetched " , i)
+            break
+    
+    # --- Step 2: process custom_locations (if any) ---
+    if req.custom_locations:
+        for i , coord in enumerate(req.custom_locations , start=1):
+            shop_data = await fetch_all_criterions_data(
+                lat=coord.lat,
+                lng=coord.lng,
+                Userid=req.user_id,
+                hospital=hospitals,
+                pharmacies=pharmacies,
+                dentists=dentists,
+                grocery_store=grocery_store,
+                supermarket=supermarket,
+                restaurant=restaurant,
+                atm=atm,
+                bank=bank,
+                source = source_custom_locations,
+                place_name=f"Num {i} custom location",   # no URL for custom
+                place_price=None  # no price for custom
+            )
+            all_shops_data.append(shop_data)
+    
+    if req.current_location:
+        shop_data = await fetch_all_criterions_data(
+            lat=req.current_location.lat,
+            lng=req.current_location.lng,
+            Userid=req.user_id,
+            hospital=hospitals,
+            pharmacies=pharmacies,
+            dentists=dentists,
+            grocery_store=grocery_store,
+            supermarket=supermarket,
+            restaurant=restaurant,
+            atm=atm,
+            bank=bank,
+            source= source_current_location,
+            place_name="Your current location",
+            place_price=None
+        )
+        all_shops_data.append(shop_data)
+    
     # in this part we process all candidates locations data
     results = {}
+  
     for shop in all_shops_data:
+        source = shop.get("source")
         lat = shop.get("lat")
         lng = shop.get("lng")
         place_name = shop.get("place name")
@@ -134,6 +184,7 @@ async def generate_pharmacy_report(req : Reqsmartreport):
 
 
         results[loc_key] = {
+            "source" : source,
             "place name" : place_name,
             "lat": lat,
             "lng": lng,
@@ -160,7 +211,7 @@ async def generate_pharmacy_report(req : Reqsmartreport):
 
     criterion_weights = req.evaluation_metrics.dict()
     max_total = sum(criterion_weights.values())
-    report_data = await generate_report_from_data(results , criterion_weights , max_total) 
+    report_data = await generate_report_from_data(results , criterion_weights , max_total , top_n=2) 
     return report_data
 
 
@@ -176,8 +227,9 @@ async def fetch_all_criterions_data(
     restaurant: dict,
     atm: dict,
     bank: dict,
-    place_url : str,
-    place_price 
+    source : str = source_shop_for_rent,
+    place_name: Optional[str] = None,
+    place_price: Optional[float] = None   # or str, depending on your data
 ):
     """
     Fetch all relevant criterion data for evaluating a shop location.
@@ -211,7 +263,8 @@ async def fetch_all_criterions_data(
     # Add the new key right under num_of_pharmacies
     healthcare["healthcare"]["pharmacy"]["pharmacies_per_10k_population"] = pharmacies_per_10k
     return {
-        "place name" : place_url ,
+        "source" : source,
+        "place name" : place_name ,
         "lat": lat,
         "lng": lng ,
         "price" : place_price,
@@ -320,11 +373,11 @@ async def generate_html_pharmacy_report_file(req: Reqsmartreport = None, report_
 
 async def loading_category_dataset(req: ReqFetchDataset):
 
-    data = await fetch_dataset(req)   
     try:
-        features = data.get("features", []) 
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        features = data.get("features", [])
         return features
     except Exception as e:
         print("Error fetching features:", e)
         return []
-

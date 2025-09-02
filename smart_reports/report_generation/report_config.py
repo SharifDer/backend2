@@ -6,3 +6,6 @@ FONT_FAMILY = 'Arial'
 UNICODE_MINUS = False
 DEFAULT_OUTPUT_DIR = "static/pharmacy_report"
 DEFAULT_OUTPUT_FILENAME = "report.md"
+source_current_location = "current"
+source_custom_locations = "custom"
+source_shop_for_rent = "shop_for_rent"
