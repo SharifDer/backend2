@@ -154,6 +154,7 @@ class ReqPointTrafficScore(BaseModel):
     lng: float
     target_max_speed: int = 50
     method: str = "google_maps"  # "here" or "google_maps"
+    day_of_week: str | int = None # Optional e.g "Monday", 0-6
 
 class ResPointTrafficScore(BaseModel):
     score: float
@@ -181,7 +182,8 @@ async def analyze_traffic_endpoint(request: ReqPointTrafficScore):
             lat=request.lat,
             lng=request.lng,
             cleanup_screenshots=False,  # Don't cleanup when saving to static
-            save_to_static=True  # Save to static folder for web access
+            save_to_static=True,  # Save to static folder for web access
+            day_of_week=request.day_of_week
         )
     else:
         # Use HERE API method (default)
