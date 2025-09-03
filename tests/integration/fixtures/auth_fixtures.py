@@ -3,6 +3,15 @@ import httpx
 import logging
 from typing import Optional, Dict, Any
 from .user_fixtures import UserData
+import sys
+import os
+# Add project root to Python path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+# add 1 more level up to reach project root
+project_root = os.path.dirname(project_root)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from app_logger import get_logger
 logger = get_logger(__name__)

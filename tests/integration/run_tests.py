@@ -21,6 +21,12 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+# Add project root to Python path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from app_logger import get_logger
 logger = get_logger(__name__)
 
