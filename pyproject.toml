@@ -54,4 +54,5 @@ dependencies = [
     "html2image",
     "debugpy",
     "pillow>=10.0.0",
+    "seaborn"
 ]

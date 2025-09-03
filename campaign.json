@@ -3,11 +3,11 @@
     "id": 1,
     "title": "Dine-in Cafe/Restaurant",
     "description": "I am looking for best location to open dine in cafe/resturant in Riyad (Free Sample)",
-    "bgImage": "http://37.27.195.216:8000/static/cafe-analysis.png",
+    "bgImage": "http://localhost:8000/static/cafe-analysis.png",
     "options": {
-      "free_redirect": "https://example.com/cafe",
+      "free_redirect": "http://localhost:8050/cafe-analysis",
       "custom_redirect": {
-        "has_account": "https://newapp.com",
+        "has_account": "http://localhost:8050/",
         "no_account": "/plans"
       }
     }
@@ -16,11 +16,11 @@
     "id": 2,
     "title": "Warehouse Delivery",
     "description": "I am looking for a location to open a warehouse for my delivery service where I take goods from and deliver it to majority of people in Riyad in less than 25 mins (Free Sample)",
-    "bgImage": "http://37.27.195.216:8000/static/warehouse-analysis.png",
+    "bgImage": "http://localhost:8000/static/warehouse-analysis.png",
     "options": {
-      "free_redirect": "https://example.com/warehouse",
+      "free_redirect": "http://localhost:8050/warehouse-analysis",
       "custom_redirect": {
-        "has_account": "https://newapp.com",
+        "has_account": "http://localhost:8050/",
         "no_account": "/plans"
       }
     }
@@ -29,11 +29,11 @@
     "id": 3,
     "title": "Retail Store/Pharmacy",
     "description": "I am looking for best location to open a retail store/pharmacy in Riyad (Free Sample)",
-    "bgImage": "http://37.27.195.216:8000/static/pharmacy-analysis.png",
+    "bgImage": "http://localhost:8000/static/pharmacy-analysis.png",
     "options": {
-      "free_redirect": "https://example.com/pharmacy",
+      "free_redirect": "http://localhost:8050/pharmacy-analysis",
       "custom_redirect": {
-        "has_account": "https://newapp.com",
+        "has_account": "http://localhost:8050/",
         "no_account": "/plans"
       }
     }
@@ -42,11 +42,11 @@
     "id": 4,
     "title": "Try Something Else",
     "description": "Try something else",
-    "bgImage": "http://37.27.195.216:8000/static/custom-analysis.png",
+    "bgImage": "http://localhost:8000/static/custom-analysis.png",
     "options": {
-      "free_redirect": "https://example.com/custom",
+      "free_redirect": "http://localhost:3000/",
       "custom_redirect": {
-        "has_account": "https://newapp.com",
+        "has_account": "http://localhost:3000/",
         "no_account": "/plans"
       }
     }

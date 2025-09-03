@@ -40,4 +40,5 @@ for handler in logging.getLogger().handlers:
             # but might show replacement characters for unsupported Unicode
             pass
 
-logger = logging.getLogger(__name__)
+# Export the root logger so other modules can use it
+logger = logging.getLogger()

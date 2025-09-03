@@ -23,7 +23,7 @@ all_types/__pycache__/**
 
 # user files
 docker-compose.yml
-
+static/pharmacy_report/*
 static/plots/*
 static/reports/*
 static/traffic_screenshots/*

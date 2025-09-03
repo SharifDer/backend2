@@ -1,10 +1,8 @@
 import requests
 import math
-import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from config_factory import CONF
-
-logger = logging.getLogger(__name__)
+from logger import logger
 
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate distance between two points in meters using Haversine formula"""

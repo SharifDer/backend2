@@ -34,6 +34,7 @@ from all_types.request_dtypes import ReqDineInSuitabilityAnalysis
 from all_types.response_dtypes import ResDineInSuitabilityAnalysis
 from all_types.internal_types import UserId
 from smart_reports.reports import generate_pharmacy_report
+from smart_reports.reports import generate_html_pharmacy_report
 from traffic_data import get_here_traffic_score
 from standalone_google_maps_traffic import analyze_traffic_at_location
 from pydantic import BaseModel
@@ -144,7 +145,8 @@ async def ep_pharmacy_site_selection(
         req.request_body,
         Reqsmartreport,         # request schema
         ResModel[ResIntelligenceData],          # response schema, path string wrapped
-        generate_pharmacy_report,  # your core analysis function
+        #generate_pharmacy_report,  # your core analysis function
+        generate_html_pharmacy_report,
         wrap_output=True,
     )
     return response
