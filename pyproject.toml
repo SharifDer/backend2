@@ -52,5 +52,7 @@ dependencies = [
     "arabic_reshaper",
     "python-bidi",
     "html2image",
-    "debugpy"
+    "debugpy",
+    "pillow>=10.0.0",
+    "seaborn"
 ]
