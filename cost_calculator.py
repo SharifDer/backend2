@@ -1,6 +1,5 @@
 from all_types.request_dtypes import ReqFetchDataset
 from all_types.response_dtypes import ResCostEstimate
-import logging
 from logging_wrapper import apply_decorator_to_module
 from boolean_query_processor import optimize_query_sequence
 import json
@@ -8,7 +7,8 @@ import math
 from typing import Dict, Optional
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 COST_PER_1000_CALLS = 40
 MAX_RESULTS_THRESHOLD = 20  # Stop subdividing if results < 20

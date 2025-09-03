@@ -1,5 +1,4 @@
 import aiohttp
-import logging
 from typing import List, Dict, Any, Tuple, Optional
 import json
 import math
@@ -34,7 +33,8 @@ from storage_methods import (
 from tests.utils import _get_test_data_for_get_call,_get_test_data_for_post_call,_get_test_data_for_street_view
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 MIN_DELAY = 0.7  # Minimum delay in seconds
 

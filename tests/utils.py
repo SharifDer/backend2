@@ -10,7 +10,8 @@ from sql_object import SqlObject
 from logging_wrapper import apply_decorator_to_module
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 async def _get_test_data_for_get_call(ggl_api_url: str, headers: dict) -> dict:

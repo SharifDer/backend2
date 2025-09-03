@@ -26,7 +26,8 @@ sys.path.insert(
 from all_types.request_dtypes import ReqFetchDataset
 from tool_bridge_mcp_server.context import get_app_context
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 # --- Configuration is now a simple module-level constant ---
 FASTAPI_BASE_URL = "http://localhost:8000"

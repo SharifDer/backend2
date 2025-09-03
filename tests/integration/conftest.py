@@ -17,7 +17,8 @@ from .fixtures import (
     DatabaseCleanupManager,
 )
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 # Generate unique test identifiers for each test run
 TEST_RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]

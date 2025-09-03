@@ -16,7 +16,8 @@ from PIL import Image
 import numpy as np
 from collections import Counter
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 class GoogleMapsTrafficAnalyzer:
     """Standalone Google Maps traffic analyzer using screenshots and color detection"""

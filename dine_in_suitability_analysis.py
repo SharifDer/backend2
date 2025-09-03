@@ -1,7 +1,6 @@
 import os
 import json
 import asyncio
-import logging
 import math
 import unicodedata
 from typing import Dict, List, Any, Tuple, Optional
@@ -17,7 +16,8 @@ from report_generator import create_property_map, create_overview_map, generate_
 from all_types.request_dtypes import ReqFetchDataset, ReqIntelligenceData, ReqDineInSuitabilityAnalysis
 from all_types.internal_types import UserId
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 async def analyze_dine_in_sites(req: ReqDineInSuitabilityAnalysis) -> Dict[str, Any]:
     """Main function to analyze dine-in suitability for properties"""

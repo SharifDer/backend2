@@ -18,7 +18,8 @@ from pydantic import Field
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 from tool_bridge_mcp_server.context import get_app_context
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 # Configuration
 FASTAPI_BASE_URL = "http://localhost:8000"

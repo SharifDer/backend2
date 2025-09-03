@@ -34,7 +34,8 @@ import math
 
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 BACKEND_DIR = "Backend/real_estate_storage"
 USERS_PATH = "Backend/users"

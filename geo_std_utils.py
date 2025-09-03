@@ -2,14 +2,14 @@ import math
 from geopy.distance import geodesic
 import geopy.distance
 from datetime import timedelta, datetime
-import logging
 from typing import Optional, Dict, Any, List, Tuple
 from geopy.geocoders import Nominatim
 from all_types.request_dtypes import ReqFetchDataset, ReqGeodata
 from constants import load_country_city
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 def get_point_at_distance(start_point, bearing, distance_km):

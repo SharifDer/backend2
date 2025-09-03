@@ -21,7 +21,8 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 class TestServerManager:
     """Manages test server with proper database configuration"""

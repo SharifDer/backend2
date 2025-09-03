@@ -21,7 +21,8 @@ from tool_bridge_mcp_server.context import get_app_context
 from backend_common.common_storage import to_json_string_async
 import logging
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 def register_auth_tools(mcp: FastMCP):

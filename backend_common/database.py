@@ -9,16 +9,16 @@ from contextlib import asynccontextmanager
 import time
 from logging_wrapper import apply_decorator_to_module
 
-from logger import logging
+from app_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+logger.info("Database module loaded successfully")
 
 
 class Database:
     pool: Optional[Pool] = None
     last_refresh_time: float = 0
     refresh_interval: int = 3600  # Refresh every hour
-    time.sleep(5)
     dsn: str = os.getenv("DATABASE_URL")
 
     @classmethod

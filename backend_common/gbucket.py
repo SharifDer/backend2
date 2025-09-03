@@ -4,7 +4,8 @@ from google.cloud import storage
 from google.oauth2 import service_account
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 def get_google_cloud_bucket_conn(bucket_name: str, cred_path: str):

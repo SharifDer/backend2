@@ -8,7 +8,8 @@ from logging_wrapper import log_and_validate
 import logging
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 T = TypeVar("T", bound=BaseModel)

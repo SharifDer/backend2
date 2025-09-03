@@ -1,5 +1,4 @@
 from datetime import timedelta, datetime, timezone
-import logging
 import random
 from fuzzywuzzy import process, fuzz
 import re
@@ -75,7 +74,8 @@ from boolean_query_processor import reduce_to_single_query
 from popularity_algo import get_plan, transform_plan_items
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 async def fetch_census_realestate(

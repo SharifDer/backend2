@@ -4,7 +4,8 @@ import logging
 from typing import Optional, Dict, Any
 from .user_fixtures import UserData
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 class AuthHelper:
     """Handles authentication operations for tests"""

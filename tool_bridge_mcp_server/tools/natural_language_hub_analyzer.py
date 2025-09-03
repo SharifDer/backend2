@@ -31,7 +31,8 @@ except ImportError:
         def get_reports_path():
             return os.path.join(os.path.dirname(__file__), "../../reports")
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 # Configuration
 FASTAPI_BASE_URL = "http://localhost:8000"

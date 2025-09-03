@@ -21,7 +21,8 @@ from datetime import datetime
 from typing import Optional
 import time
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 def define_boundary(bounding_box: list[tuple[float, float]]) -> Polygon:

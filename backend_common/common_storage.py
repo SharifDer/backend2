@@ -15,9 +15,10 @@ from pydantic import BaseModel
 from backend_common.common_config import CONF
 from logging_wrapper import apply_decorator_to_module
 
-from logger import logging
+from app_logger import logging
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 class FileLock:

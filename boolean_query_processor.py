@@ -1,4 +1,3 @@
-import logging
 import json
 import re
 from sympy import parse_expr
@@ -9,7 +8,8 @@ from string import ascii_lowercase
 from typing import Tuple, Dict, List
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 def replace_boolean_operators(query: str) -> str:

@@ -6,7 +6,8 @@ from typing import Optional, Tuple
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 def setup_webdriver() -> Optional[webdriver.Chrome]:
     """Setup Chrome webdriver for screenshots"""

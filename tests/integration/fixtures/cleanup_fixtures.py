@@ -6,7 +6,8 @@ from firebase_admin import auth
 from backend_common.auth import firebase_db
 from .user_fixtures import UserData
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 class CleanupManager:
     """Handles cleanup of test resources"""

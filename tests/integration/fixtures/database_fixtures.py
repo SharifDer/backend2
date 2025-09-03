@@ -10,7 +10,8 @@ from .user_fixtures import UserData
 # Add Firebase imports
 from firebase_admin import firestore
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 class DatabaseSeeder:
     """Handles database seeding for integration tests"""

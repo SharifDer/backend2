@@ -7,7 +7,8 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from plot_generator import create_scatter_plots_html
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 def create_property_map(property_data: Dict[str, Any], businesses: List[Dict[str, Any]], 
                        traffic_details: List[Dict[str, Any]], analysis_radius: int) -> folium.Map:

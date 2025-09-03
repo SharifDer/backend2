@@ -17,7 +17,8 @@ import json
 from geopy.distance import geodesic
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 RADIUS_ZOOM_MULTIPLIER = {

@@ -6,11 +6,11 @@ from collections import defaultdict
 from backend_common.auth import firebase_db
 from google_api_connector import fetch_ggl_nearby
 from all_types.request_dtypes import ReqFetchDataset
-import logging
 from firebase_admin import firestore
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 # async def read_plan_data(plan_name):

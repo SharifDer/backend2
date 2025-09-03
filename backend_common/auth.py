@@ -32,7 +32,8 @@ from fastapi import BackgroundTasks
 import time
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 stripe.api_key = CONF.stripe_api_key

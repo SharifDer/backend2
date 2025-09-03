@@ -8,7 +8,8 @@ import logging
 background_tasks_context: ContextVar[BackgroundTasks] = ContextVar("background_tasks")
 
 
-logger = logging.getLogger(__name__)
+from app_logger import get_logger
+logger = get_logger(__name__)
 
 
 def wrap_task_with_logging(func, parent_func_name=None):
