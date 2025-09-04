@@ -13,6 +13,27 @@ class ResDineInSuitabilityAnalysis(BaseModel):
     total_properties_analyzed: int
     report_filename: str
 
+class PropertyAnalysisResult(BaseModel):
+    """Individual property analysis result"""
+    rank: int
+    property_id: str
+    final_score: float
+    price: float
+    url: str
+    traffic_score: float
+    business_score: float
+    demographics_score: float
+    competition_score: float
+
+class AnalysisSummary(BaseModel):
+    """Summary statistics for the analysis"""
+    total_properties: int
+    avg_score: float
+    top_score: float
+    avg_price: float
+    total_businesses: int
+    total_competitors: int
+
 class ResModel(BaseModel, Generic[T]):
     message: str
     request_id: str

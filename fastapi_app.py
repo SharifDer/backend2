@@ -44,7 +44,10 @@ app.include_router(plans_router, prefix="", tags=["Plans"])
 
 # Create static directory and mount static files
 os.makedirs("static/plots", exist_ok=True)
-os.makedirs("static/reports", exist_ok=True)
+try:
+    os.makedirs("static/reports", exist_ok=True)
+except FileExistsError:
+    pass
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 

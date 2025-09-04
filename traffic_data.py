@@ -19,66 +19,127 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     
     return R * c
 
-async def fetch_here_traffic_flow(bbox: str) -> List[Dict[str, Any]]:
-    """Fetch traffic flow data from HERE API"""
+def chunk_bounding_box(min_lng: float, min_lat: float, max_lng: float, max_lat: float, max_size: float = 0.95) -> List[Dict[str, float]]:
+    """Split a large bounding box into smaller chunks that fit HERE API limits"""
+    chunks = []
+    
+    # Calculate how many chunks we need in each direction
+    width = max_lng - min_lng
+    height = max_lat - min_lat
+    
+    lng_chunks = math.ceil(width / max_size)
+    lat_chunks = math.ceil(height / max_size)
+    
+    # Calculate actual chunk sizes
+    lng_step = width / lng_chunks
+    lat_step = height / lat_chunks
+    
+    logger.info(f"Splitting bounding box into {lng_chunks}x{lat_chunks} = {lng_chunks * lat_chunks} chunks")
+    logger.info(f"Original size: {width:.3f}° x {height:.3f}°, Chunk size: {lng_step:.3f}° x {lat_step:.3f}°")
+    
+    # Create chunks
+    for i in range(lng_chunks):
+        for j in range(lat_chunks):
+            chunk_min_lng = min_lng + i * lng_step
+            chunk_max_lng = min(min_lng + (i + 1) * lng_step, max_lng)
+            chunk_min_lat = min_lat + j * lat_step
+            chunk_max_lat = min(min_lat + (j + 1) * lat_step, max_lat)
+            
+            chunks.append({
+                'min_lng': chunk_min_lng,
+                'min_lat': chunk_min_lat,
+                'max_lng': chunk_max_lng,
+                'max_lat': chunk_max_lat,
+                'bbox_string': f"{chunk_min_lng},{chunk_min_lat},{chunk_max_lng},{chunk_max_lat}"
+            })
+    
+    return chunks
+
+async def fetch_here_traffic_flow_chunked(bbox: str) -> List[Dict[str, Any]]:
+    """Fetch traffic flow data with automatic chunking for large bounding boxes"""
     if not hasattr(CONF, 'here_api_key') or not CONF.here_api_key or CONF.here_api_key == "Put your api key":
         logger.error("HERE API key not configured.")
         raise ValueError("Failed to get traffic data from API, generate request again")
     
+    # Parse bounding box
+    coords = list(map(float, bbox.split(',')))
+    min_lng, min_lat, max_lng, max_lat = coords
+    
+    # Check if chunking is needed
+    width = max_lng - min_lng
+    height = max_lat - min_lat
+    max_dimension = max(width, height)
+    
+    if max_dimension <= 1.0:
+        # Single request - no chunking needed
+        logger.info(f"Bounding box size {width:.3f}° x {height:.3f}° - making single API call")
+        return await fetch_here_traffic_flow_single(bbox)
+    else:
+        # Multiple requests - chunking needed
+        logger.info(f"Bounding box size {width:.3f}° x {height:.3f}° - chunking required")
+        chunks = chunk_bounding_box(min_lng, min_lat, max_lng, max_lat)
+        
+        all_results = []
+        successful_chunks = 0
+        
+        for i, chunk in enumerate(chunks):
+            try:
+                logger.info(f"Fetching chunk {i+1}/{len(chunks)}: {chunk['bbox_string']}")
+                chunk_results = await fetch_here_traffic_flow_single(chunk['bbox_string'])
+                all_results.extend(chunk_results)
+                successful_chunks += 1
+                
+                # Small delay between requests to be respectful to the API
+                if i < len(chunks) - 1:  # Don't delay after the last request
+                    import asyncio
+                    await asyncio.sleep(0.1)
+                    
+            except Exception as e:
+                logger.warning(f"Failed to fetch chunk {i+1}: {e}")
+                continue
+        
+        logger.info(f"Successfully fetched {successful_chunks}/{len(chunks)} chunks, total segments: {len(all_results)}")
+        
+        if successful_chunks == 0:
+            raise ValueError("Failed to get traffic data from API, generate request again")
+        
+        return all_results
+
+async def fetch_here_traffic_flow_single(bbox: str) -> List[Dict[str, Any]]:
+    """Fetch traffic flow data from HERE API for a single bounding box"""
     params = {
         'in': f'bbox:{bbox}',
         'locationReferencing': 'shape',
         'apikey': CONF.here_api_key
     }
     
-    logger.info("Fetching traffic flow data from HERE API...")
-    
-    response = requests.get(CONF.here_traffic_flow_url, params=params, timeout=30)
-    response.raise_for_status()
-    
-    data = response.json()
-    
-    if 'results' in data and data['results']:
-        logger.info(f"Successfully fetched {len(data['results'])} traffic flow segments")
-        return data['results']
-    else:
-        logger.error("No results in HERE API response")
+    try:
+        response = requests.get(CONF.here_traffic_flow_url, params=params, timeout=30)
+        
+        # Check for specific bounding box error
+        if response.status_code == 400:
+            error_data = response.json()
+            if 'cause' in error_data and 'maximum width and height' in error_data['cause']:
+                logger.error(f"HERE API bounding box error: {error_data}")
+                raise ValueError("Bounding box too large - this should not happen with chunking")
+        
+        response.raise_for_status()
+        data = response.json()
+        
+        if 'results' in data and data['results']:
+            return data['results']
+        else:
+            logger.warning("No results in HERE API response for this chunk")
+            return []
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching HERE traffic data: {e}")
         raise ValueError("Failed to get traffic data from API, generate request again")
 
-async def get_here_traffic_score(property_lat: float, property_lng: float, 
-                               target_max_speed: int = 50) -> Dict[str, Any]:
-    """
-    Get traffic score using HERE API
-    
-    Args:
-        property_lat: Latitude of the property
-        property_lng: Longitude of the property  
-        target_max_speed: Maximum desired speed for scoring
-        
-    Returns:
-        Dict containing traffic analysis results from HERE API
-    """
-    try:
-        # Generate bbox for single point
-        buffer = 0.01  # ~1km buffer
-        bbox = f"{property_lng - buffer},{property_lat - buffer},{property_lng + buffer},{property_lat + buffer}"
-        
-        traffic_data = await fetch_here_traffic_flow(bbox)
-        result = calculate_traffic_score(property_lat, property_lng, traffic_data, target_max_speed)
-        result['method'] = 'here_api'
-        
-        logger.info(f"HERE API traffic analysis successful: Score {result['score']}")
-        return result
-            
-    except Exception as e:
-        logger.error(f"HERE API traffic analysis failed: {e}")
-        return {
-            'score': 0,
-            'method': 'here_api_failed',
-            'error': str(e),
-            'coordinates': {'lat': property_lat, 'lng': property_lng}
-        }
-            
+# Update the main function to use the new chunked version
+async def fetch_here_traffic_flow(bbox: str) -> List[Dict[str, Any]]:
+    """Main entry point - automatically handles chunking if needed"""
+    return await fetch_here_traffic_flow_chunked(bbox)
 
 def calculate_distance_score(min_distance: float) -> float:
     """Calculate distance score based on proximity to nearest road"""
@@ -178,7 +239,7 @@ def calculate_traffic_score(property_lat: float, property_lng: float,
     }
 
 def get_traffic_bbox_for_candidates(candidates: List[Dict[str, Any]]) -> str:
-    """Generate bounding box for traffic data based on candidates"""
+    """Generate bounding box for traffic data based on candidates with optimized buffer"""
     if not candidates:
         # Default Riyadh bbox
         return "46.5000,24.6000,46.8000,24.8000"
@@ -189,11 +250,29 @@ def get_traffic_bbox_for_candidates(candidates: List[Dict[str, Any]]) -> str:
     min_lat, max_lat = min(lats), max(lats)
     min_lng, max_lng = min(lngs), max(lngs)
     
-    # Add buffer
-    buffer = 0.02
+    # Use smaller buffer to avoid exceeding limits
+    # Calculate current dimensions
+    current_width = max_lng - min_lng
+    current_height = max_lat - min_lat
+    
+    # Use adaptive buffer - smaller for larger areas
+    if max(current_width, current_height) > 0.8:
+        buffer = 0.005  # Very small buffer for large areas
+    elif max(current_width, current_height) > 0.5:
+        buffer = 0.01   # Small buffer for medium areas  
+    else:
+        buffer = 0.02   # Normal buffer for small areas
+    
     min_lng -= buffer
     max_lng += buffer
     min_lat -= buffer
     max_lat += buffer
     
-    return f"{min_lng},{min_lat},{max_lng},{max_lat}"
+    bbox = f"{min_lng},{min_lat},{max_lng},{max_lat}"
+    
+    # Log the final bounding box size for debugging
+    final_width = max_lng - min_lng
+    final_height = max_lat - min_lat
+    logger.info(f"Generated traffic bounding box: {final_width:.3f}° x {final_height:.3f}° (buffer: {buffer:.3f}°)")
+    
+    return bbox

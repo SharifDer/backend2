@@ -111,27 +111,24 @@ async def ep_hub_expansion_analysis(
 
 
 @analysis_router.post(
-    CONF.dine_in_suitability_analysis,
-    response_model=ResModel[ResDineInSuitabilityAnalysis],
-    dependencies=[Depends(JWTBearer())],
+    "/dine_in_suitability_analysis", response_model=ResModel[ResDineInSuitabilityAnalysis]
 )
 async def ep_dine_in_suitability_analysis(
-    req: ReqModel[ReqDineInSuitabilityAnalysis], 
-    request: Request
+    req: ReqModel[ReqDineInSuitabilityAnalysis],
 ):
     try:
-        response = await request_handling(
-            req.request_body,
-            ReqDineInSuitabilityAnalysis,
-            ResModel[ResDineInSuitabilityAnalysis],
-            analyze_dine_in_sites,
-            wrap_output=True,
+        # Direct call - bypass request_handling wrapper
+        result = await analyze_dine_in_sites(req.request_body)
+        
+        return ResModel(
+            message="Analysis completed successfully",
+            request_id="dine_in_analysis",
+            data=result
         )
-        return response
     except ValueError as e:
         if "Failed to get traffic data from API" in str(e):
             raise HTTPException(status_code=503, detail=str(e))
-        raise
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @analysis_router.post(
     CONF.smart_pharmacy_report,   # <-- add a new path constant in CONF
