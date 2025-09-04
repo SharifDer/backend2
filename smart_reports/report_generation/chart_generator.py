@@ -9,6 +9,7 @@ from typing import List, Dict
 import arabic_reshaper
 from bidi.algorithm import get_display
 from .report_config import CHART_DPI,CHART_FIGSIZE
+import logging
 
 
 # Set up matplotlib for Arabic text
@@ -155,3 +156,115 @@ def plot_breakdown(site: Dict, outpath: str , criterions : dict):
     fig.tight_layout()
     fig.savefig(outpath, bbox_inches='tight')
     plt.close(fig)
+
+
+def plot_score_vs_price(sites: List[Dict], top_n: int, outpath: str):
+    """Scatter plot of Final Score vs Price for top N sites with colored points like the example."""
+    CHART_FIGSIZE = (10, 6)
+    CHART_DPI = 100
+
+    # Sort top N sites by total_score
+    top_sites = sorted(
+    [s for s in sites if isinstance(s.get('price'), (int, float))],
+    key=lambda s: s.get('total_score', 0),
+    reverse=True
+                )[:top_n]
+    if not top_sites:
+        return
+
+    # Extract data
+    scores = [s['total_score'] for s in top_sites]
+    prices = [s.get('price', 0) for s in top_sites]
+    names = [f"  Number {i}" for i,_ in enumerate(top_sites)]
+
+    # Color points based on score tier
+    colors = []
+    for score in scores:
+        if score >= 75:
+            colors.append('green')
+        elif score >= 70:
+            colors.append('orange')
+        else:
+            colors.append('red')
+
+    fig, ax = plt.subplots(figsize=CHART_FIGSIZE, dpi=CHART_DPI)
+    
+    # Scatter plot
+    ax.scatter(prices, scores, color=colors, s=80, edgecolor='black', linewidth=0.5, zorder=3)
+    
+    # Optional: add labels next to points
+    for x, y, label in zip(prices, scores, names):
+        ax.text(x, y, f" {label}", fontsize=9, ha='left', va='center', zorder=4)
+
+    ax.set_xlabel('Rent Price (SAR)', fontsize=12)
+    ax.set_ylabel('Final Score', fontsize=12)
+    ax.set_title(f"Rent Price vs Final Score — Top {top_n} Sites", fontsize=16, fontweight='bold', pad=20)
+    ax.grid(True, alpha=0.3)
+    ax.set_axisbelow(True)
+
+    plt.tight_layout()
+    fig.savefig(outpath, bbox_inches='tight')
+    plt.close(fig)
+
+
+
+
+
+def plot_healthcare_vs_competition(sites: List[Dict], outpath: str, top_n: int):
+    """
+    Generates a scatter plot of healthcare facility count vs. competition for the top N sites.
+    
+    Args:
+        sites (List[Dict]): A list of site data dictionaries.
+        outpath (str): The file path to save the generated chart image.
+        top_n (int): The number of top sites to include in the plot, sorted by score.
+    """
+    CHART_FIGSIZE = (10, 6)
+    CHART_DPI = 100
+        
+    top_sites = sorted(sites, key=lambda s: s.get('total_score', 0), reverse=True)[:top_n]
+
+    if not top_sites:
+        logging.warning("No sites to plot for healthcare vs competition chart.")
+        return
+
+    # Extract data for the plot, defaulting to 0 if keys are missing or values are None
+    # X-axis: Sum of hospitals and dentists
+    healthcare_counts = [
+        (s.get('num_of_hospitals')) + (s.get('num_of_dentists'))
+        for s in top_sites
+    ]
+    # Y-axis: Number of competing pharmacies
+    competition_counts = [s.get('competing_pharmacies')for s in top_sites]
+
+    # --- Plotting ---
+    fig, ax = plt.subplots(figsize=CHART_FIGSIZE, dpi=CHART_DPI)
+
+    # Create the scatter plot with styling similar to the example image
+    ax.scatter(
+        healthcare_counts, 
+        competition_counts, 
+        s=100,                  # Marker size
+        c='#3498db',            # A clear, medium blue color
+        alpha=0.8,              # Semi-transparent markers
+        edgecolors='#2980b9'    # A slightly darker edge for definition
+    )
+
+    # --- Titles and Labels ---
+    ax.set_title('Healthcare Count vs Competition', fontsize=16, fontweight='bold', pad=20)
+    ax.set_xlabel('Number of Healthcare Facilities (Hospitals & Dentists)', fontsize=12)
+    ax.set_ylabel('Number of Competing Pharmacies', fontsize=12)
+
+    # --- Grid and Layout ---
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray')
+    ax.set_axisbelow(True) # Ensure the grid is drawn behind the plot elements
+
+    # Set axis limits to start from 0 and add some padding for clarity
+    ax.set_xlim(left=-1, right=max(healthcare_counts or [0]) * 1.1 + 2)
+    ax.set_ylim(bottom=-1, top=max(competition_counts or [0]) * 1.1 + 2)
+
+    # --- Save Figure ---
+    plt.tight_layout()
+    fig.savefig(outpath, bbox_inches='tight')
+    plt.close(fig)
+    logging.info(f"Successfully generated healthcare vs competition chart at {outpath}")
