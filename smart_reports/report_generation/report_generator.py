@@ -18,7 +18,7 @@ def generate_detailed_insights(site: Dict) -> str:
     avg_speed = site.get("average speed in km")
     if avg_speed is not None:
         if 20 <= avg_speed <= 30:
-            traffic_status = "✅ Optimal accessibility — moderate traffic flow ensures both convenience and visibility."
+            traffic_status = "✅ Optimal traffic — moderate traffic flow ensures both convenience and visibility."
         elif avg_speed < 20:
             traffic_status = "⚠️ Heavy congestion — low traffic speed may reduce accessibility but can increase local visibility."
         else:
@@ -79,6 +79,21 @@ def generate_detailed_insights(site: Dict) -> str:
             f"Competeing Pharmacies in the area: {site['competing_pharmacies']}  \n"
             f"{market_status}\n\n"
         )
+    hospitals = site.get("num_of_hospitals", 0)
+    dentists = site.get("num_of_dentists", 0)
+    if hospitals + dentists > 10:
+        health_status = "✅ Strong healthcare hub — high concentration of facilities ensures steady demand."
+    elif hospitals + dentists >= 5:
+        health_status = "⚠️ Moderate healthcare presence — demand is supported but with limited spillover."
+    else:
+        health_status = "❌ Weak healthcare presence — fewer facilities may reduce referral opportunities."
+    
+    insights.append(
+        f"### 🏥 Healthcare Environment\n"
+        f"Hospitals nearby: {hospitals}  \n"
+        f"Dentists nearby: {dentists}  \n"
+        f"Assessment: {health_status}\n\n"
+    )
 
     return "".join(insights)
 
@@ -157,8 +172,8 @@ def generate_enhanced_table(sites: List[Dict],  MAX_TOTAL : float , CRITERION_WE
         return "_No sites available for table generation._\n"
 
     header = (
-        "| Rank | Site Name | Price (SAR) | Final Score | Traffic | Demographics | "
-        "Competition | Healthcare Ecosystem | Complementary Businesses | View |\n"
+        "| Rank | Site Name |Rent Price (SAR) | Final Score | Traffic | Demographics | "
+        "Competition | Healthcare Environment | Complementary Businesses | View |\n"
         "|:----:|:---------:|:-----------:|:-----------:|:-------:|:-----------:|"
         ":----------:|:-----------------:|:-------------------:|:---:|\n"
     )
@@ -194,7 +209,7 @@ def generate_enhanced_table(sites: List[Dict],  MAX_TOTAL : float , CRITERION_WE
             f"| {site['rank']} | {site['display_name']} | {price_display} | {final_score_100:.1f} | "
             f"{traffic_100:.1f} | {demographics_100:.1f} | {competitive_100:.1f} | "
             f"{healthcare_100:.1f} | {complementary_100:.1f} | "
-            f"[View]({google_maps_link(site)}) |\n"
+            f"[View]({site['url']}) |\n"
         )
     return header + "".join(rows) + "\n"
 
@@ -218,13 +233,14 @@ def write_detailed_analysis(
             if (s['lat'] is not None and s['lng'] is not None)
             else f"**Location:** {s.get('raw_place') or 'N/A'}"
         )
-        price_text = f"**Price:** {s.get('price', 0):,} SAR" if s.get('price') else "**Price:** Not specified"
+        price_text = f"**Rent Price:** {s.get('price', 0):,} SAR" if s.get('price') else "**Rent Price:** Not specified"
         
         md.write(f"{coords_text} | {price_text} | Category: {category} \n\n")
-        
+        analysis_space = "Analysis Preformed for locations with 2km from all sides"
+        md.write(f"{analysis_space}\n\n")
         # Generate insights
         md.write(generate_detailed_insights(s))
-        md.write(f"**[🗺️ View on Google Maps]({google_maps_link(s)})**\n\n")
+        md.write(f"**[🗺️ View location]({s["url"]})**\n\n")
         
         # Maps
         map_image, html_map = generate_site_map_image(s, maps_dir, MAX_TOTAL)
@@ -283,6 +299,7 @@ def write_detailed_analysis(
             "rank": i,
             "site_name": s['display_name'],
             "final_score": round(final_score_100, 1),
+            "analysis_space" : analysis_space,
             "location": {
                 "latitude": s['lat'] if s['lat'] is not None else None,
                 "longitude": s['lng'] if s['lng'] is not None else None,
@@ -290,7 +307,7 @@ def write_detailed_analysis(
             },
             "price_sar": s.get('price', 0) if s.get('price') else None,
             "category": category,
-            "google_maps_url": google_maps_link(s),
+            "url": s.get("url"),
             "maps": {
                 "static_map_url": map_image_rel,
                 "interactive_map_url": html_map_rel
@@ -330,8 +347,10 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
         md.write(f"# {report_data['title']}\n\n")
         
         report_data["description"] = (
-            "Comprehensive site selection report with multi-criteria scoring analysis "
-            "across traffic, demographics, competition, healthcare proximity, and complementary businesses."
+            f"This Comprehensive analysis evaluates {num_of_sites} pharmacy locations accorss Riyadh "
+            "using advanced location intelligence methodologies. Each locations is systematically socred using "
+            "our propiertary, wieghted methodolgy considering "
+            "traffic, demographics, competition, healthcare proximity, and complementary businesses."
         )
         md.write(f"{report_data['description']}\n\n")
         
@@ -345,7 +364,7 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
         # Convert average score to 100 scale for display
         avg_score_100 = (stats['average_score'] / MAX_TOTAL) * 100
         md.write(f"- **Average Score:** {avg_score_100:.1f}/100\n")
-        md.write(f"- **Average Price:** {stats['average_price']:,.0f} SAR\n")
+        md.write(f"- **Average Rent Price:** {stats['average_price']:,.0f} SAR\n")
         md.write(f"- **Competing Pharmacies:** {stats['total_competing_pharmacies']}\n\n")
         
         report_data["summary_metrics"] = {
@@ -361,10 +380,12 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
         
         executive_summary = {}
         if best:
+            price = best.get('price')
+            price_str = f"{price:,}" if price is not None else "N/A"
             best_score_100 = (best['total_score'] / MAX_TOTAL) * 100
             top_rec_text = (
                 f"**Top recommendation:** **{best['display_name']}** with an overall score of "
-                f"{best_score_100:.1f}/100 points, priced at {best.get('price', 0):,} SAR.\n\n"
+                f"{best_score_100:.1f}/100 points, rent priced at {price_str} SAR.\n\n"
             )
             md.write(top_rec_text)
             
@@ -498,7 +519,26 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
                     "type": "site_breakdown",
                     "url": chart_path
                 })
-
+        if charts.get('price_vs_score') and os.path.exists(charts['price_vs_score']):
+            path = charts.get('price_vs_score')
+            if path:
+                chart_path = path.replace('\\', '/')
+                md.write(f"**Price VS Final Score :**\n\n![Price VS Score]({chart_path})\n\n")
+                visual_analysis["charts"].append({
+                    "title": "Best Site Breakdown",
+                    "type": "site_breakdown",
+                    "url": chart_path
+                })
+        if charts.get('healthcare_competition') and os.path.exists(charts['healthcare_competition']):
+            path = charts.get('healthcare_competition')
+            if path:
+                chart_path = path.replace('\\', '/')
+                md.write(f"**Healthcare vs pharmacies competition :**\n\n![healthcare_competition]({chart_path})\n\n")
+                visual_analysis["charts"].append({
+                    "title": "Healthcare vs Pharmacy Competition",
+                     "type": "healthcare_competition",
+                    "url": chart_path
+                })
         # Maps
         maps_title = "🗺️ Geographic Analysis"
         md.write(f"## {maps_title}\n\n")
@@ -607,12 +647,12 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
         }
 
         # Healthcare Ecosystem (20%)
-        md.write("### 🏥 Healthcare Ecosystem (20%)\n")
+        md.write("### 🏥 Healthcare Environment (20%)\n")
         health_method = (
             "**Data Source:** POI analysis of hospitals and dental clinics  \n"
             "**Method:** Scoring based on proximity to nearby hospitals and dentists (≤1500m preferred)  \n"
             "**Scoring:** Average of proximity scores; closer and more accessible healthcare improves score  \n"
-            "**Rationale:** A strong healthcare ecosystem increases site attractiveness and convenience for residents.\n\n"
+            "**Rationale:** A strong healthcare environment increases site attractiveness and convenience for residents.\n\n"
         )
         md.write(health_method)
         
@@ -621,7 +661,7 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             "data_source": "POI analysis of hospitals and dental clinics",
             "method": "Scoring based on proximity to nearby hospitals and dentists (≤1500m preferred)",
             "scoring": "Average of proximity scores; closer and more accessible healthcare improves score",
-            "rationale": "A strong healthcare ecosystem increases site attractiveness and convenience for residents."
+            "rationale": "A strong healthcare environment increases site attractiveness and convenience for residents."
         }
 
         # Complementary Businesses (10%)
@@ -743,8 +783,8 @@ def generate_table_with_current_comparison(
 
     current = current_location[0]  # baseline
     header = (
-        "| Rank | Site Name | Price (SAR) | Final Score | Traffic | Demographics | "
-        "Competition | Healthcare Ecosystem | Complementary Businesses | View |\n"
+        "| Rank | Site Name | Rent Price (SAR) | Final Score | Traffic | Demographics | "
+        "Competition | Healthcare Environment  | Complementary Businesses | View |\n"
         "|:----:|:---------:|:-----------:|:-----------:|:-------:|:-----------:|"
         ":----------:|:-----------------:|:-------------------:|:---:|\n"
     )
@@ -793,7 +833,7 @@ def generate_table_with_current_comparison(
         rows.append(
             f"| {site['rank']} | {site['display_name']} | {price_display} | {final_display} | "
             f"{traffic_display} | {demo_display} | {comp_display} | {health_display} | {complement_display} | "
-            f"[View]({google_maps_link(site)}) |\n"
+            f"[View]({site["url"]}) |\n"
         )
 
     return header + "".join(rows) + "\n"
