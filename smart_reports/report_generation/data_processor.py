@@ -63,7 +63,7 @@ def _process_single_site(
     lng = rec.get('lng')
     price = rec.get('price', 0)
     source = rec.get("source")
-
+    url = rec.get("url")
     site = {
         'id': key,
         "source" : source,
@@ -72,6 +72,7 @@ def _process_single_site(
         'lat': None,
         'lng': None,
         'price': price,
+        "url" : url,
         'scores': {},
         'details': {},
         'competing_pharmacies': 0,
@@ -79,7 +80,10 @@ def _process_single_site(
         "average speed in km": rec.get("data", {}).get("Average Vehicle Speed in km"),
         "Age above 35": rec.get("data", {}).get("percentage_age_above_35"),
         "Average Income": rec.get("data", {}).get("avg_income"),
-        "pharmacies_per_10k_population": rec.get("data", {}).get("pharmacies_per_10k_population")
+        "pharmacies_per_10k_population": rec.get("data", {}).get("pharmacies_per_10k_population"),
+        "num_of_hospitals" : rec.get("data" , {}).get("number of hospitals around"),
+        "num_of_dentists" : rec.get("data" , {}).get("number of dentists around")
+
     }
 
     try:
