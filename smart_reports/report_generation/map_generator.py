@@ -88,7 +88,7 @@ def generate_site_map_image(site_data: Dict, output_dir: str , MAX_TOTAL) -> str
     # Analysis radius circle
     folium.Circle(
         [site_data['lat'], site_data['lng']],
-        radius=300,
+        radius=1000,
         color='red',
         weight=2,
         fill=True,
@@ -99,18 +99,6 @@ def generate_site_map_image(site_data: Dict, output_dir: str , MAX_TOTAL) -> str
     ).add_to(m)
 
     # Traffic line (example coordinates)
-    traffic_coords = [
-        [site_data['lat'] - 0.003, site_data['lng'] - 0.005],
-        [site_data['lat'] + 0.003, site_data['lng'] + 0.005]
-    ]
-    folium.PolyLine(
-        locations=traffic_coords,
-        color='red',
-        weight=6,
-        opacity=0.6,
-        popup='Traffic Pattern'
-    ).add_to(m)
-
     # Title
     title_html = '''
     <div style="position: fixed; 
@@ -223,13 +211,12 @@ def create_static_map_png(sites: List[Dict], outpath: str, top_n: int = 10, exte
             x, y = point_3857.geometry[0].coords[0]
             
             # Plot star marker
-            ax.scatter(x, y, s=200, color='red', marker='*', 
-                      edgecolors='darkred', linewidth=2, zorder=5)
+            ax.scatter(x, y, s=200, color='red', marker='*', edgecolors='darkred', linewidth=2, zorder=5)
+
             
             # Add rank number
             ax.text(x, y, f" {i}", fontsize=12, weight='bold', 
-                   color='white', ha='left', va='center', zorder=6)
-
+                    color='white', ha='left', va='center', zorder=6)
         # Add basemap
         ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik, alpha=0.8)
         
