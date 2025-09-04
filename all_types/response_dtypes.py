@@ -216,11 +216,11 @@ class ResIntelligenceData(BaseModel):
     executive_summary: Dict[str, Any]  # top recommendation and evaluation overview
     key_investment_insights: List[Dict[str, Any]]  # main insights per category
     rankings: List[Dict[str, Any]]  # site rankings and scores
-    custom_locations : Optional[List[Dict[str,Any]]]
-    current_location : Optional[List[Dict[str,Any]]]
+    custom_locations : Optional[List[Dict[str,Any]]] = None
+    current_location : Optional[List[Dict[str,Any]]] = None
     detailed_analysis: List[Dict[str, Any]]  # full analysis per site
-    custom_detailed_analysis : Optional[List[Dict[str , Any]]]
-    current_detailed_analysis : Optional[List[Dict[str , Any]]]
+    custom_detailed_analysis : Optional[List[Dict[str , Any]]] = None
+    current_detailed_analysis : Optional[List[Dict[str , Any]]] = None
     visual_analysis: Dict[str, List[Dict[str, Any]]]  # charts and maps
     methodology: Dict[str, Any]  # scoring method and criteria
     statistical_insights: List[Dict[str, Any]]  # statistical observations
