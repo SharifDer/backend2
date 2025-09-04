@@ -18,7 +18,7 @@ from typing import Dict
 # Import our modular components
 
 from .data_processor import  process_sites, calculate_statistics
-from .chart_generator import plot_top_stacked, plot_traffic, plot_breakdown
+from .chart_generator import plot_top_stacked, plot_traffic, plot_breakdown, plot_healthcare_vs_competition, plot_score_vs_price
 from .map_generator import create_static_map_png, create_demographic_heatmap_png
 from .report_generator import generate_markdown
 from .report_config import FONT_FAMILY, UNICODE_MINUS, DEFAULT_OUTPUT_DIR, DEFAULT_OUTPUT_FILENAME
@@ -33,33 +33,29 @@ def generate_all_charts(sites: list, outdir: str, top_n: int , criterions : dict
     charts = {
         'top_stacked': os.path.join(outdir, 'charts', 'top_stacked.png'),
         'traffic': os.path.join(outdir, 'charts', 'traffic_flow.png'),
-        'best_breakdown': os.path.join(outdir, 'charts', 'best_breakdown.png')
+        'best_breakdown': os.path.join(outdir, 'charts', 'best_breakdown.png'),
+        'price_vs_score' : os.path.join(outdir , 'charts' , 'price_vs_score.png'),
+        'healthcare_competition' : os.path.join(outdir , 'charts' , 'healthcare_competition.png')
     }
     
     # Generate top stacked chart
-    try:
-        list_criterions = list(criterions)
-        plot_top_stacked(sites, top_n, charts['top_stacked'] , list_criterions)
-        logging.info("✅ Generated top stacked chart")
-    except Exception as e:
-        logging.warning(f"❌ Failed to generate top stacked chart: {e}" , exc_info=True)
+
+    list_criterions = list(criterions)
+    plot_top_stacked(sites, top_n, charts['top_stacked'] , list_criterions)
+    logging.info("✅ Generated top stacked chart")
+
     
     # Generate traffic chart
-    try:
-        plot_traffic(sites, charts['traffic'])
-        logging.info("✅ Generated traffic analysis chart")
-    except Exception as e:
-        logging.warning(f"❌ Failed to generate traffic chart: {e}" , exc_info=True)
+
+    plot_traffic(sites, charts['traffic'])
+
     
     # Generate best site breakdown chart
-    try:
-        if sites:
-            best = max(sites, key=lambda s: s.get('total_score', 0))
-            plot_breakdown(best, charts['best_breakdown'] , criterions)
-            logging.info("✅ Generated best site breakdown chart")
-    except Exception as e:
-        logging.warning(f"❌ Failed to generate breakdown chart: {e}" , exc_info=True)
-    
+
+    best = max(sites, key=lambda s: s.get('total_score', 0))
+    plot_breakdown(best, charts['best_breakdown'] , criterions)
+    plot_score_vs_price(sites , top_n=top_n, outpath=charts['price_vs_score'])
+    plot_healthcare_vs_competition(sites=sites , outpath=charts['healthcare_competition'] , top_n=top_n)
     return charts
 
 def ensure_directories(outdir: str):
