@@ -9,7 +9,7 @@ def generate_detailed_insights_dict(site: Dict) -> Dict[str, Any]:
     avg_speed = site.get("average speed in km")
     if avg_speed is not None:
         if 20 <= avg_speed <= 30:
-            traffic_status = "Optimal accessibility — moderate traffic flow ensures both convenience and visibility."
+            traffic_status = "Optimal traffic — moderate traffic flow ensures both convenience and visibility."
             traffic_level = "optimal"
         elif avg_speed < 20:
             traffic_status = "Heavy congestion — low traffic speed may reduce accessibility but can increase local visibility."
@@ -83,7 +83,22 @@ def generate_detailed_insights_dict(site: Dict) -> Dict[str, Any]:
             "market_status": market_status,
             "market_level": market_level
         }
-
+    hospitals = site.get("num_of_hospitals", 0)
+    dentists = site.get("num_of_dentists", 0)
+    
+    if hospitals + dentists > 10:
+        health_status = "✅ Strong healthcare hub — high concentration of facilities ensures steady demand."
+    elif hospitals + dentists >= 5:
+        health_status = "⚠️ Moderate healthcare presence — demand is supported but with limited spillover."
+    else:
+        health_status = "❌ Weak healthcare presence — fewer facilities may reduce referral opportunities."
+    
+    insights["healthcare_environment"] = {
+    "hospitals_around" : hospitals,
+    "dentists_around" : dentists,
+    "healthcare_places" : hospitals + dentists,
+    "healthcare_market_status" : health_status
+    }
     return insights
 
 
@@ -197,7 +212,7 @@ def generate_rankings_dict(sites: List[Dict], MAX_TOTAL: float, CRITERION_WEIGHT
             "competition_score": round(competitive_100, 1),
             "healthcare_ecosystem_score": round(healthcare_100, 1),
             "complementary_businesses_score": round(complementary_100, 1),
-            "google_maps_url": google_maps_link(site)
+            "url": site["url"]
         })
     
     return rankings
@@ -294,7 +309,7 @@ def generate_rankings_dict_with_current_comparison(
             "competition_score_comparison": competition_comparison,
             "healthcare_ecosystem_score_comparison": healthcare_comparison,
             "complementary_businesses_score_comparison": complementary_comparison,
-            "google_maps_url": google_maps_link(site)
+            "url": site["url"]
         })
     
     return rankings
