@@ -91,7 +91,8 @@ async def generate_pharmacy_report(req : Reqsmartreport):
             atm=atm,
             bank=bank,
             place_name=extracted_part,
-            place_price=price
+            place_price=price,
+            place_url=place_url
         )
 
         all_shops_data.append(shop_data)
@@ -144,6 +145,7 @@ async def generate_pharmacy_report(req : Reqsmartreport):
         lng = shop.get("lng")
         place_name = shop.get("place name")
         place_price = shop.get("price")
+        url = shop.get("url")
         # Compose key
         loc_key = f"{lat},{lng}"
         location_data = shop.get("location_data", {})
@@ -183,6 +185,7 @@ async def generate_pharmacy_report(req : Reqsmartreport):
             "lat": lat,
             "lng": lng,
             "price" : place_price,
+            "url" : url,
             "scores": {
                 "overall_score" : (traffic_score["overall_score"] + demographics_score["overall_score"] + 
                                    healthcare_score["overall_score"] + competitive_score["overall_score"] + complementary_score["overall_score"]),
@@ -205,7 +208,7 @@ async def generate_pharmacy_report(req : Reqsmartreport):
 
     criterion_weights = req.evaluation_metrics.dict()
     max_total = sum(criterion_weights.values())
-    report_data = await generate_report_from_data(results , criterion_weights , max_total , top_n=2) 
+    report_data = await generate_report_from_data(results , criterion_weights , max_total , top_n=10) 
     return report_data
 
 
@@ -223,7 +226,8 @@ async def fetch_all_criterions_data(
     bank: dict,
     source : str = source_shop_for_rent,
     place_name: Optional[str] = None,
-    place_price: Optional[float] = None   # or str, depending on your data
+    place_price: Optional[float] = None,   # or str, depending on your data
+    place_url : Optional[str] = None
 ):
     """
     Fetch all relevant criterion data for evaluating a shop location.
@@ -262,6 +266,7 @@ async def fetch_all_criterions_data(
         "lat": lat,
         "lng": lng ,
         "price" : place_price,
+        "url" : place_url,
         "location_data": {
             "traffic": traffic,
             "pop_data" : {
