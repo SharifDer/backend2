@@ -11,6 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 from PIL import Image
 import numpy as np
 from collections import Counter
@@ -69,6 +70,7 @@ class GoogleMapsTrafficAnalyzer:
             "friday": 5,
             "saturday": 6,
         }
+        self.TIME_MAP = {"8:30AM": 28, "6:00PM": 135, "10:00PM": 180}
         
     def setup_webdriver(self) -> Optional[webdriver.Chrome]:
         """Setup Chrome webdriver with specific options for Google Maps"""
@@ -114,7 +116,8 @@ class GoogleMapsTrafficAnalyzer:
     def capture_google_maps_screenshot(self, lat: float, lng: float, 
                                      filename: str = "traffic_screenshot", 
                                      save_to_static: bool = False, 
-                                     day_of_week: Optional[Union[str, int]] = None) -> Optional[str]:
+                                     day_of_week: Optional[Union[str, int]] = None,
+                                     target_time: Optional[str] = None) -> Optional[str]:
         """Capture screenshot of Google Maps with traffic at specified location"""
         if not self.driver:
             logger.error("Webdriver not initialized")
@@ -193,9 +196,6 @@ class GoogleMapsTrafficAnalyzer:
 
             # Select traffic type (typical or live) if possible
             try:
-                # Wait for slow internet connections
-                time.sleep(3)
-
                 # Click the traffic layer button
                 traffic_button = WebDriverWait(self.driver, 3).until(
                     EC.element_to_be_clickable(
@@ -206,7 +206,7 @@ class GoogleMapsTrafficAnalyzer:
                     )
                 )
                 traffic_button.click()
-                time.sleep(0.2)
+                time.sleep(0.3)
 
                 # Click the "Typical traffic" option if available
                 self.driver.find_element(
@@ -224,10 +224,31 @@ class GoogleMapsTrafficAnalyzer:
                         days[day_of_week].click()
                     else:
                         days[self.DAY_MAP.get(str(day_of_week).strip().lower(), 0)].click()
-                    
-                    time.sleep(1)
+
+                    time.sleep(1)  # wait for UI update
 
                 # Hour selection code can be added here if needed
+                if target_time is not None:
+                    try:
+                        pos = self.TIME_MAP.get(target_time.upper().strip().replace(" ", ""), 0)
+                        actions = ActionChains(self.driver)
+
+                        slider = WebDriverWait(self.driver, 3).until(
+                            EC.presence_of_element_located(
+                                (
+                                    By.XPATH,
+                                    '//*[@id="layer"]/div/div/div/div[2]/div/div[1]/span[2]',
+                                )
+                            )
+                        )
+
+                        actions.click_and_hold(slider).move_by_offset(-35, 0).release().perform() # Return the cursor to the beginning
+                        time.sleep(0.2)
+                        actions.click_and_hold(slider).move_by_offset(pos, 0).release().perform() # Set the cursor to the specific time position
+
+                        time.sleep(1)  # wait for UI update
+                    except Exception:
+                        logger.info("Failed to adjust the traffic time slider.")
 
                 logger.info("Typical traffic mode selection attempted.")
             except Exception as e:
@@ -661,7 +682,9 @@ class GoogleMapsTrafficAnalyzer:
         }
 
     def analyze_location_traffic(self, lat: float, lng: float, save_to_static: bool = False, 
-                               storefront_direction: str = 'north', day_of_week: Optional[Union[str, int]] = None) -> Dict[str, Any]:
+                               storefront_direction: str = 'north', 
+                               day_of_week: Optional[Union[str, int]] = None, 
+                               target_time: Optional[str] = None) -> Dict[str, Any]:
         """
         Main method to analyze traffic using Google Maps screenshots
         
@@ -671,6 +694,7 @@ class GoogleMapsTrafficAnalyzer:
             save_to_static: Whether to save screenshot to static folder
             storefront_direction: Direction the storefront faces (n, ne, e, se, s, sw, w, nw)
             day_of_week: Day of week for historical traffic (e.g., 'Monday', 0-6)
+            target_time: Target Time for historical traffic ('8:30AM', '6:00PM', '10:00PM')
 
         Returns:
             Dict containing traffic analysis results
@@ -681,7 +705,8 @@ class GoogleMapsTrafficAnalyzer:
                 raise Exception("Failed to setup webdriver")
             
             # Capture screenshot
-            screenshot_path = self.capture_google_maps_screenshot(lat, lng, save_to_static=save_to_static, day_of_week=day_of_week)
+            screenshot_path = self.capture_google_maps_screenshot(lat, lng, save_to_static=save_to_static, 
+                                                                  day_of_week=day_of_week, target_time=target_time)
             if not screenshot_path:
                 raise Exception("Failed to capture screenshot")
             
@@ -917,7 +942,8 @@ class GoogleMapsTrafficAnalyzer:
 # Standalone functions for easy usage
 def analyze_traffic_at_location(lat: float, lng: float, cleanup_screenshots: bool = True, 
                               save_to_static: bool = False, storefront_direction: str = 'north', 
-                              day_of_week: Optional[Union[str, int]] = None) -> Dict[str, Any]:
+                              day_of_week: Optional[Union[str, int]] = None,
+                              target_time: Optional[str] = None) -> Dict[str, Any]:
     """
     Standalone function to analyze traffic at a specific location
     
@@ -927,14 +953,17 @@ def analyze_traffic_at_location(lat: float, lng: float, cleanup_screenshots: boo
         cleanup_screenshots: Whether to delete screenshots after analysis (ignored if save_to_static=True)
         save_to_static: Whether to save screenshot to static folder for web access
         storefront_direction: Direction the storefront faces (n, ne, e, se, s, sw, w, nw)
-        
+        day_of_week: Day of week for historical traffic (e.g., 'Monday', 0-6)
+        target_time: Target Time for historical traffic ('8:30AM', '6:00PM', '10:00PM')
+
     Returns:
         Dict containing traffic analysis results
     """
     analyzer = GoogleMapsTrafficAnalyzer(cleanup_screenshots=cleanup_screenshots)
     return analyzer.analyze_location_traffic(lat, lng, save_to_static=save_to_static, 
                                            storefront_direction=storefront_direction,
-                                           day_of_week=day_of_week)
+                                           day_of_week=day_of_week,
+                                           target_time=target_time)
 
 
 def compare_multiple_locations(locations: list, cleanup_screenshots: bool = True) -> list:
@@ -957,7 +986,8 @@ def compare_multiple_locations(locations: list, cleanup_screenshots: bool = True
             result = analyzer.analyze_location_traffic(
                 location['lat'], location['lng'], 
                 storefront_direction=storefront_direction,
-                day_of_week=location["day_of_week"]
+                day_of_week=location["day_of_week"],
+                target_time=location["target_time"]
             )
             result['name'] = location.get('name', f"Location_{location['lat']}_{location['lng']}")
             results.append(result)
