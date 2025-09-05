@@ -35,7 +35,7 @@ from all_types.response_dtypes import ResDineInSuitabilityAnalysis
 from all_types.internal_types import UserId
 from smart_reports.reports import generate_pharmacy_report
 from smart_reports.reports import generate_html_pharmacy_report
-from traffic_data import get_here_traffic_score
+# from traffic_data import get_here_traffic_score
 from standalone_google_maps_traffic import analyze_traffic_at_location
 from pydantic import BaseModel
 
@@ -177,23 +177,23 @@ async def analyze_traffic_endpoint(request: ReqPointTrafficScore):
     Returns:
         Traffic analysis results with score and detailed breakdown
     """
-    if request.method.lower() == "google_maps":
-        # Use Google Maps screenshot method and save to static folder
-        result = analyze_traffic_at_location(
-            lat=request.lat,
-            lng=request.lng,
-            cleanup_screenshots=False,  # Don't cleanup when saving to static
-            save_to_static=True,  # Save to static folder for web access
-            day_of_week=request.day_of_week,
-            target_time=request.target_time
-        )
-    else:
-        # Use HERE API method (default)
-        result = await get_here_traffic_score(
-            property_lat=request.lat,
-            property_lng=request.lng,
-            target_max_speed=request.target_max_speed
-        )
+    # if request.method.lower() == "google_maps":
+    # Use Google Maps screenshot method and save to static folder
+    result = analyze_traffic_at_location(
+        lat=request.lat,
+        lng=request.lng,
+        cleanup_screenshots=False,  # Don't cleanup when saving to static
+        save_to_static=True,  # Save to static folder for web access
+        day_of_week=request.day_of_week,
+        target_time=request.target_time
+    )
+    # else:
+    #     # Use HERE API method (default)
+    #     result = await get_here_traffic_score(
+    #         property_lat=request.lat,
+    #         property_lng=request.lng,
+    #         target_max_speed=request.target_max_speed
+    #     )
     
     return ResPointTrafficScore(
         score=result.get('score', 0),
