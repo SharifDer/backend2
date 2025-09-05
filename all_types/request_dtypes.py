@@ -317,5 +317,5 @@ class Reqsmartreport(UserId):
     country_name: str = "Saudi Arabia"
     Type: str = "Pharmacy"
     evaluation_metrics: EvaluationMetrics = EvaluationMetrics() 
-    custom_locations : Optional[List[Coordinate]] # In case the client or user wants to analyze specific locations that don't exist in our db so he will provide the coordinates
-    current_location : Optional[Coordinate] #In case a client wants to analyze his current location
+    custom_locations : Optional[List[Coordinate]] = None # In case the client or user wants to analyze specific locations that don't exist in our db so he will provide the coordinates
+    current_location : Optional[Coordinate] = None #In case a client wants to analyze his current location
