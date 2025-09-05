@@ -156,22 +156,13 @@ async def generate_pharmacy_report(req : Reqsmartreport):
         pop_data = location_data.get("pop_data", {})
         traffic_score_weight = req.evaluation_metrics.traffic
         #here we score each location
-        if traffic_data:
-            traffic_score = score_traffic_for_retail(
-                average_speed=traffic_data.get("Average Vehicle Speed in km", 0),
-                ## Functional Road Class is how much of highway this street is
-                frc=traffic_data.get("Functional Road Class", ""),
-                traffic_score=traffic_score_weight
-            )
-        else:
-            # Default traffic score when no traffic data is available
-            traffic_score = {
-                "overall_score": 0.0,
-                "details": {
-                    "Average Viechle Speed": 0.0,
-                    "highway score": 0.0,
-                }
-            }
+      
+        traffic_score = score_traffic_for_retail(
+            average_speed=traffic_data.get("Average Vehicle Speed in km", 0),
+            ## Functional Road Class is how much of highway this street is
+            frc=traffic_data.get("Functional Road Class", ""),
+            traffic_score=traffic_score_weight
+        )
         
         demographics_score = score_demographics(pop_data, req.evaluation_metrics.demographics)
         healthcare_score = score_healthcare_ecosystem(healthcare_data, req.evaluation_metrics.healthcare)
