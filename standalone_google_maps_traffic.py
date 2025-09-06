@@ -317,7 +317,7 @@ class GoogleMapsTrafficAnalyzer:
         return best_match
     
     def add_pin_to_image(self, image_path: str, storefront_direction: str = 'north') -> str:
-        """Add a pin marker and directional arrow to the center of the image for verification"""
+        """Add a pin marker and directional cone to the center of the image for verification"""
         try:
             from PIL import ImageDraw
             
@@ -326,29 +326,12 @@ class GoogleMapsTrafficAnalyzer:
             
             # Load the image
             image = Image.open(image_path)
-            draw = ImageDraw.Draw(image)
             
             # Get image center
             width, height = image.size
             center_x, center_y = width // 2, height // 2
             
-            # Draw a pin-like marker
-            pin_size = 10
-            
-            # Pin body (red circle)
-            draw.ellipse([
-                center_x - pin_size, center_y - pin_size,
-                center_x + pin_size, center_y + pin_size
-            ], fill='red', outline='darkred', width=2)
-            
-            # Pin point (small triangle below)
-            draw.polygon([
-                (center_x, center_y + pin_size),
-                (center_x - 4, center_y + pin_size + 8),
-                (center_x + 4, center_y + pin_size + 8)
-            ], fill='darkred')
-            
-            # Add directional arrow for storefront direction
+            # Add directional cone for storefront direction
             self._add_directional_arrow(image, center_x, center_y, storefront_direction)
             
             # Generate pinned image path
@@ -362,7 +345,7 @@ class GoogleMapsTrafficAnalyzer:
             image_copy.save(pinned_path)
             image_copy.close()
             
-            logger.info(f"Pin and directional arrow added to image: {pinned_path}")
+            logger.info(f"Pin and directional cone added to image: {pinned_path}")
             return pinned_path
             
         except Exception as e:
@@ -370,98 +353,51 @@ class GoogleMapsTrafficAnalyzer:
             return image_path  # Return original path if pin addition fails
     
     def _add_directional_arrow(self, image: Image.Image, center_x: int, center_y: int, direction: str):
-        """Add a directional arrow pointing towards the storefront direction"""
-        try:
-            # Try to load the arrow image from the specified path
-            arrow_path = r"c:\Users\u_je_\Downloads\image-removebg-preview.png"
-            
-            # If the file doesn't exist locally, create a simple arrow
-            if not os.path.exists(arrow_path):
-                self._draw_simple_arrow(image, center_x, center_y, direction)
-                return
-            
-            # Load and process the arrow image
-            arrow_img = Image.open(arrow_path)
-            
-            # Resize arrow to appropriate size (about 30x30 pixels)
-            arrow_size = (30, 30)
-            arrow_img = arrow_img.resize(arrow_size, Image.Resampling.LANCZOS)
-            
-            # Get the direction angle and rotate the arrow
-            direction_angle = self.DIRECTION_ANGLES.get(direction.lower(), 0)
-            
-            # Rotate the arrow to point in the correct direction
-            # Note: PIL rotation is counterclockwise, and we want 0° to point North (up)
-            # So we need to adjust: North=0° -> -90° rotation (to point up)
-            rotation_angle = -(direction_angle - 90)
-            rotated_arrow = arrow_img.rotate(rotation_angle, expand=True, fillcolor=(0, 0, 0, 0))
-            
-            # Calculate arrow position (offset from center pin)
-            arrow_distance = 40  # Distance from pin center
-            arrow_angle_rad = math.radians(direction_angle)
-            arrow_x = int(center_x + arrow_distance * math.cos(arrow_angle_rad) - rotated_arrow.width // 2)
-            arrow_y = int(center_y - arrow_distance * math.sin(arrow_angle_rad) - rotated_arrow.height // 2)
-            
-            # Paste the arrow onto the image
-            if rotated_arrow.mode == 'RGBA':
-                image.paste(rotated_arrow, (arrow_x, arrow_y), rotated_arrow)
-            else:
-                image.paste(rotated_arrow, (arrow_x, arrow_y))
-            
-            logger.info(f"Directional arrow added pointing {direction}")
-            
-        except Exception as e:
-            logger.warning(f"Could not add custom arrow image: {e}, falling back to simple arrow")
-            self._draw_simple_arrow(image, center_x, center_y, direction)
-    
-    def _draw_simple_arrow(self, image: Image.Image, center_x: int, center_y: int, direction: str):
-        """Draw a simple directional arrow using PIL drawing functions"""
+        """Draw a pin with a directional cone pointing towards the storefront direction"""
         try:
             from PIL import ImageDraw
-            
             draw = ImageDraw.Draw(image)
-            
-            # Get direction angle
+
+            # Pin head (smaller circle)
+            pin_head_size = 8
+            draw.ellipse([
+                center_x - pin_head_size, center_y - pin_head_size,
+                center_x + pin_head_size, center_y + pin_head_size
+            ], fill='purple', outline='black', width=1)
+
+            # Directional cone
             direction_angle = self.DIRECTION_ANGLES.get(direction.lower(), 0)
             angle_rad = math.radians(direction_angle)
-            
-            # Arrow parameters
-            arrow_length = 25
-            arrow_color = 'blue'
-            
-            # Calculate arrow end point
-            end_x = center_x + arrow_length * math.cos(angle_rad)
-            end_y = center_y - arrow_length * math.sin(angle_rad)  # Negative because Y is inverted
-            
-            # Draw arrow shaft
-            draw.line([(center_x, center_y), (end_x, end_y)], fill=arrow_color, width=3)
-            
-            # Calculate arrowhead points
-            head_length = 8
-            head_angle1 = angle_rad + math.radians(150)  # 30 degrees from shaft
-            head_angle2 = angle_rad - math.radians(150)  # 30 degrees from shaft
-            
-            head_x1 = end_x + head_length * math.cos(head_angle1)
-            head_y1 = end_y - head_length * math.sin(head_angle1)
-            head_x2 = end_x + head_length * math.cos(head_angle2)
-            head_y2 = end_y - head_length * math.sin(head_angle2)
-            
-            # Draw arrowhead
-            draw.polygon([(end_x, end_y), (head_x1, head_y1), (head_x2, head_y2)], fill=arrow_color)
-            
-            # Add direction label
-            label_distance = 35
-            label_x = center_x + label_distance * math.cos(angle_rad)
-            label_y = center_y - label_distance * math.sin(angle_rad)
-            
-            # Draw text background for better visibility
-            text = direction.upper()
-            draw.text((label_x, label_y), text, fill='white', anchor='mm')
-            
-            logger.info(f"Simple arrow drawn pointing {direction}")
-            
+
+            # Cone parameters
+            cone_length = 52  # 75% larger cone
+            cone_width_degrees = 25  # Half-width of the cone's base in degrees
+
+            # Calculate the three points of the cone
+            # Point 1: Tip of the cone (at the center of the circle)
+            p1 = (center_x, center_y)
+
+            # Point 2: Base of the cone
+            angle2 = math.radians(direction_angle - cone_width_degrees)
+            p2 = (
+                center_x + cone_length * math.sin(angle2),
+                center_y - cone_length * math.cos(angle2)
+            )
+
+            # Point 3: Base of the cone
+            angle3 = math.radians(direction_angle + cone_width_degrees)
+            p3 = (
+                center_x + cone_length * math.sin(angle3),
+                center_y - cone_length * math.cos(angle3)
+            )
+
+            draw.polygon([p1, p2, p3], fill='hotpink', outline='black')
+
+            logger.info(f"Directional cone added pointing {direction}")
+
         except Exception as e:
-            logger.error(f"Failed to draw simple arrow: {e}")
+            logger.error(f"Failed to draw directional cone: {e}")
+    
     
     def find_storefront_in_direction(self, image_array: np.ndarray, center_x: int, center_y: int, 
                                    direction: str, max_distance: int = 150) -> Dict[str, Any]:
