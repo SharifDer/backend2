@@ -5,6 +5,7 @@ Provides traffic analysis using Google Maps screenshots and color detection
 import os
 import time
 import math
+import logging
 from typing import Dict, Any, Optional, Tuple, Union
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -354,49 +355,45 @@ class GoogleMapsTrafficAnalyzer:
     
     def _add_directional_arrow(self, image: Image.Image, center_x: int, center_y: int, direction: str):
         """Draw a pin with a directional cone pointing towards the storefront direction"""
-        try:
-            from PIL import ImageDraw
-            draw = ImageDraw.Draw(image)
+        from PIL import ImageDraw
+        draw = ImageDraw.Draw(image)
 
-            # Pin head (smaller circle)
-            pin_head_size = 8
-            draw.ellipse([
-                center_x - pin_head_size, center_y - pin_head_size,
-                center_x + pin_head_size, center_y + pin_head_size
-            ], fill='purple', outline='black', width=1)
+        # Pin head (smaller circle)
+        pin_head_size = 8
+        draw.ellipse([
+            center_x - pin_head_size, center_y - pin_head_size,
+            center_x + pin_head_size, center_y + pin_head_size
+        ], fill='purple', outline='black', width=1)
 
-            # Directional cone
-            direction_angle = self.DIRECTION_ANGLES.get(direction.lower(), 0)
-            angle_rad = math.radians(direction_angle)
+        # Directional cone
+        direction_angle = self.DIRECTION_ANGLES.get(direction.lower(), 0)
+        angle_rad = math.radians(direction_angle)
 
-            # Cone parameters
-            cone_length = 52  # 75% larger cone
-            cone_width_degrees = 25  # Half-width of the cone's base in degrees
+        # Cone parameters
+        cone_length = 52  # 75% larger cone
+        cone_width_degrees = 25  # Half-width of the cone's base in degrees
 
-            # Calculate the three points of the cone
-            # Point 1: Tip of the cone (at the center of the circle)
-            p1 = (center_x, center_y)
+        # Calculate the three points of the cone
+        # Point 1: Tip of the cone (at the center of the circle)
+        p1 = (center_x, center_y)
 
-            # Point 2: Base of the cone
-            angle2 = math.radians(direction_angle - cone_width_degrees)
-            p2 = (
-                center_x + cone_length * math.sin(angle2),
-                center_y - cone_length * math.cos(angle2)
-            )
+        # Point 2: Base of the cone
+        angle2 = math.radians(direction_angle - cone_width_degrees)
+        p2 = (
+            center_x + cone_length * math.sin(angle2),
+            center_y - cone_length * math.cos(angle2)
+        )
 
-            # Point 3: Base of the cone
-            angle3 = math.radians(direction_angle + cone_width_degrees)
-            p3 = (
-                center_x + cone_length * math.sin(angle3),
-                center_y - cone_length * math.cos(angle3)
-            )
+        # Point 3: Base of the cone
+        angle3 = math.radians(direction_angle + cone_width_degrees)
+        p3 = (
+            center_x + cone_length * math.sin(angle3),
+            center_y - cone_length * math.cos(angle3)
+        )
 
-            draw.polygon([p1, p2, p3], fill='hotpink', outline='black')
+        draw.polygon([p1, p2, p3], fill='hotpink', outline='black')
 
-            logger.info(f"Directional cone added pointing {direction}")
-
-        except Exception as e:
-            logger.error(f"Failed to draw directional cone: {e}")
+        logger.info(f"Directional cone added pointing {direction}")
     
     
     def find_storefront_in_direction(self, image_array: np.ndarray, center_x: int, center_y: int, 
