@@ -19,8 +19,8 @@ import os
 async def generate_pharmacy_report(req : Reqsmartreport):
     # Check if we should use mock data
     if USE_MOCK_DATA:
-        from .mock_data import get_mock_data
-        return get_mock_data(req.city_name)
+        from .mock_data_scenarios import get_mock_data_for_scenario
+        return get_mock_data_for_scenario(req)
     
     # Original logic continues below
     req_dataset = ReqFetchDataset(user_id=req.user_id , city_name=req.city_name,

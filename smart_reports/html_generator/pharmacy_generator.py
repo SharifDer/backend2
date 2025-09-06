@@ -29,16 +29,47 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         self.map_generator = None
         self.image_generator = None
     
+    def _detect_scenario(self, report_data) -> str:
+        """Detect the scenario based on request data"""
+        has_current_location = report_data.current_location is not None
+        has_custom_locations = report_data.custom_locations is not None and len(report_data.custom_locations) > 0
+        
+        if has_current_location and has_custom_locations:
+            return "custom_and_current"
+        elif has_current_location and not has_custom_locations:
+            return "current_location_only"
+        elif not has_current_location and has_custom_locations:
+            return "custom_only"
+        else:
+            return "no_custom_no_current"
+    
+    def _generate_investment_insights_list(self, key_investment_insights) -> str:
+        """Generate investment insights list using only available JSON data"""
+        if not key_investment_insights:
+            return "<li>No investment insights available</li>"
+        
+        insights_html = ""
+        for insight in key_investment_insights:
+            category = insight.get('category', 'Insight')
+            description = insight.get('description', 'No description available')
+            insights_html += f'<li style="margin-bottom: 12px;"><strong>{category}:</strong> {description}</li>'
+        
+        return insights_html
+    
     def generate_report(self, data: Dict[str, Any]) -> str:
         """Generate the complete pharmacy HTML report"""
         # Extract data
         report_data = data.get('report_data')
         processed_report_data = data.get('processed_report_data', {})
         
-        # Create directory structure
+        # Detect scenario from request data
+        scenario = self._detect_scenario(report_data)
+        
+        # Create directory structure with scenario
         dirs = self.create_directory_structure(
             report_data.city_name, 
-            "pharmacies"
+            "pharmacies",
+            scenario
         )
         
         # Extract report components
@@ -70,14 +101,50 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         if not detailed_analysis:
             raise ValueError("No detailed analysis data available for report generation")
         
-        # Initialize map and image generators
-        self.map_generator = MapGenerator(dirs['maps_dir'])
-        self.image_generator = ImageGenerator(dirs['images_dir'])
+        # Use visual_analysis data from JSON instead of generating new images/maps
+        visual_analysis = processed_report_data.get('visual_analysis', {})
         
-        # Generate maps and images - EXACT MATCH (10 maps, 5 charts)
-        properties = detailed_analysis[:10]  # Use only first 10 properties for EXACT MATCH
-        generated_maps = self.map_generator.generate_all_maps(properties, report_data.city_name)
-        generated_charts = self.image_generator.generate_all_charts(properties, report_data.city_name)
+        # Extract chart and map URLs from JSON
+        charts_data = visual_analysis.get('charts', [])
+        maps_data = visual_analysis.get('maps', [])
+        interactive_maps_data = visual_analysis.get('interactive_maps', [])
+        
+        # Convert JSON URLs to relative paths for HTML
+        generated_charts = []
+        for chart in charts_data:
+            chart_url = chart.get('url', '')
+            if chart_url:
+                # Convert absolute path to relative path
+                if 'static/pharmacy_report/' in chart_url:
+                    relative_path = chart_url.split('static/pharmacy_report/')[-1]
+                    generated_charts.append(relative_path)
+        
+        generated_maps = []
+        for interactive_map in interactive_maps_data:
+            map_url = interactive_map.get('url', '')
+            if map_url:
+                # Convert absolute path to relative path
+                if 'static/pharmacy_report/' in map_url:
+                    relative_path = map_url.split('static/pharmacy_report/')[-1]
+                    generated_maps.append(relative_path)
+        
+        # Fallback: If no visual_analysis data, generate dynamically
+        if not generated_charts or not generated_maps:
+            print("Warning: No visual_analysis data found, falling back to dynamic generation")
+            self.map_generator = MapGenerator(dirs['maps_dir'])
+            self.image_generator = ImageGenerator(dirs['images_dir'])
+            
+            properties = detailed_analysis[:10]
+            if not generated_maps:
+                generated_maps = self.map_generator.generate_all_maps(properties, report_data.city_name)
+            if not generated_charts:
+                generated_charts = self.image_generator.generate_all_charts(properties, report_data.city_name)
+        
+        # Copy chart files to charts directory for HTML references
+        self._copy_charts_to_charts_dir(dirs['charts_dir'], generated_charts)
+        
+        # Copy coordinate-based map files to maps directory for HTML references
+        self._copy_coordinate_maps_to_maps_dir(dirs['maps_dir'])
         
         # Generate HTML content - PIXEL PERFECT MATCH
         html_content = self._generate_complete_report_exact(
@@ -121,7 +188,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             {self.components.hero_section(
                 kwargs['title'], 
                 kwargs['description'], 
-                kwargs['metadata'].get('generation_timestamp', 'N/A')
+                kwargs['metadata'].get('generation_method', 'N/A')
             )}
             
             {self.components.executive_summary(
@@ -261,7 +328,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         for insight in key_investment_insights[:6]:
             insights_html += f"""
                         <div class="criterion-card">
-                            <h4>{insight.get('title', 'Strategic Insight')}</h4>
+                            <h4>{insight.get('category', 'Strategic Insight')}</h4>
                             <p>{insight.get('description', 'Key strategic insight for pharmacy investment.')}</p>
                         </div>"""
         return insights_html
@@ -597,26 +664,55 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
 </html>"""
         return html_content
 
-    def _generate_top_recommendation_exact(self, top_recommendation):
+    def _generate_top_recommendation_exact(self, top_recommendation, processed_report_data=None):
         """Generate top recommendation section - EXACT MATCH"""
         if not top_recommendation:
             return ""
         
-        property_name = top_recommendation.get('property_name', 'N/A')
-        score = top_recommendation.get('final_score', 0)
-        price = top_recommendation.get('price', 0)
-        traffic_score = top_recommendation.get('traffic_score', 0)
-        demographics_score = top_recommendation.get('demographics_score', 0)
-        healthcare_score = top_recommendation.get('healthcare_score', 0)
-        competition_score = top_recommendation.get('competition_score', 0)
-        complementary_score = top_recommendation.get('complementary_score', 0)
+        # Get current location data for detailed scores (has more complete data)
+        current_location = processed_report_data.get('current_location', []) if processed_report_data else []
+        current_location_data = current_location[0] if current_location else {}
         
-        # Get detailed metrics
-        traffic_flow = top_recommendation.get('traffic_flow', 0)
-        nearby_businesses = top_recommendation.get('nearby_businesses', 0)
-        population_density = top_recommendation.get('population_density', 0)
-        avg_income = top_recommendation.get('avg_income', 0)
-        competing_pharmacies = top_recommendation.get('competing_pharmacies', 0)
+        # Get summary metrics for competing pharmacies
+        summary_metrics = processed_report_data.get("summary_metrics", {}) if processed_report_data else {}
+        
+        # Extract data with proper field mapping - USE JSON alternatives where available
+        property_name = top_recommendation.get('site_name', 'N/A')  # Use site_name instead of property_name
+        score = top_recommendation.get('score', 0)  # Use score instead of final_score
+        price = top_recommendation.get('price_sar', 0)  # Use price_sar instead of price
+        
+        # Use current_location data for detailed scores (more complete)
+        traffic_score = current_location_data.get('traffic_score', 0)
+        demographics_score = current_location_data.get('demographics_score', 0)
+        healthcare_score = current_location_data.get('healthcare_ecosystem_score', 0)  # Use healthcare_ecosystem_score
+        competition_score = current_location_data.get('competition_score', 0)
+        complementary_score = current_location_data.get('complementary_businesses_score', 0)  # Use complementary_businesses_score
+        
+        # Additional metrics - use available alternatives from detailed_insights
+        # Get the top recommendation's detailed insights from detailed_analysis data
+        detailed_analysis = processed_report_data.get('detailed_analysis', []) if processed_report_data else []
+        top_property_insights = {}
+        if detailed_analysis:
+            # Find the top ranking property (rank 1) to get its detailed insights
+            top_property = next((prop for prop in detailed_analysis if prop.get('rank') == 1), {})
+            detailed_insights = top_property.get('detailed_insights', {})
+            business_environment = detailed_insights.get('business_environment', {})
+            demographics_match = detailed_insights.get('demographics_match', {})
+            traffic_performance = detailed_insights.get('traffic_performance', {})
+            
+            # Map the available fields
+            traffic_flow = traffic_performance.get('current_speed_kmh', 30)
+            nearby_businesses = business_environment.get('nearby_businesses_500m', 0)
+            population_density = demographics_match.get('population_age_35_plus_percent', 0)  # Use age percentage as proxy
+            avg_income = demographics_match.get('average_income_sar', 0)
+        else:
+            # Fallback values
+            traffic_flow = 30
+            nearby_businesses = 0
+            population_density = 0
+            avg_income = 0
+        
+        competing_pharmacies = summary_metrics.get('competing_pharmacies', 0)  # Use from summary_metrics
         
         return f"""
       <div class="top-recommendation">
@@ -642,12 +738,12 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
           <div>
             <strong>🏪 Business Environment:</strong><br />
             {nearby_businesses} businesses within 500m <br />
-            <small>❌ Weak ecosystem</small>
+            <small>✅ Strong ecosystem</small>
           </div>
           <div>
             <strong>👥 Demographics:</strong><br />
-            {population_density:.1f}% of population Aged 35 and Above<br />
-            <small>✅ Strong alignment | Average Income: {avg_income:,.2f} SAR monthly</small>
+            {population_age_35_plus:.1f}% of population Aged 35 and Above<br />
+            <small>✅ Strong alignment | Average Income: {avg_income:,.0f} SAR monthly</small>
           </div>
           <div>
             <strong>☕ Competition:</strong><br />
@@ -674,10 +770,58 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         top_recommendation = executive_summary.get("top_recommendation", {})
         total_sites_evaluated = executive_summary.get("total_sites_evaluated", 0)
         
+        # Get current location data for detailed scores (has more complete data)
+        current_location = processed_report_data.get('current_location', [])
+        current_location_data = current_location[0] if current_location else {}
+        
+        # Extract detailed scores from current_location data
+        traffic_score = current_location_data.get('traffic_score', 0)
+        demographics_score = current_location_data.get('demographics_score', 0)
+        healthcare_score = current_location_data.get('healthcare_ecosystem_score', 0)
+        competition_score = current_location_data.get('competition_score', 0)
+        complementary_score = current_location_data.get('complementary_businesses_score', 0)
+        
+        # Get additional metrics from top property's detailed insights
+        detailed_analysis = processed_report_data.get('detailed_analysis', [])
+        top_property_insights = {}
+        if detailed_analysis:
+            # Find the top ranking property (rank 1) to get its detailed insights
+            top_property = next((prop for prop in detailed_analysis if prop.get('rank') == 1), {})
+            detailed_insights = top_property.get('detailed_insights', {})
+            business_environment = detailed_insights.get('business_environment', {})
+            demographics_match = detailed_insights.get('demographics_match', {})
+            traffic_performance = detailed_insights.get('traffic_performance', {})
+            
+            # Map the available fields for display
+            traffic_flow = traffic_performance.get('current_speed_kmh', 30)
+            nearby_businesses = business_environment.get('nearby_businesses_500m', 0)
+            population_age_35_plus = demographics_match.get('population_age_35_plus_percent', 0)
+            avg_income = demographics_match.get('average_income_sar', 0)
+            
+            # Get competition data
+            competitive_position = detailed_insights.get('competitive_position', {})
+            competing_pharmacies = competitive_position.get('competing_pharmacies', 0)
+            
+            # Get competition score from rankings data (it's in competition_score_comparison.value)
+            rankings = processed_report_data.get('rankings', [])
+            competition_score = 0
+            if rankings:
+                top_ranking = next((prop for prop in rankings if prop.get('rank') == 1), {})
+                competition_score_comparison = top_ranking.get('competition_score_comparison', {})
+                competition_score = competition_score_comparison.get('value', 0)
+        else:
+            # Fallback values
+            traffic_flow = 30
+            nearby_businesses = 0
+            population_age_35_plus = 0
+            avg_income = 0
+            competing_pharmacies = 0
+            competition_score = 0
+        
         return f"""
     <div class="page">
       <div class="hero">
-        <h1>🏢 {title}</h1>
+        <h1>{title}</h1>
         <div class="muted">{description}</div>
         <div style="margin-top: 20px; font-size: 0.9em">
           Generated on {datetime.now().strftime('%B %d, %Y')}
@@ -716,10 +860,10 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         <h2 style="margin-bottom: 20px; border: none; color: white">
           🏆 TOP RECOMMENDATION
         </h2>
-        <h3 style="font-size: 1.8em; margin-bottom: 10px">Property #1: {top_recommendation.get('name', 'Top Property')}</h3>
-        <div class="score-display">{top_recommendation.get('score_normalized', top_recommendation.get('score', 0)):.1f}/100</div>
+        <h3 style="font-size: 1.8em; margin-bottom: 10px">Property #1: {top_recommendation.get('site_name', 'Top Property')}</h3>
+        <div class="score-display">{top_recommendation.get('score', 0):.1f}/100</div>
         <p style="display: none">
-          <strong>Price:</strong> {top_recommendation.get('price', 0):,.0f} SAR
+          <strong>Price:</strong> {top_recommendation.get('price_sar', 0):,.0f} SAR
         </p>
         <div style="
               display: grid;
@@ -729,23 +873,23 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             ">
           <div>
             <strong>🚗 Traffic Analysis:</strong><br />
-            Score: {top_recommendation.get('traffic_score_normalized', top_recommendation.get('traffic_score', 0)):.1f}/100<br />
+            Score: {traffic_score:.1f}/100<br />
             <small>Target: 20–30 km/h | ℹ️ Light traffic</small>
           </div>
           <div>
             <strong>🏪 Business Environment:</strong><br />
-            {top_recommendation.get('nearby_businesses', 0)} businesses within 500m<br />
-            <small>❌ Weak ecosystem</small>
+            {nearby_businesses} businesses within 500m<br />
+            <small>✅ Strong ecosystem</small>
           </div>
           <div>
             <strong>👥 Demographics:</strong><br />
-            Score: {top_recommendation.get('demographics_score_normalized', top_recommendation.get('demographics_score', 0)):.1f}/100<br />
-            <small>✅ Strong alignment | Average Income: {top_recommendation.get('avg_income', 0):,.2f} SAR monthly</small>
+            {population_age_35_plus:.1f}% Aged 35+ <br /> {avg_income:,.0f} SAR income<br />
+            <small>✅ Strong alignment</small>
           </div>
           <div>
             <strong>☕ Competition:</strong><br />
-            {top_recommendation.get('competing_pharmacies', 0)} competing pharmacies in the area<br />
-            <small>Status: 🟢 Underserved market</small>
+            {competition_score:.1f}<br />
+            <small>({competing_pharmacies} pharmacies)</small>
           </div>
         </div>
       </div>
@@ -779,7 +923,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         print(f"DEBUG: _generate_page_2_exact called with {len(detailed_analysis)} items")
         
         # Generate property cards
-        property_cards_html = self._generate_property_cards_exact(detailed_analysis[:10])
+        property_cards_html = self._generate_property_cards_exact(detailed_analysis[:10], processed_report_data.get('visual_analysis', {}), processed_report_data)
         print(f"DEBUG: Property cards HTML length: {len(property_cards_html)}")
         print(f"DEBUG: First 500 chars of property cards: {property_cards_html[:500]}")
         
@@ -962,7 +1106,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
           ">
         <h3 style="color: #2c3e50; margin-bottom: 20px">📈 Statistical Analysis</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
-          {self._generate_chart_grid_exact(generated_charts)}
+          {self._generate_chart_grid_exact(generated_charts, processed_report_data.get('visual_analysis', {}))}
         </div>
       </div>
 
@@ -1021,26 +1165,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
       <div class="insights" style="margin-top: 30px;">
         <h3 style="margin-bottom: 15px;">💡 Key Investment Insights</h3>
         <ul style="margin-left: 20px; margin-top: 15px; line-height: 1.6;">
-          <li style="margin-bottom: 12px;">
-            <strong>Prime Opportunity:</strong>
-            {key_investment_insights[0].get('description', 'Commercial Space 1 emerges as the clear market leader with exceptional potential scoring 81.1/100 points.')}
-          </li>
-                      <li style="margin-bottom: 12px;">
-              <strong>Market Dynamics:</strong>
-              {key_investment_insights[1].get('description', 'Emerging market with minimal competition with 15 total competing pharmacies.')}
-            </li>
-            <li style="margin-bottom: 12px;">
-              <strong>Traffic Advantage:</strong>
-              {key_investment_insights[2].get('description', 'Accessibility scoring 85.0/100 points supporting consistent customer flow.')}
-            </li>
-            <li style="margin-bottom: 12px;">
-              <strong>Business Ecosystem:</strong>
-              {key_investment_insights[3].get('description', '18 nearby complementary businesses ensure consistent foot traffic and cross-selling opportunities.')}
-            </li>
-            <li style="margin-bottom: 12px;">
-              <strong>Demographic Alignment:</strong>
-              {key_investment_insights[4].get('description', 'Scoring 82.0/100 points indicating strong market fit.')}
-            </li>
+          {self._generate_investment_insights_list(key_investment_insights)}
         </ul>
       </div>
       
@@ -1058,29 +1183,39 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         for i, property_data in enumerate(rankings, 1):
             rank_class = "top3" if i <= 3 else ""
             
-            # Extract data with proper field mapping
-            site_name = property_data.get('name', property_data.get('property_name', 'Property'))
-            price = property_data.get('price', property_data.get('price_sar', 0))
-            final_score = property_data.get('score_normalized', property_data.get('score', property_data.get('final_score', 0)))
-            traffic_score = property_data.get('traffic_score_normalized', property_data.get('traffic_score', 0))
-            demographics_score = property_data.get('demographics_score_normalized', property_data.get('demographics_score', 0))
-            competition_score = property_data.get('competition_score_normalized', property_data.get('competition_score', 0))
-            healthcare_score = property_data.get('healthcare_score_normalized', property_data.get('healthcare_score', 0))
-            complementary_score = property_data.get('complementary_score_normalized', property_data.get('complementary_score', 0))
+            # Extract data with proper field mapping - ONLY use data that exists in JSON
+            site_name = property_data.get('site_name', 'Property')  # Use site_name from JSON
+            price = property_data.get('price_sar', 0)  # Use price_sar from JSON
+            # Handle None price values
+            if price is None:
+                price = 0
+            
+            # Extract scores from comparison objects in JSON
+            final_score = property_data.get('final_score_comparison', {}).get('value', 0)
+            traffic_score = property_data.get('traffic_score_comparison', {}).get('value', 0)
+            demographics_score = property_data.get('demographics_score_comparison', {}).get('value', 0)
+            competition_score = property_data.get('competition_score_comparison', {}).get('value', 0)
+            healthcare_score = property_data.get('healthcare_ecosystem_score_comparison', {}).get('value', 0)
+            complementary_score = property_data.get('complementary_businesses_score_comparison', {}).get('value', 0)
             
             # Generate Google Maps URL if coordinates are available
-            google_maps_url = property_data.get('google_maps_url', '#')
+            google_maps_url = property_data.get('url', '#')  # Use url from JSON instead of google_maps_url
             if not google_maps_url or google_maps_url == '#':
-                lat = property_data.get('lat')
-                lng = property_data.get('lng')
+                # Try to get coordinates from location object if available
+                location = property_data.get('location', {})
+                lat = location.get('latitude')
+                lng = location.get('longitude')
                 if lat and lng:
                     google_maps_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
+            
+            # Format price display
+            price_display = "N/A" if price == 0 and property_data.get('price_sar') is None else f"{price:,.0f}"
             
             table_rows += f"""
           <tr>
             <td><span class="rank-badge {rank_class}">#{i}</span></td>
             <td><code>{site_name}</code></td>
-            <td>{price:,.0f}</td>
+            <td>{price_display}</td>
             <td><strong>{final_score:.1f}</strong></td>
             <td>{traffic_score:.1f}</td>
             <td>{demographics_score:.1f}</td>
@@ -1091,13 +1226,29 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
           </tr>"""
         return table_rows
 
-    def _generate_property_cards_exact(self, detailed_analysis):
+    def _generate_property_cards_exact(self, detailed_analysis, visual_analysis=None, processed_report_data=None):
         """Generate property cards - EXACT MATCH"""
+        # Create a mapping of site names to interactive map URLs
+        interactive_maps_map = {}
+        if visual_analysis:
+            interactive_maps_data = visual_analysis.get('interactive_maps', [])
+            for interactive_map in interactive_maps_data:
+                site_name = interactive_map.get('site_name', '')
+                map_url = interactive_map.get('url', '')
+                if site_name and map_url:
+                    # Convert absolute path to relative path
+                    if 'static/pharmacy_report/' in map_url:
+                        relative_path = map_url.split('static/pharmacy_report/')[-1]
+                        interactive_maps_map[site_name] = relative_path
+        
         property_cards_html = ""
         for i, property_data in enumerate(detailed_analysis, 1):
             site_name = property_data.get('site_name', 'Property')
             final_score = property_data.get('final_score', 0)
             price_sar = property_data.get('price_sar', 0)
+            # Handle None price values
+            if price_sar is None:
+                price_sar = 0
             category = property_data.get('category', 'Pharmacy')
             google_maps_url = property_data.get('google_maps_url', '#')
             
@@ -1119,6 +1270,15 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             population_age_35_plus = demographics_match.get('population_age_35_plus_percent', 0)
             average_income = demographics_match.get('average_income_sar', 0)
             competing_pharmacies = competitive_position.get('competing_pharmacies', 0)
+            
+            # Get competition score from rankings data (it's in competition_score_comparison.value)
+            competition_score = 0
+            rankings = processed_report_data.get('rankings', []) if processed_report_data else []
+            if rankings:
+                # Find the matching ranking by site_name
+                matching_ranking = next((prop for prop in rankings if prop.get('site_name') == site_name), {})
+                competition_score_comparison = matching_ranking.get('competition_score_comparison', {})
+                competition_score = competition_score_comparison.get('value', 0)
             
             # Get scores from the scoring breakdown
             scoring_breakdown = property_data.get('scoring_breakdown', [])
@@ -1143,7 +1303,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px">
           <div>
             <h4 style="color: #2c3e50; margin-bottom: 10px">📍 Property Details</h4>
-            <p><strong>Price:</strong> {price_sar:,.0f} SAR</p>
+            <p><strong>Price:</strong> {"N/A" if price_sar == 0 and property_data.get('price_sar') is None else f"{price_sar:,.0f} SAR"}</p>
             <p><strong>Coordinates:</strong> {latitude:.6f}, {longitude:.6f}</p>
             <p><strong>Category:</strong> {category}</p>
             <p>
@@ -1157,19 +1317,19 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             <div class="score-breakdown">
               <div class="score-item">
                 <div class="value">{traffic_score:.1f}</div>
-                <div class="label">Traffic<br />Score</div>
+                <div class="label">Traffic<br />({current_speed:.1f} km/h)</div>
               </div>
               <div class="score-item">
                 <div class="value">{nearby_businesses}</div>
-                <div class="label">Businesses<br />(500m)</div>
+                <div class="label">Business<br />({nearby_businesses} nearby)</div>
               </div>
               <div class="score-item">
                 <div class="value">{demographics_score:.1f}</div>
-                <div class="label">Demographics<br />Score</div>
+                <div class="label">Demographics<br />(Age: {population_age_35_plus:.0f})</div>
               </div>
               <div class="score-item">
-                <div class="value">{competing_pharmacies}</div>
-                <div class="label">Competition<br />(pharmacies)</div>
+                <div class="value">{competition_score:.1f}</div>
+                <div class="label">Competition<br />({competing_pharmacies} pharmacies)</div>
               </div>
             </div>
           </div>
@@ -1203,7 +1363,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
 
         <div class="map-container">
           <h4 style="color: #2c3e50; margin-bottom: 15px">📍 Site Location Map</h4>
-          <iframe src="maps/map_{i}.html" width="100%" height="400" style="border:0; border-radius: 12px;"></iframe>
+          <iframe src="{interactive_maps_map.get(site_name, f'maps/map_{i}.html')}" width="100%" height="400" style="border:0; border-radius: 12px;"></iframe>
           <p style="margin-top: 15px; color: #7f8c8d; font-size: 0.9em">
             <strong>Map shows:</strong> Property location, nearby businesses, analysis radius, and traffic patterns.
           </p>
@@ -1211,26 +1371,48 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
       </div>"""
         return property_cards_html
 
-    def _generate_chart_grid_exact(self, generated_charts):
+    def _generate_chart_grid_exact(self, generated_charts, visual_analysis=None):
         """Generate chart grid - EXACT MATCH"""
         if not generated_charts:
             return """
           <div class="map-placeholder">
-            <img src="images/score_distribution.png" alt="Score Distribution" style="width: 100%; height: 300px; object-fit: cover;">
+            <img src="charts/score_distribution.png" alt="Score Distribution" style="width: 100%; height: 300px; object-fit: cover;">
           </div>
           <div class="map-placeholder">
-            <img src="images/analysis_dashboard.png" alt="Analysis Dashboard" style="width: 100%; height: 300px; object-fit: cover;">
+            <img src="charts/analysis_dashboard.png" alt="Analysis Dashboard" style="width: 100%; height: 300px; object-fit: cover;">
           </div>
           <div class="map-placeholder">
-            <img src="images/price_vs_score.png" alt="Price vs Score" style="width: 100%; height: 300px; object-fit: cover;">
+            <img src="charts/price_vs_score.png" alt="Price vs Score" style="width: 100%; height: 300px; object-fit: cover;">
           </div>"""
+        
+        # Get chart titles from visual_analysis if available
+        chart_titles = {}
+        if visual_analysis:
+            charts_data = visual_analysis.get('charts', [])
+            for chart in charts_data:
+                chart_url = chart.get('url', '')
+                chart_title = chart.get('title', '')
+                if chart_url and chart_title:
+                    # Extract filename from URL
+                    filename = chart_url.split('/')[-1]
+                    chart_titles[filename] = chart_title
         
         chart_html = ""
         for i, chart_path in enumerate(generated_charts[:5]):  # Exactly 5 charts like perfect output
-            chart_name = chart_path.split('/')[-1].replace('.png', '').replace('_', ' ').title()
+            # Extract filename from path
+            filename = chart_path.split('/')[-1]
+            
+            # Use title from JSON if available, otherwise generate from filename
+            if filename in chart_titles:
+                chart_name = chart_titles[filename]
+            else:
+                chart_name = filename.replace('.png', '').replace('_', ' ').title()
+            
+            # Use charts/ path for HTML references
+            charts_path = f"charts/{filename}"
             chart_html += f"""
           <div class="map-placeholder">
-            <img src="{chart_path}" alt="{chart_name}" style="width: 100%; height: 300px; object-fit: cover;">
+            <img src="{charts_path}" alt="{chart_name}" style="width: 100%; height: 300px; object-fit: cover;">
           </div>"""
         
         return chart_html
@@ -1246,7 +1428,56 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
                 border-radius: 10px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
               ">
-            <h4 style="color: #2c3e50; margin-bottom: 10px">{insight.get('title', 'Strategic Insight')}</h4>
+            <h4 style="color: #2c3e50; margin-bottom: 10px">{insight.get('category', 'Strategic Insight')}</h4>
             <p>{insight.get('description', 'Key strategic insight for pharmacy investment.')}</p>
           </div>"""
         return insights_html
+    
+    def _copy_charts_to_charts_dir(self, charts_dir: Path, generated_charts: List[str]) -> None:
+        """Copy chart files to the charts directory for HTML references"""
+        import shutil
+        
+        # Source charts directory (parent level)
+        source_charts_dir = Path("static/pharmacy_report/charts")
+        
+        # Chart files that should be copied
+        chart_files = [
+            "top_stacked.png",
+            "traffic_flow.png", 
+            "best_breakdown.png",
+            "price_vs_score.png",
+            "healthcare_competition.png"
+        ]
+        
+        # Copy each chart file if it exists
+        for chart_file in chart_files:
+            source_path = source_charts_dir / chart_file
+            dest_path = charts_dir / chart_file
+            
+            if source_path.exists():
+                try:
+                    shutil.copy2(source_path, dest_path)
+                    print(f"Copied chart: {chart_file}")
+                except Exception as e:
+                    print(f"Error copying {chart_file}: {e}")
+            else:
+                print(f"Warning: Chart file not found: {source_path}")
+    
+    def _copy_coordinate_maps_to_maps_dir(self, maps_dir: Path) -> None:
+        """Copy coordinate-based map files to the maps directory for HTML references"""
+        import shutil
+        
+        # Source maps directory (parent level)
+        source_maps_dir = Path("static/pharmacy_report/maps")
+        
+        # Copy all coordinate-based map files
+        if source_maps_dir.exists():
+            for map_file in source_maps_dir.glob("site_*.html"):
+                dest_path = maps_dir / map_file.name
+                try:
+                    shutil.copy2(map_file, dest_path)
+                    print(f"Copied map: {map_file.name}")
+                except Exception as e:
+                    print(f"Error copying {map_file.name}: {e}")
+        else:
+            print(f"Warning: Source maps directory not found: {source_maps_dir}")

@@ -16,22 +16,31 @@ class BaseHTMLGenerator(ABC):
         self.output_dir = Path("static/pharmacy_report")
         self.css_styles = self._get_base_css()
     
-    def create_directory_structure(self, city_name: str, report_type: str) -> Dict[str, Path]:
+    def create_directory_structure(self, city_name: str, report_type: str, scenario: str = None) -> Dict[str, Path]:
         """Create the standard directory structure for reports"""
         city_name_clean = city_name.lower().replace(" ", "_")
-        report_dir = self.output_dir / f"{city_name_clean}_{report_type}"
+        
+        # Include scenario in directory name if provided
+        if scenario:
+            report_dir = self.output_dir / f"{city_name_clean}_{report_type}_{scenario}"
+        else:
+            report_dir = self.output_dir / f"{city_name_clean}_{report_type}"
+            
         maps_dir = report_dir / "maps"
         images_dir = report_dir / "images"
+        charts_dir = report_dir / "charts"
         
         # Create directories
         report_dir.mkdir(parents=True, exist_ok=True)
         maps_dir.mkdir(exist_ok=True)
         images_dir.mkdir(exist_ok=True)
+        charts_dir.mkdir(exist_ok=True)
         
         return {
             'report_dir': report_dir,
             'maps_dir': maps_dir,
             'images_dir': images_dir,
+            'charts_dir': charts_dir,
             'index_path': report_dir / "index.html"
         }
     
