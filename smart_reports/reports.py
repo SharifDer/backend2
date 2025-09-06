@@ -355,10 +355,17 @@ async def generate_html_pharmacy_report_file(req: Reqsmartreport = None, report_
     generator = PharmacyReportGenerator()
     
     # Generate the report using the modular system
-    return generator.generate_report({
+    html_file_path = generator.generate_report({
         'report_data': data,
         'processed_report_data': processed_report_data
     })
+    
+    # Log the HTML report path
+    print(f"\n🎉 SUCCESS! HTML report generated:")
+    print(f"🌐 HTML path: {html_file_path}")
+    print(f"💡 Open the HTML file in your browser for the best experience!")
+    
+    return html_file_path
 
 
 async def loading_category_dataset(req: ReqFetchDataset):

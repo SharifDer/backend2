@@ -18,13 +18,20 @@ class BaseHTMLGenerator(ABC):
     
     def create_directory_structure(self, city_name: str, report_type: str, scenario: str = None) -> Dict[str, Path]:
         """Create the standard directory structure for reports"""
+        from ..config import USE_MOCK_DATA
+        
         city_name_clean = city_name.lower().replace(" ", "_")
         
-        # Include scenario in directory name if provided
-        if scenario:
-            report_dir = self.output_dir / f"{city_name_clean}_{report_type}_{scenario}"
+        # Check if we should use mock data structure
+        if USE_MOCK_DATA:
+            # Mock data: Create subdirectories for each scenario
+            if scenario:
+                report_dir = self.output_dir / f"{city_name_clean}_{report_type}_{scenario}"
+            else:
+                report_dir = self.output_dir / f"{city_name_clean}_{report_type}"
         else:
-            report_dir = self.output_dir / f"{city_name_clean}_{report_type}"
+            # Real data: Use root directory directly
+            report_dir = self.output_dir
             
         maps_dir = report_dir / "maps"
         images_dir = report_dir / "images"
@@ -63,7 +70,6 @@ class BaseHTMLGenerator(ABC):
         
         /* Report Container */
         .report-container {
-            max-width: 1200px;
             margin: 0 auto;
             background-color: white;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);

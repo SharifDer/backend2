@@ -152,6 +152,9 @@ async def generate_report_from_data(
         logging.error(f"❌ Failed to generate report: {e}")
         raise Exception(f"Report generation failed: {e}")
     print(f"\n🎉 SUCCESS! Enhanced report generated:")
+    if 'metadata' in report_data and 'report_file_path' in report_data['metadata']:
+        report_path = report_data['metadata']['report_file_path']
+        print(f"📄 Report path: {report_path}")
     print(f"\n💡 Open the report in any markdown viewer or browser for best experience!")
     
     return report_data

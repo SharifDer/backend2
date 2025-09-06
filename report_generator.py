@@ -270,7 +270,6 @@ async def generate_complete_html_report(results: List[Dict[str, Any]],
         }}
         
         .report-container {{
-            max-width: 1200px;
             margin: 0 auto;
             background: white;
             box-shadow: 0 20px 60px rgba(0,0,0,0.1);

@@ -418,8 +418,19 @@ class MockDataGenerator:
 # Convenience function for easy access
 def get_mock_data(city_name: str = "Riyadh") -> Dict[str, Any]:
     """Get mock data for a specific city."""
-    generator = MockDataGenerator()
-    return generator.generate_mock_processed_report(city_name)
+    # Try to use the new scenario-based system first
+    try:
+        from .mock_data_scenarios import MockDataScenarioManager
+        manager = MockDataScenarioManager()
+        # Create a default request for current_location_only scenario
+        req = manager.create_mock_request("current_location_only", city_name)
+        return manager.get_mock_data(req)
+    except Exception as e:
+        print(f"Warning: Could not load scenario-based mock data: {e}")
+        print("Falling back to generated mock data...")
+        # Fall back to the original generated mock data
+        generator = MockDataGenerator()
+        return generator.generate_mock_processed_report(city_name)
 
 def get_mock_request(city_name: str = "Riyadh"):
     """Get a mock request object for testing."""

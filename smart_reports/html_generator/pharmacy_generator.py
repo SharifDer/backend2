@@ -377,7 +377,6 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
     }}
 
     .report-container {{
-      max-width: 1200px;
       margin: 0 auto;
       background: white;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
@@ -1130,7 +1129,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         </div>
 
         <div class="map-container">
-          <img src="images/candidates_map.png" alt="Riyadh Properties Overview Map" class="map-image" />
+          <img src="maps/candidates_map.png" alt="Riyadh Properties Overview Map" class="map-image" />
 
           <p style="margin-top: 15px; color: #7f8c8d">
             <strong>Overview Map Features:</strong> Top 10 analyzed properties
@@ -1653,7 +1652,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
                 print(f"Warning: Chart file not found: {source_path}")
     
     def _copy_coordinate_maps_to_maps_dir(self, maps_dir: Path) -> None:
-        """Copy coordinate-based map files to the maps directory for HTML references"""
+        """Copy coordinate-based map files and universal maps to the maps directory for HTML references"""
         import shutil
         
         # Source maps directory (parent level)
@@ -1661,6 +1660,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         
         # Copy all coordinate-based map files
         if source_maps_dir.exists():
+            # Copy coordinate-based HTML maps
             for map_file in source_maps_dir.glob("site_*.html"):
                 dest_path = maps_dir / map_file.name
                 try:
@@ -1668,5 +1668,19 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
                     print(f"Copied map: {map_file.name}")
                 except Exception as e:
                     print(f"Error copying {map_file.name}: {e}")
+            
+            # Copy universal maps (PNG files)
+            universal_maps = ["candidates_map.png", "demographics_heatmap.png"]
+            for map_file in universal_maps:
+                source_path = source_maps_dir / map_file
+                dest_path = maps_dir / map_file
+                if source_path.exists():
+                    try:
+                        shutil.copy2(source_path, dest_path)
+                        print(f"Copied universal map: {map_file}")
+                    except Exception as e:
+                        print(f"Error copying {map_file}: {e}")
+                else:
+                    print(f"Warning: Universal map not found: {source_path}")
         else:
             print(f"Warning: Source maps directory not found: {source_maps_dir}")
