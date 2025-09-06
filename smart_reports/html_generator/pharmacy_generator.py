@@ -802,13 +802,18 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             competitive_position = detailed_insights.get('competitive_position', {})
             competing_pharmacies = competitive_position.get('competing_pharmacies', 0)
             
-            # Get competition score from rankings data (it's in competition_score_comparison.value)
+            # Get scores from rankings data using display_text with icons
             rankings = processed_report_data.get('rankings', [])
-            competition_score = 0
+            top_ranking = {}
             if rankings:
                 top_ranking = next((prop for prop in rankings if prop.get('rank') == 1), {})
-                competition_score_comparison = top_ranking.get('competition_score_comparison', {})
-                competition_score = competition_score_comparison.get('value', 0)
+            
+            # Get display text with icons for each score
+            traffic_score_display = self._get_display_text_with_icon(top_ranking.get('traffic_score_comparison', {}))
+            demographics_score_display = self._get_display_text_with_icon(top_ranking.get('demographics_score_comparison', {}))
+            competition_score_display = self._get_display_text_with_icon(top_ranking.get('competition_score_comparison', {}))
+            healthcare_score_display = self._get_display_text_with_icon(top_ranking.get('healthcare_ecosystem_score_comparison', {}))
+            complementary_score_display = self._get_display_text_with_icon(top_ranking.get('complementary_businesses_score_comparison', {}))
         else:
             # Fallback values
             traffic_flow = 30
@@ -816,7 +821,11 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             population_age_35_plus = 0
             avg_income = 0
             competing_pharmacies = 0
-            competition_score = 0
+            traffic_score_display = "N/A"
+            demographics_score_display = "N/A"
+            competition_score_display = "N/A"
+            healthcare_score_display = "N/A"
+            complementary_score_display = "N/A"
         
         return f"""
     <div class="page">
@@ -873,7 +882,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             ">
           <div>
             <strong>🚗 Traffic Analysis:</strong><br />
-            Score: {traffic_score:.1f}/100<br />
+            {traffic_score_display}<br />
             <small>Target: 20–30 km/h | ℹ️ Light traffic</small>
           </div>
           <div>
@@ -883,12 +892,12 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
           </div>
           <div>
             <strong>👥 Demographics:</strong><br />
-            {population_age_35_plus:.1f}% Aged 35+ <br /> {avg_income:,.0f} SAR income<br />
-            <small>✅ Strong alignment</small>
+            {demographics_score_display}<br />
+            <small>Age: {population_age_35_plus:.1f}% | Income: {avg_income:,.0f} SAR</small>
           </div>
           <div>
             <strong>☕ Competition:</strong><br />
-            {competition_score:.1f}<br />
+            {competition_score_display}<br />
             <small>({competing_pharmacies} pharmacies)</small>
           </div>
         </div>
@@ -915,6 +924,9 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
           {self._generate_rankings_table_exact(rankings[:10])}
         </tbody>
       </table>
+
+      {self._generate_current_location_table(processed_report_data)}
+      {self._generate_custom_locations_table(processed_report_data)}
     </div>"""
 
     def _generate_page_2_exact(self, report_data, processed_report_data):
@@ -1177,6 +1189,26 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
       </div>
     </div>"""
 
+    def _get_display_text_with_icon(self, comparison_data):
+        """Extract display text with appropriate icon based on comparison type"""
+        if not comparison_data:
+            return "N/A"
+        
+        display_text = comparison_data.get('display_text', '')
+        comparison_type = comparison_data.get('comparison_type', '')
+        
+        # Add appropriate icon based on comparison type
+        if comparison_type == 'improvement':
+            return f"{display_text} 📈"
+        elif comparison_type == 'disadvantage':
+            return f"{display_text} 📉"
+        elif comparison_type == 'difference':
+            # For 'difference' (like 0% difference), just return the display text with no icon
+            return display_text
+        else:
+            # For other types, just return the display text
+            return display_text
+
     def _generate_rankings_table_exact(self, rankings):
         """Generate rankings table - EXACT MATCH"""
         table_rows = ""
@@ -1190,13 +1222,13 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             if price is None:
                 price = 0
             
-            # Extract scores from comparison objects in JSON
-            final_score = property_data.get('final_score_comparison', {}).get('value', 0)
-            traffic_score = property_data.get('traffic_score_comparison', {}).get('value', 0)
-            demographics_score = property_data.get('demographics_score_comparison', {}).get('value', 0)
-            competition_score = property_data.get('competition_score_comparison', {}).get('value', 0)
-            healthcare_score = property_data.get('healthcare_ecosystem_score_comparison', {}).get('value', 0)
-            complementary_score = property_data.get('complementary_businesses_score_comparison', {}).get('value', 0)
+            # Extract scores from comparison objects in JSON using display_text with icons
+            final_score = self._get_display_text_with_icon(property_data.get('final_score_comparison', {}))
+            traffic_score = self._get_display_text_with_icon(property_data.get('traffic_score_comparison', {}))
+            demographics_score = self._get_display_text_with_icon(property_data.get('demographics_score_comparison', {}))
+            competition_score = self._get_display_text_with_icon(property_data.get('competition_score_comparison', {}))
+            healthcare_score = self._get_display_text_with_icon(property_data.get('healthcare_ecosystem_score_comparison', {}))
+            complementary_score = self._get_display_text_with_icon(property_data.get('complementary_businesses_score_comparison', {}))
             
             # Generate Google Maps URL if coordinates are available
             google_maps_url = property_data.get('url', '#')  # Use url from JSON instead of google_maps_url
@@ -1216,15 +1248,167 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             <td><span class="rank-badge {rank_class}">#{i}</span></td>
             <td><code>{site_name}</code></td>
             <td>{price_display}</td>
-            <td><strong>{final_score:.1f}</strong></td>
-            <td>{traffic_score:.1f}</td>
-            <td>{demographics_score:.1f}</td>
-            <td>{competition_score:.1f}</td>
-            <td>{healthcare_score:.1f}</td>
-            <td>{complementary_score:.1f}</td>
+            <td><strong>{final_score}</strong></td>
+            <td>{traffic_score}</td>
+            <td>{demographics_score}</td>
+            <td>{competition_score}</td>
+            <td>{healthcare_score}</td>
+            <td>{complementary_score}</td>
             <td><a href="{google_maps_url}" target="_blank">View</a></td>
           </tr>"""
         return table_rows
+
+    def _generate_current_location_table(self, processed_report_data):
+        """Generate Current Location Scores table if current location data exists"""
+        current_location = processed_report_data.get('current_location', [])
+        
+        if not current_location:
+            return ""
+        
+        # Generate table rows for current location
+        table_rows = ""
+        for location_data in current_location:
+            site_name = location_data.get('site_name', 'Your current location')
+            price = location_data.get('price_sar', 0)
+            rank = location_data.get('rank', 0)
+            
+            # Handle None price values
+            if price is None:
+                price = 0
+            
+            # Use direct score values from JSON (no comparison objects for current/custom locations)
+            final_score = f"{location_data.get('final_score', 0):.1f}"
+            traffic_score = f"{location_data.get('traffic_score', 0):.1f}"
+            demographics_score = f"{location_data.get('demographics_score', 0):.1f}"
+            competition_score = f"{location_data.get('competition_score', 0):.1f}"
+            healthcare_score = f"{location_data.get('healthcare_ecosystem_score', 0):.1f}"
+            complementary_score = f"{location_data.get('complementary_businesses_score', 0):.1f}"
+            
+            # Generate Google Maps URL if coordinates are available
+            google_maps_url = location_data.get('url', '#')
+            if not google_maps_url or google_maps_url == '#':
+                # Try to get coordinates from location object if available
+                location = location_data.get('location', {})
+                lat = location.get('latitude')
+                lng = location.get('longitude')
+                if lat and lng:
+                    google_maps_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
+            
+            # Format price display
+            price_display = "N/A" if price == 0 and location_data.get('price_sar') is None else f"{price:,.0f}"
+            
+            table_rows += f"""
+          <tr>
+            <td><span class="rank-badge">#{rank}</span></td>
+            <td><code>{site_name}</code></td>
+            <td>{price_display}</td>
+            <td><strong>{final_score}</strong></td>
+            <td>{traffic_score}</td>
+            <td>{demographics_score}</td>
+            <td>{competition_score}</td>
+            <td>{healthcare_score}</td>
+            <td>{complementary_score}</td>
+            <td><a href="{google_maps_url}" target="_blank">View</a></td>
+          </tr>"""
+        
+        return f"""
+      <h2 class="section-title">📍 Current Location Scores</h2>
+
+      <table class="rankings-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Site Name</th>
+            <th>Rent Price (SAR)</th>
+            <th>Final Score</th>
+            <th>Traffic</th>
+            <th>Demographics</th>
+            <th>Competition</th>
+            <th>Healthcare Environment</th>
+            <th>Complementary Businesses</th>
+            <th>View</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table_rows}
+        </tbody>
+      </table>"""
+
+    def _generate_custom_locations_table(self, processed_report_data):
+        """Generate Custom Location Analysis table if custom locations data exists"""
+        custom_locations = processed_report_data.get('custom_locations', [])
+        
+        if not custom_locations:
+            return ""
+        
+        # Generate table rows for custom locations
+        table_rows = ""
+        for location_data in custom_locations:
+            site_name = location_data.get('site_name', 'Custom location')
+            price = location_data.get('price_sar', 0)
+            rank = location_data.get('rank', 0)
+            
+            # Handle None price values
+            if price is None:
+                price = 0
+            
+            # Use direct score values from JSON (no comparison objects for current/custom locations)
+            final_score = f"{location_data.get('final_score', 0):.1f}"
+            traffic_score = f"{location_data.get('traffic_score', 0):.1f}"
+            demographics_score = f"{location_data.get('demographics_score', 0):.1f}"
+            competition_score = f"{location_data.get('competition_score', 0):.1f}"
+            healthcare_score = f"{location_data.get('healthcare_ecosystem_score', 0):.1f}"
+            complementary_score = f"{location_data.get('complementary_businesses_score', 0):.1f}"
+            
+            # Generate Google Maps URL if coordinates are available
+            google_maps_url = location_data.get('url', '#')
+            if not google_maps_url or google_maps_url == '#':
+                # Try to get coordinates from location object if available
+                location = location_data.get('location', {})
+                lat = location.get('latitude')
+                lng = location.get('longitude')
+                if lat and lng:
+                    google_maps_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
+            
+            # Format price display
+            price_display = "N/A" if price == 0 and location_data.get('price_sar') is None else f"{price:,.0f}"
+            
+            table_rows += f"""
+          <tr>
+            <td><span class="rank-badge">#{rank}</span></td>
+            <td><code>{site_name}</code></td>
+            <td>{price_display}</td>
+            <td><strong>{final_score}</strong></td>
+            <td>{traffic_score}</td>
+            <td>{demographics_score}</td>
+            <td>{competition_score}</td>
+            <td>{healthcare_score}</td>
+            <td>{complementary_score}</td>
+            <td><a href="{google_maps_url}" target="_blank">View</a></td>
+          </tr>"""
+        
+        return f"""
+      <h2 class="section-title">📍 Custom Location Analysis</h2>
+
+      <table class="rankings-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Site Name</th>
+            <th>Rent Price (SAR)</th>
+            <th>Final Score</th>
+            <th>Traffic</th>
+            <th>Demographics</th>
+            <th>Competition</th>
+            <th>Healthcare Environment</th>
+            <th>Complementary Businesses</th>
+            <th>View</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table_rows}
+        </tbody>
+      </table>"""
 
     def _generate_property_cards_exact(self, detailed_analysis, visual_analysis=None, processed_report_data=None):
         """Generate property cards - EXACT MATCH"""
@@ -1271,16 +1455,21 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             average_income = demographics_match.get('average_income_sar', 0)
             competing_pharmacies = competitive_position.get('competing_pharmacies', 0)
             
-            # Get competition score from rankings data (it's in competition_score_comparison.value)
-            competition_score = 0
+            # Get scores from rankings data using display_text with icons
             rankings = processed_report_data.get('rankings', []) if processed_report_data else []
+            matching_ranking = {}
             if rankings:
                 # Find the matching ranking by site_name
                 matching_ranking = next((prop for prop in rankings if prop.get('site_name') == site_name), {})
-                competition_score_comparison = matching_ranking.get('competition_score_comparison', {})
-                competition_score = competition_score_comparison.get('value', 0)
             
-            # Get scores from the scoring breakdown
+            # Get display text with icons for each score
+            traffic_score_display = self._get_display_text_with_icon(matching_ranking.get('traffic_score_comparison', {}))
+            demographics_score_display = self._get_display_text_with_icon(matching_ranking.get('demographics_score_comparison', {}))
+            competition_score_display = self._get_display_text_with_icon(matching_ranking.get('competition_score_comparison', {}))
+            healthcare_score_display = self._get_display_text_with_icon(matching_ranking.get('healthcare_ecosystem_score_comparison', {}))
+            complementary_score_display = self._get_display_text_with_icon(matching_ranking.get('complementary_businesses_score_comparison', {}))
+            
+            # Get scores from the scoring breakdown for fallback
             scoring_breakdown = property_data.get('scoring_breakdown', [])
             traffic_score = 0
             demographics_score = 0
@@ -1316,7 +1505,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             <h4 style="color: #2c3e50; margin-bottom: 10px">🎯 Performance Metrics</h4>
             <div class="score-breakdown">
               <div class="score-item">
-                <div class="value">{traffic_score:.1f}</div>
+                <div class="value">{traffic_score_display}</div>
                 <div class="label">Traffic<br />({current_speed:.1f} km/h)</div>
               </div>
               <div class="score-item">
@@ -1324,11 +1513,11 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
                 <div class="label">Business<br />({nearby_businesses} nearby)</div>
               </div>
               <div class="score-item">
-                <div class="value">{demographics_score:.1f}</div>
+                <div class="value">{demographics_score_display}</div>
                 <div class="label">Demographics<br />(Age: {population_age_35_plus:.0f})</div>
               </div>
               <div class="score-item">
-                <div class="value">{competition_score:.1f}</div>
+                <div class="value">{competition_score_display}</div>
                 <div class="label">Competition<br />({competing_pharmacies} pharmacies)</div>
               </div>
             </div>
