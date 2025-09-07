@@ -30,9 +30,12 @@ def generate_executive_summary_section(report_data, processed_report_data: Dict[
     top_recommendation = executive_summary.get("top_recommendation", {})
     total_sites_evaluated = executive_summary.get("total_sites_evaluated", 0)
     
-    # Get current location data for detailed scores (has more complete data)
-    current_location = processed_report_data.get('current_location', [])
-    current_location_data = current_location[0] if current_location else {}
+    nearby_businesses = 0
+    population_age_35_plus = 0
+    avg_income = 0
+    traffic_score_display = "N/A"
+    demographics_score_display = "N/A"
+    competition_score_display = "N/A"
     
     # Get additional metrics from top property's detailed insights
     detailed_analysis = processed_report_data.get('detailed_analysis', [])
@@ -64,17 +67,8 @@ def generate_executive_summary_section(report_data, processed_report_data: Dict[
         traffic_score_display = _get_display_text_with_icon(top_ranking.get('traffic_score_comparison', {}))
         demographics_score_display = _get_display_text_with_icon(top_ranking.get('demographics_score_comparison', {}))
         competition_score_display = _get_display_text_with_icon(top_ranking.get('competition_score_comparison', {}))
-    else:
-        # Fallback values
-        nearby_businesses = 0
-        population_age_35_plus = 0
-        avg_income = 0
-        competing_pharmacies = 0
-        traffic_score_display = "N/A"
-        demographics_score_display = "N/A"
-        competition_score_display = "N/A"
-        
-        return f"""
+    
+    return f"""
     <div class="page">
       <div class="hero">
         <h1>{title}</h1>

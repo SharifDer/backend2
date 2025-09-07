@@ -6,7 +6,6 @@ Main generator for pharmacy HTML reports using modular components
 from typing import Dict, Any
 from pathlib import Path
 from .base_generator import BaseHTMLGenerator
-from .components import HTMLComponents
 from .property_analyzer import PropertyAnalyzer
 from .css_styles import get_pharmacy_report_css
 from .html_sections import generate_executive_summary_section, generate_methodology_and_analysis_section, generate_visual_analysis_section
@@ -17,7 +16,6 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
     
     def __init__(self):
         super().__init__()
-        self.components = HTMLComponents()
         self.property_analyzer = PropertyAnalyzer()
         self.css_styles += self.property_analyzer.css_styles
 
@@ -45,23 +43,15 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         report_data = data.get('user_request')
         processed_report_data = data.get('analysis_results', {})
         
-        
-        city_name = report_data.city_name if report_data else "Unknown City"
         base_dir = Path("static/pharmacy_report")
         base_dir.mkdir(parents=True, exist_ok=True)
         
         index_path = base_dir / "index.html"
         
-        
-        
-        
-        rankings = processed_report_data.get("rankings", [])
-        detailed_analysis = processed_report_data.get("detailed_analysis", [])
-        
-        if not rankings:
+        if not processed_report_data.get("rankings", []):
             raise ValueError("No ranking data available for report generation")
         
-        if not detailed_analysis:
+        if not processed_report_data.get("detailed_analysis", []):
             raise ValueError("No detailed analysis data available for report generation")
         
         visual_analysis = processed_report_data.get('visual_analysis', {})
