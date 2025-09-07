@@ -11,13 +11,13 @@ def generate_chart_grid(generated_charts: List[str], visual_analysis: Dict[str, 
     if not generated_charts:
         return """
       <div class="map-placeholder">
-        <img src="charts/score_distribution.png" alt="Score Distribution" style="width: 100%; height: 300px; object-fit: cover;">
+        <img src="charts/score_distribution.png" alt="Score Distribution" style="width: 100%; height: auto; object-fit: cover;">
       </div>
       <div class="map-placeholder">
-        <img src="charts/analysis_dashboard.png" alt="Analysis Dashboard" style="width: 100%; height: 300px; object-fit: cover;">
+        <img src="charts/analysis_dashboard.png" alt="Analysis Dashboard" style="width: 100%; height: auto; object-fit: cover;">
       </div>
       <div class="map-placeholder">
-        <img src="charts/price_vs_score.png" alt="Price vs Score" style="width: 100%; height: 300px; object-fit: cover;">
+        <img src="charts/price_vs_score.png" alt="Price vs Score" style="width: 100%; height: auto; object-fit: cover;">
       </div>"""
     
     # Get chart titles from visual_analysis if available

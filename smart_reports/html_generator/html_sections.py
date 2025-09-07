@@ -357,8 +357,8 @@ def generate_visual_analysis_section(report_data, processed_report_data: Dict[st
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             margin: 30px 0;
           ">
-        <h3 style="color: #2c3e50; margin-bottom: 20px">📈 Statistical Analysis</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
+        <h2 style="color: #2c3e50; margin-bottom: 20px">📈 Statistical Analysis</h2>
+        <div style="display: flex; flex-direction:column; gap: 24px; margin: 20px 0;">
           {generate_chart_grid(generated_charts, processed_report_data.get('visual_analysis', {}))}
         </div>
       </div>
