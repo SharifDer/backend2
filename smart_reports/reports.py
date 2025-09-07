@@ -11,18 +11,11 @@ from smart_reports.scoring import *
 from smart_reports.report_generation.pharmacy_report_final import generate_report_from_data
 from typing import Dict, Any
 
-from .config import USE_MOCK_DATA
 from typing import Optional
 from .report_generation.report_config import source_current_location, source_custom_locations , source_shop_for_rent
 import json
 import os
 async def generate_pharmacy_report(req : Reqsmartreport):
-    # Check if we should use mock data
-    if USE_MOCK_DATA:
-        from .mock_data_scenarios import get_mock_data_for_scenario
-        return get_mock_data_for_scenario(req)
-    
-    # Original logic continues below
     req_dataset = ReqFetchDataset(user_id=req.user_id , city_name=req.city_name,
                                   country_name=req.country_name,
                                 boolean_query="shop_for_rent",
@@ -269,7 +262,7 @@ async def fetch_all_criterions_data(
         }
     }
 
-async def generate_html_pharmacy_report(req: Reqsmartreport = None, report_data: Reqsmartreport = None) -> Dict[str, Any]:
+async def generate_html_pharmacy_report(req: Reqsmartreport) -> Dict[str, Any]:
     """
     Generate a comprehensive pharmacy report and return structured data.
     
@@ -277,20 +270,14 @@ async def generate_html_pharmacy_report(req: Reqsmartreport = None, report_data:
     detailed analysis, and visual components following the specified structure.
     
     Args:
-        req (Reqsmartreport): Report data containing pharmacy analysis results (for router compatibility)
-        report_data (Reqsmartreport): Report data containing pharmacy analysis results (for direct calls)
+        req (Reqsmartreport): User request containing pharmacy analysis parameters
         
     Returns:
         Dict[str, Any]: Structured report data matching ResIntelligenceData format
     """
-    
-    # Handle both parameter names for compatibility
-    data = req if req is not None else report_data
-    if data is None:
-        raise ValueError("Either req or report_data parameter must be provided")
-    
+
     # Generate the processed report data
-    processed_report_data = await generate_pharmacy_report(data)
+    processed_report_data = await generate_pharmacy_report(req)
     
     # Import the modular generator
     from .html_generator import PharmacyReportGenerator
@@ -300,13 +287,13 @@ async def generate_html_pharmacy_report(req: Reqsmartreport = None, report_data:
     
     # Generate the HTML report file
     html_file_path = generator.generate_report({
-        'report_data': data,
-        'processed_report_data': processed_report_data
+        'user_request': req,
+        'analysis_results': processed_report_data
     })
     
     # Return structured data matching ResIntelligenceData format
     return {
-        "title": processed_report_data.get("title", f"{data.city_name} Pharmacy Site Analysis Report"),
+        "title": processed_report_data.get("title", f"{req.city_name} Pharmacy Site Analysis Report"),
         "description": processed_report_data.get("description", "Comprehensive Location Intelligence & Investment Recommendations"),
         "summary_metrics": processed_report_data.get("summary_metrics", {}),
         "executive_summary": processed_report_data.get("executive_summary", {}),
@@ -323,50 +310,6 @@ async def generate_html_pharmacy_report(req: Reqsmartreport = None, report_data:
             "report_type": "pharmacy_site_selection"
         }
     }
-
-
-async def generate_html_pharmacy_report_file(req: Reqsmartreport = None, report_data: Reqsmartreport = None) -> str:
-    """
-    Generate a comprehensive HTML pharmacy report file.
-    
-    Creates a multi-page HTML report with executive summary, methodology,
-    detailed analysis, and visual components following the specified structure.
-    
-    Args:
-        req (Reqsmartreport): Report data containing pharmacy analysis results (for router compatibility)
-        report_data (Reqsmartreport): Report data containing pharmacy analysis results (for direct calls)
-        
-    Returns:
-        str: Absolute path to the generated index.html file
-    """
-    
-    # Handle both parameter names for compatibility
-    data = req if req is not None else report_data
-    if data is None:
-        raise ValueError("Either req or report_data parameter must be provided")
-    
-    # Import the modular generator
-    from .html_generator import PharmacyReportGenerator
-    
-    # Generate the processed report data
-    processed_report_data = await generate_pharmacy_report(data)
-    
-    # Create the generator instance
-    generator = PharmacyReportGenerator()
-    
-    # Generate the report using the modular system
-    html_file_path = generator.generate_report({
-        'report_data': data,
-        'processed_report_data': processed_report_data
-    })
-    
-    # Log the HTML report path
-    print(f"\n🎉 SUCCESS! HTML report generated:")
-    print(f"🌐 HTML path: {html_file_path}")
-    print(f"💡 Open the HTML file in your browser for the best experience!")
-    
-    return html_file_path
-
 
 async def loading_category_dataset(req: ReqFetchDataset):
 

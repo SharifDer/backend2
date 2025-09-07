@@ -13,6 +13,7 @@ from .components import HTMLComponents
 from .property_analyzer import PropertyAnalyzer
 from .map_generator import MapGenerator
 from .image_generator import ImageGenerator
+from .css_styles import get_pharmacy_report_css
 
 
 class PharmacyReportGenerator(BaseHTMLGenerator):
@@ -31,6 +32,9 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
     
     def _detect_scenario(self, report_data) -> str:
         """Detect the scenario based on request data"""
+        if report_data is None:
+            return "no_custom_no_current"
+        
         has_current_location = report_data.current_location is not None
         has_custom_locations = report_data.custom_locations is not None and len(report_data.custom_locations) > 0
         
@@ -59,21 +63,37 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
     def generate_report(self, data: Dict[str, Any]) -> str:
         """Generate the complete pharmacy HTML report"""
         # Extract data
-        report_data = data.get('report_data')
-        processed_report_data = data.get('processed_report_data', {})
+        report_data = data.get('user_request')
+        processed_report_data = data.get('analysis_results', {})
         
         # Detect scenario from request data
         scenario = self._detect_scenario(report_data)
         
-        # Create directory structure with scenario
-        dirs = self.create_directory_structure(
-            report_data.city_name, 
-            "pharmacies",
-            scenario
-        )
+        # Create simple directory structure
+        city_name = report_data.city_name if report_data else "Unknown City"
+        base_dir = Path("static/pharmacy_report")
+        base_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create subdirectories
+        maps_dir = base_dir / "maps"
+        images_dir = base_dir / "images" 
+        charts_dir = base_dir / "charts"
+        maps_dir.mkdir(exist_ok=True)
+        images_dir.mkdir(exist_ok=True)
+        charts_dir.mkdir(exist_ok=True)
+        
+        # Create index file path
+        index_path = base_dir / "index.html"
+        
+        dirs = {
+            'maps_dir': maps_dir,
+            'images_dir': images_dir,
+            'charts_dir': charts_dir,
+            'index_path': index_path
+        }
         
         # Extract report components
-        title = processed_report_data.get("title", f"{report_data.city_name} Pharmacy Site Analysis Report")
+        title = processed_report_data.get("title", f"{city_name} Pharmacy Site Analysis Report")
         description = processed_report_data.get("description", "Comprehensive Location Intelligence & Investment Recommendations")
         
         # Extract summary metrics
@@ -136,9 +156,9 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
             
             properties = detailed_analysis[:10]
             if not generated_maps:
-                generated_maps = self.map_generator.generate_all_maps(properties, report_data.city_name)
+                generated_maps = self.map_generator.generate_all_maps(properties, city_name)
             if not generated_charts:
-                generated_charts = self.image_generator.generate_all_charts(properties, report_data.city_name)
+                generated_charts = self.image_generator.generate_all_charts(properties, city_name)
         
         # Copy chart files to charts directory for HTML references
         self._copy_charts_to_charts_dir(dirs['charts_dir'], generated_charts)
@@ -160,602 +180,124 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
         # Return absolute path
         return str(dirs['index_path'].absolute())
     
-    def _generate_report(self, **kwargs) -> str:
-        """Generate the complete report content"""
-        return f"""
-        <!-- Page 1: Executive Overview -->
-        <div class="page">
-            {self._generate_page_1(**kwargs)}
-        </div>
-        
-        <!-- Page 2: Methodology & Analysis -->
-        <div class="page page-break">
-            {self._generate_page_2(**kwargs)}
-        </div>
-        
-        <!-- Page 3: Visual Analysis -->
-        <div class="page page-break">
-            {self._generate_page_3(**kwargs)}
-        </div>
-        
-        <!-- Report Footer -->
-        {self._generate_footer(**kwargs)}
-        """
-    
-    def _generate_page_1(self, **kwargs) -> str:
-        """Generate Page 1: Executive Overview"""
-        return f"""
-            {self.components.hero_section(
-                kwargs['title'], 
-                kwargs['description'], 
-                kwargs['metadata'].get('generation_method', 'N/A')
-            )}
-            
-            {self.components.executive_summary(
-                f"This comprehensive analysis evaluates {kwargs['total_sites_evaluated']} pharmacy locations across {kwargs['report_data'].city_name} "
-                f"using advanced location intelligence methodologies. Our assessment integrates multiple data sources including "
-                f"traffic flow analysis, demographic profiling, healthcare ecosystem mapping, competitive landscape evaluation, "
-                f"and complementary business assessment. Each location is systematically scored using our proprietary weighted "
-                f"methodology, considering market opportunity, accessibility, and business environment factors to provide "
-                f"data-driven investment recommendations."
-            )}
-            
-            {self.components.metrics_grid([
-                {'value': kwargs['total_locations'], 'label': 'Total Properties Analyzed'},
-                {'value': f"{kwargs['average_score']:.1f}", 'label': 'Average Performance Score'},
-                {'value': f"{kwargs['average_price_sar']:,.0f} SAR", 'label': 'Average Price'},
-                {'value': kwargs['competing_pharmacies'], 'label': 'Competing Pharmacies'}
-            ])}
-            
-            {self.components.top_recommendation(kwargs['top_recommendation'])}
-            
-            {self.components.rankings_table(kwargs['rankings'])}
-        """
-    
-    def _generate_page_2(self, **kwargs) -> str:
-        """Generate Page 2: Methodology & Analysis"""
-        return f"""
-            {self.components.methodology_section()}
-            
-            <!-- Detailed Property Analysis -->
-            <div class="property-analysis">
-                <h2>Detailed Property Analysis</h2>
-                <p>Comprehensive evaluation of individual properties with detailed scoring breakdowns, strategic insights, and location-specific recommendations.</p>
-                
-                {self._generate_property_cards(kwargs['detailed_analysis'])}
-            </div>
-        """
-    
-    def _generate_page_3(self, **kwargs) -> str:
-        """Generate Page 3: Visual Analysis"""
-        generated_maps = kwargs.get('generated_maps', [])
-        generated_charts = kwargs.get('generated_charts', [])
-        
-        # Get overview map path
-        overview_map_path = "maps/overview_map.html"
-        if generated_maps:
-            overview_map_path = generated_maps[0].split('/')[-1] if '/' in generated_maps[0] else generated_maps[0]
-            overview_map_path = f"maps/{overview_map_path}"
-        
-        # Get chart paths
-        chart_paths = []
-        for chart_path in generated_charts:
-            chart_name = chart_path.split('/')[-1] if '/' in chart_path else chart_path
-            chart_paths.append(f"images/{chart_name}")
-        
-        return f"""
-            <div class="visual-analysis">
-                <h2>Visual Analysis & Regional Insights</h2>
-                <p>Comprehensive visual representation of market analysis, performance patterns, and strategic insights.</p>
-                
-                <!-- Regional Overview Card -->
-                <div class="chart-container">
-                    <h3>Regional Overview</h3>
-                    <div class="map-placeholder">
-                        <iframe src="{overview_map_path}" width="100%" height="500" frameborder="0"></iframe>
-                    </div>
-                    <div class="property-details" style="margin-top: 20px;">
-                        <div class="property-info">
-                            <h4>Top Performing Areas</h4>
-                            <p>• Central Business District: High traffic, premium demographics</p>
-                            <p>• Residential Zones: Stable demand, moderate competition</p>
-                            <p>• Healthcare Corridors: Strong referral potential</p>
-                        </div>
-                        <div class="performance-metrics">
-                            <h4>Market Insights</h4>
-                            <p>• Score distribution shows clear performance tiers</p>
-                            <p>• Price-performance correlation analysis</p>
-                            <p>• Competition density mapping</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Statistical Analysis Chart Container -->
-                <div class="chart-container">
-                    <h3>Statistical Analysis</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
-                        {self._generate_chart_grid(chart_paths)}
-                    </div>
-                </div>
-                
-                <!-- Key Investment Insights Summary -->
-                <div class="top-recommendation">
-                    <h3>Key Investment Insights</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        {self._generate_investment_insights(kwargs['key_investment_insights'])}
-                    </div>
-                </div>
-            </div>
-        """
-    
-    def _generate_property_cards(self, detailed_analysis: List[Dict[str, Any]]) -> str:
-        """Generate property analysis cards"""
-        # Generate property cards - EXACT MATCH (10 properties like perfect output)
-        property_cards_html = ""
-        for i, property_data in enumerate(detailed_analysis[:10], 1):  # Show exactly 10 properties
-            property_cards_html += self.property_analyzer.generate_property_card(property_data, i)
-        
-        return property_cards_html
-    
-    def _generate_chart_grid(self, chart_paths: List[str]) -> str:
-        """Generate chart grid HTML"""
-        if not chart_paths:
-            # Fallback to placeholder images
-            return """
-                        <div class="map-placeholder">
-                            <img src="images/score_distribution.png" alt="Score Distribution" style="width: 100%; height: 300px; object-fit: cover;">
-                        </div>
-                        <div class="map-placeholder">
-                            <img src="images/analysis_dashboard.png" alt="Analysis Dashboard" style="width: 100%; height: 300px; object-fit: cover;">
-                        </div>
-                        <div class="map-placeholder">
-                            <img src="images/price_vs_score.png" alt="Price vs Score" style="width: 100%; height: 300px; object-fit: cover;">
-                        </div>"""
-        
-        chart_html = ""
-        for i, chart_path in enumerate(chart_paths[:6]):  # Limit to 6 charts
-            chart_name = chart_path.split('/')[-1].replace('.png', '').replace('_', ' ').title()
-            chart_html += f"""
-                        <div class="map-placeholder">
-                            <img src="{chart_path}" alt="{chart_name}" style="width: 100%; height: 300px; object-fit: cover;">
-                        </div>"""
-        
-        return chart_html
-    
-    def _generate_investment_insights(self, key_investment_insights: List[Dict[str, Any]]) -> str:
-        """Generate investment insights HTML"""
-        insights_html = ""
-        for insight in key_investment_insights[:6]:
-            insights_html += f"""
-                        <div class="criterion-card">
-                            <h4>{insight.get('category', 'Strategic Insight')}</h4>
-                            <p>{insight.get('description', 'Key strategic insight for pharmacy investment.')}</p>
-                        </div>"""
-        return insights_html
-    
-    def _generate_footer(self, **kwargs) -> str:
-        """Generate report footer"""
-        footer_data = {
-            'total_sites_evaluated': kwargs['total_sites_evaluated'],
-            'city_name': kwargs['report_data'].city_name,
-            'country_name': kwargs['report_data'].country_name
-        }
-        return self.components.report_footer(footer_data)
-
-    # ============================================================================
-    # PIXEL PERFECT MATCH METHODS - EXACT COPY OF PERFECT OUTPUT
-    # ============================================================================
-
     def _generate_complete_report_exact(self, report_data, processed_report_data, generated_maps, generated_charts):
-        """Generate the complete HTML report - PIXEL PERFECT MATCH"""
-        
-
-        
+        """Generate the complete HTML report - PIXEL PERFECT MATCH"""                
         html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
+            <!DOCTYPE html>
+            <html lang="en">
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Riyadh Pharmacy Site Analysis Report</title>
-  <style>
-    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-
-    * {{
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }}
-
-    body {{
-      font-family: "Inter", sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-    }}
-
-    .report-container {{
-      margin: 0 auto;
-      background: white;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-      border-radius: 20px;
-      overflow: hidden;
-    }}
-
-    .page {{
-      padding: 60px;
-      min-height: 100vh;
-      page-break-after: always;
-    }}
-
-    .page:last-child {{
-      page-break-after: avoid;
-    }}
-
-    .header {{
-      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      color: white;
-      padding: 40px 60px;
-      text-align: center;
-      margin: -60px -60px 40px -60px;
-    }}
-
-    .header h1 {{
-      font-size: 2.5em;
-      font-weight: 700;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }}
-
-    .header .subtitle {{
-      font-size: 1.2em;
-      font-weight: 300;
-      opacity: 0.9;
-    }}
-
-    .hero {{
-      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      color: white;
-      padding: 40px 60px;
-      text-align: center;
-      margin: -60px -60px 40px -60px;
-    }}
-
-    .hero h1 {{
-      font-size: 2.5em;
-      font-weight: 700;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }}
-
-    .hero .muted {{
-      font-size: 1.2em;
-      font-weight: 300;
-      opacity: 0.9;
-    }}
-
-    .executive-summary {{
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 15px;
-      margin: 30px 0;
-    }}
-
-    .top-recommendation {{
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-      color: white;
-      padding: 25px;
-      border-radius: 15px;
-      margin: 20px 0;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }}
-
-    .score-display {{
-      font-size: 3em;
-      font-weight: 700;
-      text-align: center;
-      margin: 20px 0;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }}
-
-    .metrics-grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin: 30px 0;
-    }}
-
-    .metric-card {{
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      border-left: 5px solid #3498db;
-    }}
-
-    .metric-value {{
-      font-size: 2em;
-      font-weight: 700;
-      color: #2c3e50;
-    }}
-
-    .metric-label {{
-      color: #7f8c8d;
-      font-weight: 500;
-      margin-top: 5px;
-    }}
-
-    .rankings-table {{
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-      background: white;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }}
-
-    .rankings-table th {{
-      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      color: white;
-      padding: 15px;
-      text-align: left;
-      font-weight: 600;
-    }}
-
-    .rankings-table td {{
-      padding: 15px;
-      border-bottom: 1px solid #ecf0f1;
-    }}
-
-    .rankings-table tr:hover {{
-      background: #f8f9fa;
-    }}
-
-    .rank-badge {{
-      background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-      color: white;
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.9em;
-    }}
-
-    .rank-badge.top3 {{
-      background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-      color: #2c3e50;
-    }}
-
-    .section-title {{
-      font-size: 2em;
-      font-weight: 600;
-      margin: 40px 0 20px 0;
-      color: #2c3e50;
-      border-bottom: 3px solid #3498db;
-      padding-bottom: 10px;
-    }}
-
-    h2 {{
-      font-size: 2em;
-      font-weight: 600;
-      margin: 40px 0 20px 0;
-      border-bottom: 3px solid #3498db;
-      padding-bottom: 10px;
-    }}
-
-    h3 {{
-      font-weight: 600;
-      margin: 30px 0 15px 0;
-    }}
-
-    .property-card {{
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      margin: 30px 0;
-      border-left: 5px solid #3498db;
-    }}
-
-    .property-header {{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #ecf0f1;
-    }}
-
-    .property-title {{
-      font-size: 1.2em;
-      font-weight: 600;
-      color: #2c3e50;
-      flex: 1;
-    }}
-
-    .score-badge {{
-      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-      color: white;
-      padding: 8px 15px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 1.1em;
-    }}
-
-    .score-breakdown {{
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-      margin-top: 15px;
-    }}
-
-    .score-item {{
-      text-align: center;
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 10px;
-    }}
-
-    .score-item .value {{
-      font-size: 1.5em;
-      font-weight: 700;
-      color: #2c3e50;
-    }}
-
-    .score-item .label {{
-      font-size: 0.9em;
-      color: #7f8c8d;
-      margin-top: 5px;
-    }}
-
-    .map-container {{
-      margin-top: 30px;
-      text-align: center;
-    }}
-
-    .map-image {{
-      max-width: 100%;
-      height: auto;
-      border-radius: 10px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    }}
-
-    .methodology {{
-      background: #f8f9fa;
-      padding: 30px;
-      border-radius: 15px;
-      margin: 30px 0;
-    }}
-
-    .page-break {{
-      page-break-before: always;
-    }}
-    
-    .insights {{
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 25px;
-      border-radius: 15px;
-      margin: 20px 0;
-    }}
-    
-    .footer {{
-      text-align: center;
-      color: #7f8c8d;
-      font-size: 0.9em;
-      margin-top: 40px;
-      padding: 20px;
-      border-top: 1px solid #ecf0f1;
-    }}
-    </style>
-</head>
-<body>
-    <div class="report-container">
-        {self._generate_page_1_exact(report_data, processed_report_data)}
-        {self._generate_page_2_exact(report_data, processed_report_data)}
-        {self._generate_page_3_exact(report_data, processed_report_data, generated_maps, generated_charts, processed_report_data.get('key_investment_insights', []))}
-    </div>
-</body>
-</html>"""
+            <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Riyadh Pharmacy Site Analysis Report</title>
+            <style>
+                {get_pharmacy_report_css()}
+            </style>
+            </head>
+            <body>
+                <div class="report-container">
+                    {self._generate_page_1_exact(report_data, processed_report_data)}
+                    {self._generate_page_2_exact(report_data, processed_report_data)}
+                    {self._generate_page_3_exact(report_data, processed_report_data, generated_maps, generated_charts, processed_report_data.get('key_investment_insights', []))}
+                </div>
+            </body>
+            </html>"""
         return html_content
 
-    def _generate_top_recommendation_exact(self, top_recommendation, processed_report_data=None):
-        """Generate top recommendation section - EXACT MATCH"""
-        if not top_recommendation:
-            return ""
+    # def _generate_top_recommendation_exact(self, top_recommendation, processed_report_data=None):
+    #     """Generate top recommendation section - EXACT MATCH"""
+    #     if not top_recommendation:
+    #         return ""
         
-        # Get current location data for detailed scores (has more complete data)
-        current_location = processed_report_data.get('current_location', []) if processed_report_data else []
-        current_location_data = current_location[0] if current_location else {}
+    #     # Get current location data for detailed scores (has more complete data)
+    #     current_location = processed_report_data.get('current_location', []) if processed_report_data else []
+    #     current_location_data = current_location[0] if current_location else {}
         
-        # Get summary metrics for competing pharmacies
-        summary_metrics = processed_report_data.get("summary_metrics", {}) if processed_report_data else {}
+    #     # Get summary metrics for competing pharmacies
+    #     summary_metrics = processed_report_data.get("summary_metrics", {}) if processed_report_data else {}
         
-        # Extract data with proper field mapping - USE JSON alternatives where available
-        property_name = top_recommendation.get('site_name', 'N/A')  # Use site_name instead of property_name
-        score = top_recommendation.get('score', 0)  # Use score instead of final_score
-        price = top_recommendation.get('price_sar', 0)  # Use price_sar instead of price
+    #     # Extract data with proper field mapping - USE JSON alternatives where available
+    #     property_name = top_recommendation.get('site_name', 'N/A')  # Use site_name instead of property_name
+    #     score = top_recommendation.get('score', 0)  # Use score instead of final_score
+    #     price = top_recommendation.get('price_sar', 0)  # Use price_sar instead of price
         
-        # Use current_location data for detailed scores (more complete)
-        traffic_score = current_location_data.get('traffic_score', 0)
-        demographics_score = current_location_data.get('demographics_score', 0)
-        healthcare_score = current_location_data.get('healthcare_ecosystem_score', 0)  # Use healthcare_ecosystem_score
-        competition_score = current_location_data.get('competition_score', 0)
-        complementary_score = current_location_data.get('complementary_businesses_score', 0)  # Use complementary_businesses_score
+    #     # Use current_location data for detailed scores (more complete)
+    #     traffic_score = current_location_data.get('traffic_score', 0)
+    #     demographics_score = current_location_data.get('demographics_score', 0)
+    #     healthcare_score = current_location_data.get('healthcare_ecosystem_score', 0)  # Use healthcare_ecosystem_score
+    #     competition_score = current_location_data.get('competition_score', 0)
+    #     complementary_score = current_location_data.get('complementary_businesses_score', 0)  # Use complementary_businesses_score
         
-        # Additional metrics - use available alternatives from detailed_insights
-        # Get the top recommendation's detailed insights from detailed_analysis data
-        detailed_analysis = processed_report_data.get('detailed_analysis', []) if processed_report_data else []
-        top_property_insights = {}
-        if detailed_analysis:
-            # Find the top ranking property (rank 1) to get its detailed insights
-            top_property = next((prop for prop in detailed_analysis if prop.get('rank') == 1), {})
-            detailed_insights = top_property.get('detailed_insights', {})
-            business_environment = detailed_insights.get('business_environment', {})
-            demographics_match = detailed_insights.get('demographics_match', {})
-            traffic_performance = detailed_insights.get('traffic_performance', {})
+    #     # Additional metrics - use available alternatives from detailed_insights
+    #     # Get the top recommendation's detailed insights from detailed_analysis data
+    #     detailed_analysis = processed_report_data.get('detailed_analysis', []) if processed_report_data else []
+    #     top_property_insights = {}
+    #     if detailed_analysis:
+    #         # Find the top ranking property (rank 1) to get its detailed insights
+    #         top_property = next((prop for prop in detailed_analysis if prop.get('rank') == 1), {})
+    #         detailed_insights = top_property.get('detailed_insights', {})
+    #         business_environment = detailed_insights.get('business_environment', {})
+    #         demographics_match = detailed_insights.get('demographics_match', {})
+    #         traffic_performance = detailed_insights.get('traffic_performance', {})
             
-            # Map the available fields
-            traffic_flow = traffic_performance.get('current_speed_kmh', 30)
-            nearby_businesses = business_environment.get('nearby_businesses_500m', 0)
-            population_density = demographics_match.get('population_age_35_plus_percent', 0)  # Use age percentage as proxy
-            avg_income = demographics_match.get('average_income_sar', 0)
-        else:
-            # Fallback values
-            traffic_flow = 30
-            nearby_businesses = 0
-            population_density = 0
-            avg_income = 0
+    #         # Map the available fields
+    #         traffic_flow = traffic_performance.get('current_speed_kmh', 30)
+    #         nearby_businesses = business_environment.get('nearby_businesses_500m', 0)
+    #         population_age_35_plus = demographics_match.get('population_age_35_plus_percent', 0)  # Use age percentage as proxy
+    #         avg_income = demographics_match.get('average_income_sar', 0)
+    #     else:
+    #         # Fallback values
+    #         traffic_flow = 30
+    #         nearby_businesses = 0
+    #         population_age_35_plus = 0
+    #         avg_income = 0
         
-        competing_pharmacies = summary_metrics.get('competing_pharmacies', 0)  # Use from summary_metrics
+    #     competing_pharmacies = summary_metrics.get('competing_pharmacies', 0)  # Use from summary_metrics
         
-        return f"""
-      <div class="top-recommendation">
-        <h2 style="margin-bottom: 20px; border: none; color: white">
-          🏆 TOP RECOMMENDATION
-        </h2>
-        <h3 style="font-size: 1.8em; margin-bottom: 10px">Property #1:
-          {property_name}
-        </h3>
-        <div class="score-display">{score:.1f}/100</div>
+    #     return f"""
+    #   <div class="top-recommendation">
+    #     <h2 style="margin-bottom: 20px; border: none; color: white">
+    #       🏆 TOP RECOMMENDATION
+    #     </h2>
+    #     <h3 style="font-size: 1.8em; margin-bottom: 10px">Property #1:
+    #       {property_name}
+    #     </h3>
+    #     <div class="score-display">{score:.1f}/100</div>
 
-        <div style="
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-              gap: 20px;
-              margin-top: 20px;
-            ">
-          <div>
-            <strong>🚗 Traffic Analysis:</strong><br />
-            Average Speed: {traffic_flow:.1f} km/h<br />
-            <small>Target: 20–30 km/h | ℹ️ Light traffic</small>
-          </div>
-          <div>
-            <strong>🏪 Business Environment:</strong><br />
-            {nearby_businesses} businesses within 500m <br />
-            <small>✅ Strong ecosystem</small>
-          </div>
-          <div>
-            <strong>👥 Demographics:</strong><br />
-            {population_age_35_plus:.1f}% of population Aged 35 and Above<br />
-            <small>✅ Strong alignment | Average Income: {avg_income:,.0f} SAR monthly</small>
-          </div>
-          <div>
-            <strong>☕ Competition:</strong><br />
-            {competing_pharmacies} competing pharmacies in the area<br />
-            <small>Status: 🟢 Underserved market</small>
-          </div>
-        </div>
-      </div>"""
+    #     <div style="
+    #           display: grid;
+    #           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    #           gap: 20px;
+    #           margin-top: 20px;
+    #         ">
+    #       <div>
+    #         <strong>🚗 Traffic Analysis:</strong><br />
+    #         Average Speed: {traffic_flow:.1f} km/h<br />
+    #         <small>Target: 20–30 km/h | ℹ️ Light traffic</small>
+    #       </div>
+    #       <div>
+    #         <strong>🏪 Business Environment:</strong><br />
+    #         {nearby_businesses} businesses within 500m <br />
+    #         <small>✅ Strong ecosystem</small>
+    #       </div>
+    #       <div>
+    #         <strong>👥 Demographics:</strong><br />
+    #         {population_age_35_plus:.1f}% of population Aged 35 and Above<br />
+    #         <small>✅ Strong alignment | Average Income: {avg_income:,.0f} SAR monthly</small>
+    #       </div>
+    #       <div>
+    #         <strong>☕ Competition:</strong><br />
+    #         {competing_pharmacies} competing pharmacies in the area<br />
+    #         <small>Status: 🟢 Underserved market</small>
+    #       </div>
+    #     </div>
+    #   </div>"""
 
     def _generate_page_1_exact(self, report_data, processed_report_data):
         """Generate Page 1: Executive Overview - EXACT MATCH"""
         # Extract data
-        title = processed_report_data.get("title", f"{report_data.city_name} Pharmacy Site Analysis Report")
+        city_name = report_data.city_name if report_data else "Unknown City"
+        title = processed_report_data.get("title", f"{city_name} Pharmacy Site Analysis Report")
         description = processed_report_data.get("description", "Comprehensive Location Intelligence & Investment Recommendations")
         summary_metrics = processed_report_data.get("summary_metrics", {})
         executive_summary = processed_report_data.get("executive_summary", {})
@@ -841,7 +383,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
           📊 Executive Summary
         </h2>
         <p style="margin-bottom: 0">
-          This comprehensive analysis evaluates {total_sites_evaluated} pharmacy locations across {report_data.city_name} using advanced location intelligence methodologies. Our assessment integrates multiple data sources including traffic flow analysis, demographic profiling, healthcare ecosystem mapping, competitive landscape evaluation, and complementary business assessment. Each location is systematically scored using our proprietary weighted methodology, considering market opportunity, accessibility, and business environment factors to provide data-driven investment recommendations.
+          This comprehensive analysis evaluates {total_sites_evaluated} pharmacy locations across {city_name} using advanced location intelligence methodologies. Our assessment integrates multiple data sources including traffic flow analysis, demographic profiling, healthcare ecosystem mapping, competitive landscape evaluation, and complementary business assessment. Each location is systematically scored using our proprietary weighted methodology, considering market opportunity, accessibility, and business environment factors to provide data-driven investment recommendations.
         </p>
       </div>
 
@@ -1551,7 +1093,7 @@ class PharmacyReportGenerator(BaseHTMLGenerator):
 
         <div class="map-container">
           <h4 style="color: #2c3e50; margin-bottom: 15px">📍 Site Location Map</h4>
-          <iframe src="{interactive_maps_map.get(site_name, f'maps/map_{i}.html')}" width="100%" height="400" style="border:0; border-radius: 12px;"></iframe>
+          <iframe src="maps/site_{latitude},{longitude}_map.html" width="100%" height="400" style="border:0; border-radius: 12px;"></iframe>
           <p style="margin-top: 15px; color: #7f8c8d; font-size: 0.9em">
             <strong>Map shows:</strong> Property location, nearby businesses, analysis radius, and traffic patterns.
           </p>

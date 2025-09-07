@@ -240,7 +240,7 @@ def write_detailed_analysis(
         md.write(f"{analysis_space}\n\n")
         # Generate insights
         md.write(generate_detailed_insights(s))
-        md.write(f"**[🗺️ View location]({s["url"]})**\n\n")
+        md.write(f"**[🗺️ View location]({s['url']})**\n\n")
         
         # Maps
         map_image, html_map = generate_site_map_image(s, maps_dir, MAX_TOTAL)
@@ -833,7 +833,7 @@ def generate_table_with_current_comparison(
         rows.append(
             f"| {site['rank']} | {site['display_name']} | {price_display} | {final_display} | "
             f"{traffic_display} | {demo_display} | {comp_display} | {health_display} | {complement_display} | "
-            f"[View]({site["url"]}) |\n"
+            f"[View]({site['url']}) |\n"
         )
 
     return header + "".join(rows) + "\n"
