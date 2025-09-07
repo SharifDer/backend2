@@ -144,6 +144,9 @@ def generate_executive_summary_section(report_data, processed_report_data: Dict[
         </div>
       </div>
 
+      {generate_current_location_table(processed_report_data)}
+      {generate_custom_locations_table(processed_report_data)}
+
       <h2 class="section-title">📈 Top 10 Rankings</h2>
 
       <table class="rankings-table">
@@ -165,9 +168,6 @@ def generate_executive_summary_section(report_data, processed_report_data: Dict[
           {generate_rankings_table(rankings[:10])}
         </tbody>
       </table>
-
-      {generate_current_location_table(processed_report_data)}
-      {generate_custom_locations_table(processed_report_data)}
     </div>"""
 
 def generate_methodology_and_analysis_section(report_data, processed_report_data: Dict[str, Any]) -> str:
