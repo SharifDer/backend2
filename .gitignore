@@ -17,10 +17,10 @@ all_types/__pycache__/**
 #everything that ends with .geojson
 **.geojson
 **.rar
-
+reports/*
 # IDE - VSCode
 .vscode/
-
+.DS_Store
 # user files
 docker-compose.yml
 static/pharmacy_report/*

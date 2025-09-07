@@ -47,6 +47,7 @@ from tools.auth_tools import register_auth_tools
 # Add import
 from tools.natural_language_hub_analyzer import register_natural_language_hub_analyzer_tools
 from tools.report_analysis import register_report_analysis_tools
+from tools.pharmacy_report_tool import register_pharmacy_report_tools
 
 
 # Add registration
@@ -832,6 +833,7 @@ register_territory_report_tools(mcp)
 register_territory_optimization_tools(mcp)
 register_natural_language_hub_analyzer_tools(mcp)
 register_report_analysis_tools(mcp)
+register_pharmacy_report_tools(mcp)
 
 
 # ===== Resource Implementations =====
