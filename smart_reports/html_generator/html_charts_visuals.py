@@ -46,7 +46,7 @@ def generate_chart_grid(generated_charts: List[str], visual_analysis: Dict[str, 
         charts_path = f"charts/{filename}"
         chart_html += f"""
       <div class="map-placeholder">
-        <img src="{charts_path}" alt="{chart_name}" style="width: 100%; height: 300px; object-fit: cover;">
+        <img src="{charts_path}" alt="{chart_name}" style="width: 100%; height: auto; object-fit: cover;">
       </div>"""
     
     return chart_html
