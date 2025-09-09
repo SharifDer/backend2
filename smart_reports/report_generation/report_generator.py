@@ -423,8 +423,14 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
         rankings_title = f"🏆 Top {top_n} Investment Opportunities"
         
         if current_location:
-            md.write(f"### 🏠 {rankings_title} compared  with Current Location Evaluation\n\n")
+            
     # Use the new function and pass top_sites as baseline
+            md.write(f"## Current Location Scores \n\n")
+            table_current_md = generate_enhanced_table(current_location,MAX_TOTAL, CRITERION_WEIGHTS)
+            md.write(table_current_md)
+            md.write("\n\n\n")
+            md.write(f"### 🏠 {rankings_title} compared  with Current Location Evaluation\n\n")
+            md.write("\n\n\n")
             table_md = generate_table_with_current_comparison(
                 top_sites,
                 current_location,
@@ -433,12 +439,9 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
 
             )
             md.write(table_md)
-            md.write("\n\n\n")
+            
             report_data["current_location"] = generate_rankings_dict(current_location, MAX_TOTAL, CRITERION_WEIGHTS)
             report_data["rankings"] = generate_rankings_dict_with_current_comparison(top_sites ,current_location , MAX_TOTAL, CRITERION_WEIGHTS)
-            md.write(f"## Current Location Scores \n\n")
-            table_md = generate_enhanced_table(current_location,MAX_TOTAL, CRITERION_WEIGHTS)
-            md.write(table_md)
             md.write("\n\n")
             md.write("\n\n")
         else :
@@ -458,11 +461,21 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             report_data["custom_locations"] = generate_rankings_dict(custom_locations , MAX_TOTAL , CRITERION_WEIGHTS)
             
         # Detailed Site Analysis
-
+        # Function call usage:
+        if current_location:
+            detailed_analysis, current_detailed_analysis = write_detailed_analysis_with_current(
+                md, top_sites, current_location, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Site Analysis vs Current Location"
+            )
+            report_data["detailed_analysis"] = detailed_analysis
+            report_data["current_detailed_analysis"] = current_detailed_analysis
+        else:
+            report_data["detailed_analysis"] = write_detailed_analysis(
+                md, top_sites, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Site Analysis"
+            )
         # Detailed Site Analysis for top N
-        report_data["detailed_analysis"] = write_detailed_analysis(
-            md, top_sites, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Site Analysis"
-        )
+        # report_data["detailed_analysis"] = write_detailed_analysis(
+        #     md, top_sites, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Site Analysis"
+        # )
 
 
         if custom_locations :
@@ -470,10 +483,10 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
                 md, custom_locations, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Custom Locations"
             )
 
-        if current_location:
-            report_data["current_detailed_analysis"] = write_detailed_analysis(
-                md, current_location, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Current Locations"
-            )
+        # if current_location:
+        #     report_data["current_detailed_analysis"] = write_detailed_analysis(
+        #         md, current_location, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, "🔍 Detailed Current Locations"
+        #     )
             
 
         # Charts & Visualizations
@@ -491,7 +504,8 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             path = charts.get('top_stacked')
             if path:
                 chart_path = path.replace('\\', '/')
-                md.write(f"**Comparative Analysis:**\n\n![Top Candidates Comparison]({chart_path})\n\n")
+                md.write(f"**Comparative Analysis:**\n\n![Top Candidates Comparison]({chart_path})\n\n\n")
+                md.write(f"**Path : {chart_path}\n\n")
                 visual_analysis["charts"].append({
                     "title": "Top Candidates Comparison",
                     "type": "comparative_analysis",
@@ -502,7 +516,8 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             path = charts.get('traffic')
             if path:
                 chart_path = path.replace('\\', '/')
-                md.write(f"**Traffic Analysis:**\n\n![Traffic Flow Analysis]({chart_path})\n\n")
+                md.write(f"**Traffic Analysis:**\n\n![Traffic Flow Analysis]({chart_path})\n\n\n")
+                md.write(f"**Path : {chart_path}\n\n")
                 visual_analysis["charts"].append({
                     "title": "Traffic Flow Analysis",
                     "type": "traffic_analysis",
@@ -513,7 +528,8 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             path = charts.get('best_breakdown')
             if path:
                 chart_path = path.replace('\\', '/')
-                md.write(f"**Best Site Breakdown:**\n\n![Best Site Breakdown]({chart_path})\n\n")
+                md.write(f"**Best Site Breakdown:**\n\n![Best Site Breakdown]({chart_path})\n\n\n")
+                md.write(f"**Path : {chart_path}\n\n")
                 visual_analysis["charts"].append({
                     "title": "Best Site Breakdown",
                     "type": "site_breakdown",
@@ -523,7 +539,8 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             path = charts.get('price_vs_score')
             if path:
                 chart_path = path.replace('\\', '/')
-                md.write(f"**Price VS Final Score :**\n\n![Price VS Score]({chart_path})\n\n")
+                md.write(f"**Price VS Final Score :**\n\n![Price VS Score]({chart_path})\n\n\n")
+                md.write(f"**Path : {chart_path}\n\n")
                 visual_analysis["charts"].append({
                     "title": "Best Site Breakdown",
                     "type": "site_breakdown",
@@ -533,7 +550,8 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
             path = charts.get('healthcare_competition')
             if path:
                 chart_path = path.replace('\\', '/')
-                md.write(f"**Healthcare vs pharmacies competition :**\n\n![healthcare_competition]({chart_path})\n\n")
+                md.write(f"**Healthcare vs pharmacies competition :**\n\n![healthcare_competition]({chart_path})\n\n\n")
+                md.write(f"**Path : {chart_path}\n\n")
                 visual_analysis["charts"].append({
                     "title": "Healthcare vs Pharmacy Competition",
                      "type": "healthcare_competition",
@@ -546,7 +564,8 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
         if map_png:
             map_path = map_png.replace('\\', '/')
             md.write("**Location Overview:**\n\n")
-            md.write(f"![Candidates Map]({map_path})\n\n")
+            md.write(f"![Candidates Map]({map_path})\n\n\n")
+            md.write(f"**Path : {map_path}\n\n")
             visual_analysis["maps"].append({
                 "title": "Location Overview",
                 "type": "candidates_map",
@@ -558,7 +577,8 @@ def generate_markdown(sites: List[Dict], outdir: str, out_md: str, top_n: int,
         if heat_png:
             heat_path = heat_png.replace('\\', '/')
             md.write("**Demographic Distribution:**\n\n")
-            md.write(f"![Demographic Heatmap]({heat_path})\n\n")
+            md.write(f"![Demographic Heatmap]({heat_path})\n\n\n")
+            md.write(f"**Path : {heat_path}\n\n")
             visual_analysis["maps"].append({
                 "title": "Demographic Distribution", 
                 "type": "demographic_heatmap",
@@ -797,11 +817,11 @@ def generate_table_with_current_comparison(
             return f"{top_val:.1f} ({curr_val:.0f}, N/A)"
         diff_pct = abs(top_val - curr_val) 
         if top_val > curr_val:
-            result = f"{top_val:.0f} ({curr_val:.0f}, {diff_pct:.0f}% 📈)"
+            result = f"{top_val:.0f} (⬆️{diff_pct:.0f})"
         elif top_val < curr_val:
-            result = f"{top_val:.0f} ({curr_val:.0f}, {diff_pct:.0f}% 📉)"
+            result = f"{top_val:.0f} (⬇️{diff_pct:.0f})"
         else:
-            result = f"{top_val:.0f} ({curr_val:.0f}, 0% difference)"
+            result = f"{top_val:.0f} (0 ⬇️⬆️)"
         return f"&lrm;{result}"
     for site in top_sites:
         price_display = f"{site.get('price', 0):,}" if site.get('price') else "N/A"
@@ -837,3 +857,239 @@ def generate_table_with_current_comparison(
         )
 
     return header + "".join(rows) + "\n"
+
+
+def write_detailed_analysis_with_current(
+    md, sites, current_location, MAX_TOTAL, CRITERION_WEIGHTS, maps_dir, md_path, section_title: str, category: str = "Shop For Rent"
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Write detailed site analysis comparing top locations with current location and return structured data."""
+    
+    if not sites:
+        return [], []
+
+    md.write(f"## {section_title}\n\n")
+    
+    detailed_analysis = []
+    current_detailed_analysis = []
+    
+    for i, s in enumerate(sites, start=1):
+        final_score_100 = (s['total_score'] / MAX_TOTAL) * 100
+        current_final_score_100 = None
+        current_s = None
+        
+        if current_location and len(current_location) > 0:
+            current_s = current_location[0]  # Assuming single current location
+            current_final_score_100 = (current_s['total_score'] / MAX_TOTAL) * 100
+        
+        # Write headers for both locations
+        if current_s:
+            md.write(f"### {i}. {s['display_name']} vs Current Location Comparison (Scores: {final_score_100:.1f}/100 vs {current_final_score_100:.1f}/100)\n\n")
+        else:
+            md.write(f"### {i}. {s['display_name']} (Score: {final_score_100:.1f}/100)\n\n")
+        
+        # Location info for top site
+        coords_text = (
+            f"**Location:** {s['lat']:.6f}, {s['lng']:.6f}"
+            if (s['lat'] is not None and s['lng'] is not None)
+            else f"**Location:** {s.get('raw_place') or 'N/A'}"
+        )
+        price_text = f"**Rent Price:** {s.get('price', 0):,} SAR" if s.get('price') else "**Rent Price:** Not specified"
+        
+        md.write(f"**Top Location:** {coords_text} | {price_text} | Category: {category}\n\n")
+        
+        # Current location info if exists
+        if current_s:
+            current_coords_text = (
+                f"**Location:** {current_s['lat']:.6f}, {current_s['lng']:.6f}"
+                if (current_s['lat'] is not None and current_s['lng'] is not None)
+                else f"**Location:** {current_s.get('raw_place') or 'N/A'}"
+            )
+            current_price_text = f"**Rent Price:** {current_s.get('price', 0):,} SAR" if current_s.get('price') else "**Rent Price:** Not specified"
+            md.write(f"**Current Location:** {current_coords_text} | {current_price_text} | Category: {category}\n\n")
+        
+        analysis_space = "Analysis Preformed for locations with 2km from all sides"
+        md.write(f"{analysis_space}\n\n")
+        
+        # Generate insights for top location
+        md.write("#### Top Location Analysis\n")
+        md.write(generate_detailed_insights(s))
+        md.write(f"**[🗺️ View location]({s['url']})**\n\n")
+        
+        # Generate insights for current location if exists
+        map_image, html_map = generate_site_map_image(s, maps_dir, MAX_TOTAL)
+        map_image_rel = map_image.replace("\\", "/") if map_image else None
+        html_map_rel = html_map.replace("\\", "/") if html_map else None
+        if map_image_rel:
+            md.write(f"![Top Location Map]({map_image_rel})\n\n")
+        if html_map_rel:
+            md.write(f"[Open interactive map - Top Location]({html_map_rel})\n\n")
+        if current_s:
+            md.write("#### Current Location Analysis\n")
+            md.write(generate_detailed_insights(current_s))
+            md.write(f"**[🗺️ View location]({current_s['url']})**\n\n")
+        
+        # Maps for top location
+ 
+        
+        # Maps for current location if exists
+        current_map_image_rel = None
+        current_html_map_rel = None
+        if current_s:
+            current_map_image, current_html_map = generate_site_map_image(current_s, maps_dir, MAX_TOTAL)
+            current_map_image_rel = current_map_image.replace("\\", "/") if current_map_image else None
+            current_html_map_rel = current_html_map.replace("\\", "/") if current_html_map else None
+            if current_map_image_rel:
+                md.write(f"![Current Location Map]({current_map_image_rel})\n\n")
+            if current_html_map_rel:
+                md.write(f"[Open interactive map - Current Location]({current_html_map_rel})\n\n")
+        
+        # Scoring breakdown table - extended format
+        if current_s:
+            md.write('| Criterion | Sub-factor | Raw Score |  Weighted Score | Current Raw Score | Current Weighted Score |\n')
+            md.write('|-----------|------------|---------------|---------------------|-------------------|------------------------|\n')
+        else:
+            md.write('| Criterion | Sub-factor | Raw Score | Weighted Points |\n')
+            md.write('|-----------|------------|-----------|----------------|\n')
+
+        scoring_breakdown = []
+        current_scoring_breakdown = []
+        
+        for c in CRITERION_WEIGHTS.keys():
+            dkeys = [k for k in s['details'].keys() if k.startswith(f"{c}__") and not k.endswith('_weighted')]
+            current_dkeys = []
+            if current_s:
+                current_dkeys = [k for k in current_s['details'].keys() if k.startswith(f"{c}__") and not k.endswith('_weighted')]
+            
+            if dkeys and any(not math.isnan(s['details'].get(k, float('nan'))) for k in dkeys):
+                sub_weight = CRITERION_WEIGHTS[c] / max(1, len(dkeys))
+                crit_total = 0.0
+                current_crit_total = 0.0
+                
+                for dk in dkeys:
+                    raw = s['details'].get(dk, float('nan'))
+                    weighted = (raw / 100.0) * sub_weight if not math.isnan(raw) else float('nan')
+                    crit_total += 0.0 if math.isnan(weighted) else weighted
+                    
+                    current_raw = float('nan')
+                    current_weighted = float('nan')
+                    if current_s and dk in current_dkeys:
+                        current_raw = current_s['details'].get(dk, float('nan'))
+                        current_weighted = (current_raw / 100.0) * sub_weight if not math.isnan(current_raw) else float('nan')
+                        current_crit_total += 0.0 if math.isnan(current_weighted) else current_weighted
+                    
+                    sub_name = dk.replace(f"{c}__", '').replace('_', ' ')
+                    raw_display = f'{raw:.1f}' if not math.isnan(raw) else 'N/A'
+                    weighted_display = f'{weighted:.2f}' if not math.isnan(weighted) else 'N/A'
+                    
+                    if current_s:
+                        current_raw_display = f'{current_raw:.1f}' if not math.isnan(current_raw) else 'N/A'
+                        current_weighted_display = f'{current_weighted:.2f}' if not math.isnan(current_weighted) else 'N/A'
+                        md.write(f"| {c.capitalize()} | {sub_name} | {raw_display} | {weighted_display} | {current_raw_display} | {current_weighted_display} |\n")
+                    else:
+                        md.write(f"| {c.capitalize()} | {sub_name} | {raw_display} | {weighted_display} |\n")
+                    
+                    scoring_breakdown.append({
+                        "criterion": c.capitalize(),
+                        "sub_factor": sub_name,
+                        "raw_score": raw if not math.isnan(raw) else None,
+                        "weighted_points": weighted if not math.isnan(weighted) else None
+                    })
+                    
+                    if current_s:
+                        current_scoring_breakdown.append({
+                            "criterion": c.capitalize(),
+                            "sub_factor": sub_name,
+                            "raw_score": current_raw if not math.isnan(current_raw) else None,
+                            "weighted_points": current_weighted if not math.isnan(current_weighted) else None
+                        })
+                
+                if current_s:
+                    md.write(f"| **{c.capitalize()} Total** | | **{crit_total:.2f}** | | **{current_crit_total:.2f}** | |\n")
+                else:
+                    md.write(f"| **{c.capitalize()} Total** | | | **{crit_total:.2f}** |\n")
+                    
+                scoring_breakdown.append({
+                    "criterion": f"{c.capitalize()} Total",
+                    "sub_factor": "",
+                    "raw_score": None,
+                    "weighted_points": crit_total
+                })
+                
+                if current_s:
+                    current_scoring_breakdown.append({
+                        "criterion": f"{c.capitalize()} Total",
+                        "sub_factor": "",
+                        "raw_score": None,
+                        "weighted_points": current_crit_total
+                    })
+            else:
+                overall = s.get('scores', {}).get(f'{c}_score', 0.0)
+                current_overall = 0.0
+                if current_s:
+                    current_overall = current_s.get('scores', {}).get(f'{c}_score', 0.0)
+                    md.write(f"| {c.capitalize()} | No detailed data | N/A | **{overall:.2f}** | N/A | **{current_overall:.2f}** |\n")
+                else:
+                    md.write(f"| {c.capitalize()} | No detailed data | N/A | **{overall:.2f}** |\n")
+                    
+                scoring_breakdown.append({
+                    "criterion": c.capitalize(),
+                    "sub_factor": "No detailed data",
+                    "raw_score": None,
+                    "weighted_points": overall
+                })
+                
+                if current_s:
+                    current_scoring_breakdown.append({
+                        "criterion": c.capitalize(),
+                        "sub_factor": "No detailed data",
+                        "raw_score": None,
+                        "weighted_points": current_overall
+                    })
+        md.write("\n")
+        
+        detailed_analysis.append({
+            "rank": i,
+            "site_name": s['display_name'],
+            "final_score": round(final_score_100, 1),
+            "analysis_space": analysis_space,
+            "location": {
+                "latitude": s['lat'] if s['lat'] is not None else None,
+                "longitude": s['lng'] if s['lng'] is not None else None,
+                "raw_place": s.get('raw_place')
+            },
+            "price_sar": s.get('price', 0) if s.get('price') else None,
+            "category": category,
+            "url": s.get("url"),
+            "maps": {
+                "static_map_url": map_image_rel,
+                "interactive_map_url": html_map_rel
+            },
+            "detailed_insights": generate_detailed_insights_dict(s),
+            "scoring_breakdown": scoring_breakdown
+        })
+        
+        if current_s:
+            current_detailed_analysis.append({
+                "rank": i,
+                "site_name": current_s['display_name'],
+                "final_score": round(current_final_score_100, 1),
+                "analysis_space": analysis_space,
+                "location": {
+                    "latitude": current_s['lat'] if current_s['lat'] is not None else None,
+                    "longitude": current_s['lng'] if current_s['lng'] is not None else None,
+                    "raw_place": current_s.get('raw_place')
+                },
+                "price_sar": current_s.get('price', 0) if current_s.get('price') else None,
+                "category": category,
+                "url": current_s.get("url"),
+                "maps": {
+                    "static_map_url": current_map_image_rel,
+                    "interactive_map_url": current_html_map_rel
+                },
+                "detailed_insights": generate_detailed_insights_dict(current_s),
+                "scoring_breakdown": current_scoring_breakdown
+            })
+    
+    return detailed_analysis, current_detailed_analysis
+
+
