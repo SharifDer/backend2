@@ -92,9 +92,30 @@ async def generate_pharmacy_report(req : Reqsmartreport):
     # --- Step 2: process custom_locations (if any) ---
     if req.custom_locations:
         for i , coord in enumerate(req.custom_locations , start=1):
+            if coord.lat !=0 and coord.lng != 0 :
+                shop_data = await fetch_all_criterions_data(
+                    lat=coord.lat,
+                    lng=coord.lng,
+                    Userid=req.user_id,
+                    hospital=hospitals,
+                    pharmacies=pharmacies,
+                    dentists=dentists,
+                    grocery_store=grocery_store,
+                    supermarket=supermarket,
+                    restaurant=restaurant,
+                    atm=atm,
+                    bank=bank,
+                    source = source_custom_locations,
+                    place_name=f"Num {i} custom location",   # no URL for custom
+                    place_price=None  # no price for custom
+                )
+                all_shops_data.append(shop_data)
+    
+    if req.current_location:
+        if req.current_location.lat != 0 and req.current_location.lng != 0:
             shop_data = await fetch_all_criterions_data(
-                lat=coord.lat,
-                lng=coord.lng,
+                lat=req.current_location.lat,
+                lng=req.current_location.lng,
                 Userid=req.user_id,
                 hospital=hospitals,
                 pharmacies=pharmacies,
@@ -104,30 +125,11 @@ async def generate_pharmacy_report(req : Reqsmartreport):
                 restaurant=restaurant,
                 atm=atm,
                 bank=bank,
-                source = source_custom_locations,
-                place_name=f"Num {i} custom location",   # no URL for custom
-                place_price=None  # no price for custom
+                source= source_current_location,
+                place_name="Your current location",
+                place_price=None
             )
             all_shops_data.append(shop_data)
-    
-    if req.current_location:
-        shop_data = await fetch_all_criterions_data(
-            lat=req.current_location.lat,
-            lng=req.current_location.lng,
-            Userid=req.user_id,
-            hospital=hospitals,
-            pharmacies=pharmacies,
-            dentists=dentists,
-            grocery_store=grocery_store,
-            supermarket=supermarket,
-            restaurant=restaurant,
-            atm=atm,
-            bank=bank,
-            source= source_current_location,
-            place_name="Your current location",
-            place_price=None
-        )
-        all_shops_data.append(shop_data)
     
     # in this part we process all candidates locations data
     results = {}
