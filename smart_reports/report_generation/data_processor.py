@@ -85,7 +85,8 @@ def _process_single_site(
         "num_of_dentists" : rec.get("data" , {}).get("number of dentists around")
 
     }
-
+    if not url :
+        site["url"] = google_maps_link(site)
     try:
         site['lat'] = float(lat) if lat is not None else None
     except Exception:
